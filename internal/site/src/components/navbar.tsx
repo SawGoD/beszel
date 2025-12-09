@@ -2,6 +2,7 @@ import { Trans } from "@lingui/react/macro"
 import { getPagePath } from "@nanostores/router"
 import {
 	ContainerIcon,
+	CreditCardIcon,
 	DatabaseBackupIcon,
 	HardDriveIcon,
 	LogOutIcon,
@@ -63,6 +64,13 @@ export default function Navbar() {
 					aria-label="S.M.A.R.T."
 				>
 					<HardDriveIcon className="h-[1.2rem] w-[1.2rem]" strokeWidth={1.5} />
+				</Link>
+				<Link
+					href={getPagePath($router, "payments")}
+					className={cn("hidden md:grid", buttonVariants({ variant: "ghost", size: "icon" }))}
+					aria-label="Payments"
+				>
+					<CreditCardIcon className="h-[1.2rem] w-[1.2rem]" strokeWidth={1.5} />
 				</Link>
 				<LangToggle />
 				<ModeToggle />

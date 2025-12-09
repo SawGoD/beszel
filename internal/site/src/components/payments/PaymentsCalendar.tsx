@@ -3,8 +3,21 @@ import { useMemo, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { $payments, $providers, $rates } from '@/lib/payments/paymentsStore'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+	CheckIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	ExternalLinkIcon,
+	PencilIcon,
+	TrashIcon,
+} from 'lucide-react'
+import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from '@/lib/payments/paymentsStore'
 import { $systems } from '@/lib/stores'
 import {
 	extractDomain,
@@ -15,6 +28,7 @@ import {
 } from '@/lib/payments/currency'
 import { CURRENCY_SYMBOLS, type PaymentEntry } from '@/lib/payments/paymentsTypes'
 import { cn } from '@/lib/utils'
+import { CountryFlag } from './CountryFlag'
 
 interface PaymentsCalendarProps {
 	onEditPayment: (payment: PaymentEntry) => void
@@ -67,7 +81,11 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 
 		// Generate 6 weeks (42 days) for consistent calendar size
 		for (let i = 0; i < 42; i++) {
-			const dateStr = current.toISOString().split('T')[0]
+			// Use local date format to avoid timezone issues
+			const year = current.getFullYear()
+			const month = String(current.getMonth() + 1).padStart(2, '0')
+			const day = String(current.getDate()).padStart(2, '0')
+			const dateStr = `${year}-${month}-${day}`
 			days.push({
 				date: new Date(current),
 				isCurrentMonth: current.getMonth() === currentMonth,
@@ -117,6 +135,22 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 		const domain = extractDomain(provider.url)
 		if (!domain) return null
 		return getFaviconUrl(domain)
+	}
+
+	const getPaymentUrl = (payment: PaymentEntry) => {
+		if (payment.providerUrlOverride) return payment.providerUrlOverride
+		const provider = providers.find((p) => p.id === payment.providerId)
+		return provider?.url || ''
+	}
+
+	const handleMarkPaid = (id: string) => {
+		markPaymentPaid(id)
+	}
+
+	const handleDelete = (id: string) => {
+		if (confirm(t`Are you sure you want to delete this payment?`)) {
+			deletePayment(id)
+		}
 	}
 
 	const isToday = (date: Date) => {
@@ -207,34 +241,76 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 										const provider = getProvider(payment.providerId)
 										const favicon = getProviderFavicon(payment.providerId)
 										const status = getPaymentStatus(daysUntil)
+										const paymentUrl = getPaymentUrl(payment)
 
 										return (
-											<div
-												key={payment.id}
-												onClick={() => onEditPayment(payment)}
-												className={cn(
-													'text-xs p-1 rounded cursor-pointer truncate flex items-center gap-1',
-													status === 'crit' && 'bg-red-500/20 text-red-700 dark:text-red-400',
-													status === 'warn' && 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
-													status === 'ok' && 'bg-green-500/10 text-green-700 dark:text-green-400',
-													'hover:opacity-80'
-												)}
-												title={`${getServerName(payment.serverId)} - ${formatRub(payment.amount)} ${CURRENCY_SYMBOLS[payment.currency]}`}
-											>
-												{favicon && (
-													<img
-														src={favicon}
-														alt=""
-														className="h-3 w-3 rounded-sm shrink-0"
-														onError={(e) => {
-															e.currentTarget.style.display = 'none'
-														}}
-													/>
-												)}
-												<span className="truncate">
-													{getServerName(payment.serverId)}
-												</span>
-											</div>
+											<DropdownMenu key={payment.id}>
+												<DropdownMenuTrigger asChild>
+													<div
+														className={cn(
+															'text-xs p-1 rounded cursor-pointer truncate flex items-center gap-1',
+															status === 'crit' && 'bg-red-500/20 text-red-700 dark:text-red-400',
+															status === 'warn' && 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+															status === 'ok' && 'bg-green-500/10 text-green-700 dark:text-green-400',
+															'hover:opacity-80'
+														)}
+														title={`${getServerName(payment.serverId)}${payment.notes ? ` (${payment.notes})` : ''} - ${formatRub(payment.amount)} ${CURRENCY_SYMBOLS[payment.currency]}`}
+													>
+														{payment.country && (
+															<CountryFlag code={payment.country} className="h-3 w-4 shrink-0" />
+														)}
+														{favicon && (
+															<img
+																src={favicon}
+																alt=""
+																className="h-3 w-3 rounded-sm shrink-0"
+																onError={(e) => {
+																	e.currentTarget.style.display = 'none'
+																}}
+															/>
+														)}
+														<span className="truncate">
+															{getServerName(payment.serverId)}
+														</span>
+													</div>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="start" className="min-w-[180px]">
+													<div className="px-2 py-1.5 text-sm font-medium">
+														{getServerName(payment.serverId)}
+														{payment.notes && (
+															<span className="text-muted-foreground font-normal ml-1">
+																({payment.notes})
+															</span>
+														)}
+													</div>
+													<div className="px-2 pb-1.5 text-xs text-muted-foreground border-b mb-1">
+														{provider?.name} • {formatRub(payment.amount)} {CURRENCY_SYMBOLS[payment.currency]}
+													</div>
+													<DropdownMenuItem onClick={() => handleMarkPaid(payment.id)}>
+														<CheckIcon className="me-2 h-4 w-4 text-green-500" />
+														<Trans>Mark Paid</Trans>
+													</DropdownMenuItem>
+													{paymentUrl && (
+														<DropdownMenuItem asChild>
+															<a href={paymentUrl} target="_blank" rel="noopener noreferrer">
+																<ExternalLinkIcon className="me-2 h-4 w-4 text-blue-500" />
+																<Trans>Go to Payment</Trans>
+															</a>
+														</DropdownMenuItem>
+													)}
+													<DropdownMenuItem onClick={() => onEditPayment(payment)}>
+														<PencilIcon className="me-2 h-4 w-4 text-yellow-500" />
+														<Trans>Edit</Trans>
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														onClick={() => handleDelete(payment.id)}
+														className="text-destructive"
+													>
+														<TrashIcon className="me-2 h-4 w-4" />
+														<Trans>Delete</Trans>
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
 										)
 									})}
 									{day.payments.length > 3 && (

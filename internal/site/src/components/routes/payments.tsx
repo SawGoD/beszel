@@ -11,6 +11,7 @@ import {
 	PaymentsStats,
 	PaymentsTable,
 	PaymentsCalendar,
+	PaymentsMobileCards,
 	PaymentForm,
 	ProviderForm,
 	ProvidersList,
@@ -167,17 +168,25 @@ export default memo(() => {
 									<CardTitle className="text-lg">
 										<Trans>Payment Schedule</Trans>
 									</CardTitle>
-									<CardDescription>
+									<CardDescription className="hidden sm:block">
 										<Trans>All scheduled payments sorted by due date</Trans>
 									</CardDescription>
 								</div>
 								<Button onClick={() => setPaymentFormOpen(true)}>
 									<PlusIcon className="h-4 w-4 me-1" />
-									<Trans>Add Payment</Trans>
+									<span className="hidden sm:inline"><Trans>Add Payment</Trans></span>
+									<span className="sm:hidden"><Trans>Add</Trans></span>
 								</Button>
 							</CardHeader>
 							<CardContent>
-								<PaymentsTable onEditPayment={handleEditPayment} />
+								{/* Desktop: Table view */}
+								<div className="hidden md:block">
+									<PaymentsTable onEditPayment={handleEditPayment} />
+								</div>
+								{/* Mobile: Card view */}
+								<div className="md:hidden">
+									<PaymentsMobileCards onEditPayment={handleEditPayment} sortBy="date" />
+								</div>
 							</CardContent>
 						</Card>
 					</TabsContent>

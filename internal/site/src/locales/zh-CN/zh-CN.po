@@ -98,6 +98,10 @@ msgstr "启用的警报"
 msgid "Active state"
 msgstr "活动状态"
 
+#: src/components/routes/payments.tsx
+msgid "Add"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -196,6 +200,8 @@ msgstr ""
 msgid "Are you sure you want to delete {name}?"
 msgstr "您确定要删除 {name} 吗？"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Are you sure you want to delete this payment?"
 msgstr ""
@@ -484,6 +490,10 @@ msgstr "复制下面的客户端<0>docker-compose.yml</0>内容，或使用<1>�
 msgid "Copy YAML"
 msgstr "复制 YAML"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Country"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -581,6 +591,8 @@ msgstr ""
 msgid "Default time period"
 msgstr "默认时间段"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -682,6 +694,8 @@ msgstr "持续时间"
 msgid "e.g., Hetzner, DigitalOcean, AWS"
 msgstr ""
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -862,6 +876,8 @@ msgstr "常规"
 msgid "Global"
 msgstr "全局"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Go to Payment"
 msgstr ""
@@ -1033,6 +1049,8 @@ msgstr ""
 msgid "Manual setup instructions"
 msgstr "手动设置说明"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Mark Paid"
 msgstr ""
@@ -1118,6 +1136,7 @@ msgstr ""
 msgid "No"
 msgstr "否"
 
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "No payments added yet. Add a provider first, then add payments."
 msgstr ""
@@ -1152,6 +1171,10 @@ msgstr "未找到系统。"
 #: src/components/payments/ProviderForm.tsx
 msgid "None"
 msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#~ msgid "Not specified"
+#~ msgstr ""
 
 #: src/components/payments/PaymentForm.tsx
 #: src/components/payments/ProviderForm.tsx
@@ -1508,6 +1531,10 @@ msgstr "查看<0>通知设置</0>以配置您接收警报的方式。"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
 msgstr "选择 {foo}"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select country"
+msgstr ""
 
 #: src/components/payments/ProviderForm.tsx
 msgid "Select currency"

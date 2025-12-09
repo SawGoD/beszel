@@ -22,8 +22,9 @@ import {
 import { $payments, $providers, addPayment, updatePayment } from '@/lib/payments/paymentsStore'
 import { extractDomain, getFaviconUrl } from '@/lib/payments/currency'
 import { $systems } from '@/lib/stores'
-import type { Currency, PaymentEntry, PaymentPeriod } from '@/lib/payments/paymentsTypes'
-import { CURRENCY_SYMBOLS, PERIOD_LABELS } from '@/lib/payments/paymentsTypes'
+import type { CountryCode, Currency, PaymentEntry, PaymentPeriod } from '@/lib/payments/paymentsTypes'
+import { COUNTRY_FLAGS, COUNTRY_NAMES, CURRENCY_SYMBOLS, PERIOD_LABELS } from '@/lib/payments/paymentsTypes'
+import { CountryFlag } from './CountryFlag'
 
 interface PaymentFormProps {
 	open: boolean
@@ -50,6 +51,7 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 	const [currency, setCurrency] = useState<Currency>('RUB')
 	const [period, setPeriod] = useState<PaymentPeriod>('monthly')
 	const [nextPayment, setNextPayment] = useState('')
+	const [country, setCountry] = useState<CountryCode | undefined>(undefined)
 	const [providerUrlOverride, setProviderUrlOverride] = useState('')
 	const [notes, setNotes] = useState('')
 
@@ -61,6 +63,7 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 			setCurrency(editPayment.currency)
 			setPeriod(editPayment.period)
 			setNextPayment(editPayment.nextPayment)
+			setCountry(editPayment.country)
 			setProviderUrlOverride(editPayment.providerUrlOverride || '')
 			setNotes(editPayment.notes || '')
 		} else {
@@ -71,6 +74,7 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 			setCurrency('RUB')
 			setPeriod('monthly')
 			setNextPayment('')
+			setCountry(undefined)
 			setProviderUrlOverride('')
 			setNotes('')
 		}
@@ -96,6 +100,7 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 			currency,
 			period,
 			nextPayment,
+			country,
 			providerUrlOverride: providerUrlOverride || undefined,
 			notes: notes || undefined,
 		}
@@ -258,6 +263,27 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 								onChange={(e) => setNextPayment(e.target.value)}
 							/>
 						</div>
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="country">
+							<Trans>Country</Trans>
+						</Label>
+						<Select value={country || ''} onValueChange={(v) => setCountry(v as CountryCode)}>
+							<SelectTrigger>
+								<SelectValue placeholder={t`Select country`} />
+							</SelectTrigger>
+							<SelectContent>
+								{(Object.keys(COUNTRY_FLAGS) as CountryCode[]).map((code) => (
+									<SelectItem key={code} value={code}>
+										<span className="flex items-center gap-2">
+											<CountryFlag code={code} className="h-3.5 w-5" />
+											{COUNTRY_NAMES[code]}
+										</span>
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					<div className="space-y-2">

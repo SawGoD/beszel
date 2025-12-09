@@ -40,6 +40,7 @@ import {
 	PERIOD_SHORT,
 	type PaymentEntry,
 } from '@/lib/payments/paymentsTypes'
+import { CountryFlag } from './CountryFlag'
 
 interface PaymentsTableProps {
 	onEditPayment: (payment: PaymentEntry) => void
@@ -106,11 +107,11 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const getStatusClasses = (status: 'ok' | 'warn' | 'crit') => {
 		switch (status) {
 			case 'crit':
-				return 'bg-red-500/10 text-red-600 dark:text-red-400 border-l-4 border-l-red-500'
+				return 'bg-red-500/10 border-l-4 border-l-red-500'
 			case 'warn':
-				return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-l-4 border-l-yellow-500'
+				return 'bg-yellow-500/10 border-l-4 border-l-yellow-500'
 			default:
-				return 'border-l-4 border-l-green-500'
+				return 'bg-green-500/10 border-l-4 border-l-green-500'
 		}
 	}
 
@@ -179,7 +180,17 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 
 						return (
 							<TableRow key={payment.id} className={getStatusClasses(status)}>
-								<TableCell className="font-medium">{getServerName(payment.serverId)}</TableCell>
+								<TableCell className="font-medium">
+									<span className="flex items-center gap-1.5" title={payment.notes || undefined}>
+										{payment.country && <CountryFlag code={payment.country} />}
+										{getServerName(payment.serverId)}
+										{payment.notes && (
+											<span className="text-xs text-muted-foreground truncate max-w-[120px]">
+												({payment.notes})
+											</span>
+										)}
+									</span>
+								</TableCell>
 								<TableCell>
 									{(() => {
 										const provider = getProvider(payment.providerId)
@@ -187,8 +198,8 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 										const providerName = provider?.name || payment.providerId
 										return (
 											<Badge
-												variant="secondary"
-												className="gap-1.5 py-1 px-2 font-normal cursor-pointer hover:bg-secondary/80"
+												variant="outline"
+												className="gap-1.5 py-1 px-2 font-normal cursor-pointer hover:bg-muted"
 												onClick={() => paymentUrl && window.open(paymentUrl, '_blank')}
 											>
 												{favicon && (

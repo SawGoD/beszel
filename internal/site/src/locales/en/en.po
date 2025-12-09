@@ -93,6 +93,10 @@ msgstr "Active Alerts"
 msgid "Active state"
 msgstr "Active state"
 
+#: src/components/routes/payments.tsx
+msgid "Add"
+msgstr "Add"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -191,6 +195,8 @@ msgstr "Amount"
 msgid "Are you sure you want to delete {name}?"
 msgstr "Are you sure you want to delete {name}?"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Are you sure you want to delete this payment?"
 msgstr "Are you sure you want to delete this payment?"
@@ -479,6 +485,10 @@ msgstr "Copy the<0>docker-compose.yml</0> content for the agent below, or regist
 msgid "Copy YAML"
 msgstr "Copy YAML"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Country"
+msgstr "Country"
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -576,6 +586,8 @@ msgstr "Default Currency"
 msgid "Default time period"
 msgstr "Default time period"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -677,6 +689,8 @@ msgstr "Duration"
 msgid "e.g., Hetzner, DigitalOcean, AWS"
 msgstr "e.g., Hetzner, DigitalOcean, AWS"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -857,6 +871,8 @@ msgstr "General"
 msgid "Global"
 msgstr "Global"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Go to Payment"
 msgstr "Go to Payment"
@@ -1028,6 +1044,8 @@ msgstr "Manage your hosting providers"
 msgid "Manual setup instructions"
 msgstr "Manual setup instructions"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Mark Paid"
 msgstr "Mark Paid"
@@ -1113,6 +1131,7 @@ msgstr "Next Payment Date"
 msgid "No"
 msgstr "No"
 
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "No payments added yet. Add a provider first, then add payments."
 msgstr "No payments added yet. Add a provider first, then add payments."
@@ -1147,6 +1166,10 @@ msgstr "No systems found."
 #: src/components/payments/ProviderForm.tsx
 msgid "None"
 msgstr "None"
+
+#: src/components/payments/PaymentForm.tsx
+#~ msgid "Not specified"
+#~ msgstr "Not specified"
 
 #: src/components/payments/PaymentForm.tsx
 #: src/components/payments/ProviderForm.tsx
@@ -1503,6 +1526,10 @@ msgstr "See <0>notification settings</0> to configure how you receive alerts."
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
 msgstr "Select {foo}"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select country"
+msgstr "Select country"
 
 #: src/components/payments/ProviderForm.tsx
 msgid "Select currency"

@@ -1,6 +1,7 @@
 export { PaymentsStats } from './PaymentsStats'
 export { PaymentsTable } from './PaymentsTable'
 export { PaymentsCalendar } from './PaymentsCalendar'
+export { PaymentsMobileCards } from './PaymentsMobileCards'
 export { PaymentForm } from './PaymentForm'
 export { ProviderForm } from './ProviderForm'
 export { ProvidersList } from './ProvidersList'

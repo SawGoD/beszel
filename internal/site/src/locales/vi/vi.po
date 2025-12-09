@@ -98,6 +98,10 @@ msgstr "Cảnh báo hoạt động"
 msgid "Active state"
 msgstr "Trạng thái hoạt động"
 
+#: src/components/routes/payments.tsx
+msgid "Add"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -196,6 +200,8 @@ msgstr ""
 msgid "Are you sure you want to delete {name}?"
 msgstr "Bạn có chắc chắn muốn xóa {name} không?"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Are you sure you want to delete this payment?"
 msgstr ""
@@ -484,6 +490,10 @@ msgstr "Sao chép nội dung <0>docker-compose.yml</0> cho tác nhân bên dư�
 msgid "Copy YAML"
 msgstr "Sao chép YAML"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Country"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -581,6 +591,8 @@ msgstr ""
 msgid "Default time period"
 msgstr "Thời gian mặc định"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -682,6 +694,8 @@ msgstr "Thời lượng"
 msgid "e.g., Hetzner, DigitalOcean, AWS"
 msgstr ""
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 #: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -862,6 +876,8 @@ msgstr "Chung"
 msgid "Global"
 msgstr "Toàn cầu"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Go to Payment"
 msgstr ""
@@ -1033,6 +1049,8 @@ msgstr ""
 msgid "Manual setup instructions"
 msgstr "Hướng dẫn cài đặt thủ công"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "Mark Paid"
 msgstr ""
@@ -1118,6 +1136,7 @@ msgstr ""
 msgid "No"
 msgstr "Không"
 
+#: src/components/payments/PaymentsMobileCards.tsx
 #: src/components/payments/PaymentsTable.tsx
 msgid "No payments added yet. Add a provider first, then add payments."
 msgstr ""
@@ -1152,6 +1171,10 @@ msgstr "Không tìm thấy hệ thống."
 #: src/components/payments/ProviderForm.tsx
 msgid "None"
 msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#~ msgid "Not specified"
+#~ msgstr ""
 
 #: src/components/payments/PaymentForm.tsx
 #: src/components/payments/ProviderForm.tsx
@@ -1507,6 +1530,10 @@ msgstr "Xem <0>cài đặt thông báo</0> để cấu hình cách bạn nhận 
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select country"
 msgstr ""
 
 #: src/components/payments/ProviderForm.tsx

@@ -13,6 +13,9 @@ export interface Provider {
 	notes?: string
 }
 
+/** Country codes for server location */
+export type CountryCode = 'RU' | 'DE' | 'NL' | 'US' | 'FI' | 'FR' | 'GB' | 'PL' | 'UA' | 'KZ' | 'BY' | 'LT' | 'LV' | 'EE' | 'CZ' | 'AT' | 'CH' | 'SE' | 'NO' | 'DK' | 'IT' | 'ES' | 'PT' | 'JP' | 'SG' | 'HK' | 'AU' | 'CA' | 'BR'
+
 /** Payment entry linked to a server */
 export interface PaymentEntry {
 	id: string
@@ -22,6 +25,7 @@ export interface PaymentEntry {
 	nextPayment: string // ISO date
 	amount: number
 	currency: Currency
+	country?: CountryCode
 	providerUrlOverride?: string
 	notes?: string
 }
@@ -74,4 +78,70 @@ export const FALLBACK_RATES: ExchangeRates = {
 	EUR: 105.0 * 1.05,
 	updated: 'fallback',
 	source: 'fallback',
+}
+
+/** Country flag emoji mapping */
+export const COUNTRY_FLAGS: Record<CountryCode, string> = {
+	RU: '🇷🇺',
+	DE: '🇩🇪',
+	NL: '🇳🇱',
+	US: '🇺🇸',
+	FI: '🇫🇮',
+	FR: '🇫🇷',
+	GB: '🇬🇧',
+	PL: '🇵🇱',
+	UA: '🇺🇦',
+	KZ: '🇰🇿',
+	BY: '🇧🇾',
+	LT: '🇱🇹',
+	LV: '🇱🇻',
+	EE: '🇪🇪',
+	CZ: '🇨🇿',
+	AT: '🇦🇹',
+	CH: '🇨🇭',
+	SE: '🇸🇪',
+	NO: '🇳🇴',
+	DK: '🇩🇰',
+	IT: '🇮🇹',
+	ES: '🇪🇸',
+	PT: '🇵🇹',
+	JP: '🇯🇵',
+	SG: '🇸🇬',
+	HK: '🇭🇰',
+	AU: '🇦🇺',
+	CA: '🇨🇦',
+	BR: '🇧🇷',
+}
+
+/** Country names for display */
+export const COUNTRY_NAMES: Record<CountryCode, string> = {
+	RU: 'Russia',
+	DE: 'Germany',
+	NL: 'Netherlands',
+	US: 'USA',
+	FI: 'Finland',
+	FR: 'France',
+	GB: 'UK',
+	PL: 'Poland',
+	UA: 'Ukraine',
+	KZ: 'Kazakhstan',
+	BY: 'Belarus',
+	LT: 'Lithuania',
+	LV: 'Latvia',
+	EE: 'Estonia',
+	CZ: 'Czechia',
+	AT: 'Austria',
+	CH: 'Switzerland',
+	SE: 'Sweden',
+	NO: 'Norway',
+	DK: 'Denmark',
+	IT: 'Italy',
+	ES: 'Spain',
+	PT: 'Portugal',
+	JP: 'Japan',
+	SG: 'Singapore',
+	HK: 'Hong Kong',
+	AU: 'Australia',
+	CA: 'Canada',
+	BR: 'Brazil',
 }

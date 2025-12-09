@@ -20,3 +20,6 @@ __debug_*
 agent/lhm/obj
 agent/lhm/bin
 dockerfile_agent_dev
+DEPLOYMENT.md
+TASK-*.md
+ref-*.html

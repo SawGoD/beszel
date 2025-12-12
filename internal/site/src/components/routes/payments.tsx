@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AlertCircleIcon, CalendarIcon, DownloadIcon, Loader2Icon, PlusIcon, UploadIcon } from 'lucide-react'
+import { AlertCircleIcon, CalendarIcon, DownloadIcon, ListIcon, Loader2Icon, PlusIcon, UploadIcon } from 'lucide-react'
 import { FooterRepoLink } from '@/components/footer-repo-link'
 import {
 	PaymentsStats,
@@ -41,6 +41,7 @@ export default memo(() => {
 	const [editingPayment, setEditingPayment] = useState<PaymentEntry | null>(null)
 	const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
 	const [importing, setImporting] = useState(false)
+	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
 	const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -189,10 +190,6 @@ export default memo(() => {
 						<TabsTrigger value="payments">
 							<Trans>Payments</Trans>
 						</TabsTrigger>
-						<TabsTrigger value="calendar">
-							<CalendarIcon className="h-4 w-4 me-1" />
-							<Trans>Calendar</Trans>
-						</TabsTrigger>
 						<TabsTrigger value="providers">
 							<Trans>Providers</Trans>
 						</TabsTrigger>
@@ -209,18 +206,47 @@ export default memo(() => {
 										<Trans>All scheduled payments sorted by due date</Trans>
 									</CardDescription>
 								</div>
-								<Button onClick={() => setPaymentFormOpen(true)}>
-									<PlusIcon className="h-4 w-4 me-1" />
-									<span className="hidden sm:inline"><Trans>Add Payment</Trans></span>
-									<span className="sm:hidden"><Trans>Add</Trans></span>
-								</Button>
+								<div className="flex items-center gap-2">
+									{/* View toggle - desktop only */}
+									<div className="hidden md:flex gap-1 bg-muted/50 p-1 rounded-lg">
+										<Button
+											size="sm"
+											variant={viewMode === 'table' ? 'default' : 'ghost'}
+											onClick={() => setViewMode('table')}
+											className="h-7 px-2"
+										>
+											<ListIcon className="h-4 w-4" />
+										</Button>
+										<Button
+											size="sm"
+											variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+											onClick={() => setViewMode('calendar')}
+											className="h-7 px-2"
+										>
+											<CalendarIcon className="h-4 w-4" />
+										</Button>
+									</div>
+									<Button onClick={() => setPaymentFormOpen(true)}>
+										<PlusIcon className="h-4 w-4 me-1" />
+										<span className="hidden sm:inline">
+											<Trans>Add Payment</Trans>
+										</span>
+										<span className="sm:hidden">
+											<Trans>Add</Trans>
+										</span>
+									</Button>
+								</div>
 							</CardHeader>
 							<CardContent>
-								{/* Desktop: Table view */}
+								{/* Desktop: Table or Calendar view */}
 								<div className="hidden md:block">
-									<PaymentsTable onEditPayment={handleEditPayment} />
+									{viewMode === 'table' ? (
+										<PaymentsTable onEditPayment={handleEditPayment} />
+									) : (
+										<PaymentsCalendar onEditPayment={handleEditPayment} />
+									)}
 								</div>
-								{/* Mobile: Card view */}
+								{/* Mobile: Card view only */}
 								<div className="md:hidden">
 									<PaymentsMobileCards onEditPayment={handleEditPayment} sortBy="date" />
 								</div>
@@ -228,21 +254,6 @@ export default memo(() => {
 						</Card>
 					</TabsContent>
 
-					<TabsContent value="calendar">
-						<Card>
-							<CardHeader>
-								<CardTitle className="text-lg">
-									<Trans>Payment Calendar</Trans>
-								</CardTitle>
-								<CardDescription>
-									<Trans>View all scheduled payments on a calendar</Trans>
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<PaymentsCalendar onEditPayment={handleEditPayment} />
-							</CardContent>
-						</Card>
-					</TabsContent>
 
 					<TabsContent value="providers">
 						<Card>

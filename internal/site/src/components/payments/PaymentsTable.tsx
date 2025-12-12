@@ -4,8 +4,19 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { CheckIcon, ExternalLinkIcon, Loader2Icon, MoreHorizontalIcon, PencilIcon, TrashIcon } from "lucide-react"
+import {
+	ArrowDownIcon,
+	ArrowUpDownIcon,
+	ArrowUpIcon,
+	CheckIcon,
+	ExternalLinkIcon,
+	Loader2Icon,
+	MoreHorizontalIcon,
+	PencilIcon,
+	TrashIcon,
+} from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from "@/lib/payments/paymentsStore"
 import { $systems } from "@/lib/stores"
@@ -27,7 +38,8 @@ interface PaymentsTableProps {
 	onEditPayment: (payment: PaymentEntry) => void
 }
 
-type SortKey = "date" | "price"
+type SortKey = "server" | "provider" | "amount" | "date" | "days"
+type SortOrder = "asc" | "desc"
 
 export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const { t } = useLingui()
@@ -37,19 +49,10 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const systems = useStore($systems)
 
 	const [sortBy, setSortBy] = useState<SortKey>("date")
+	const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
+	const [serverFilter, setServerFilter] = useState("")
+	const [providerFilter, setProviderFilter] = useState("")
 	const [loadingId, setLoadingId] = useState<string | null>(null)
-
-	const sortedPayments = useMemo(() => {
-		const arr = [...payments]
-		if (sortBy === "date") {
-			arr.sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime())
-		} else if (sortBy === "price") {
-			arr.sort(
-				(a, b) => monthlyRub(a.amount, a.currency, a.period, rates) - monthlyRub(b.amount, b.currency, b.period, rates)
-			)
-		}
-		return arr
-	}, [payments, sortBy, rates])
 
 	const getServerName = (serverId: string) => {
 		const system = systems.find((s) => s.id === serverId)
@@ -72,6 +75,71 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 		if (payment.providerUrlOverride) return payment.providerUrlOverride
 		const provider = providers.find((p) => p.id === payment.providerId)
 		return provider?.url || ""
+	}
+
+	const filteredAndSortedPayments = useMemo(() => {
+		let arr = [...payments]
+
+		// Apply filters
+		if (serverFilter) {
+			const filter = serverFilter.toLowerCase()
+			arr = arr.filter((p) => {
+				const serverName = getServerName(p.serverId).toLowerCase()
+				return serverName.includes(filter)
+			})
+		}
+		if (providerFilter) {
+			const filter = providerFilter.toLowerCase()
+			arr = arr.filter((p) => {
+				const provider = getProvider(p.providerId)
+				const providerName = (provider?.name || p.providerId).toLowerCase()
+				return providerName.includes(filter)
+			})
+		}
+
+		// Apply sorting
+		arr.sort((a, b) => {
+			let cmp = 0
+			switch (sortBy) {
+				case "server":
+					cmp = getServerName(a.serverId).localeCompare(getServerName(b.serverId))
+					break
+				case "provider": {
+					const provA = getProvider(a.providerId)?.name || a.providerId
+					const provB = getProvider(b.providerId)?.name || b.providerId
+					cmp = provA.localeCompare(provB)
+					break
+				}
+				case "amount":
+					cmp = monthlyRub(a.amount, a.currency, a.period, rates) - monthlyRub(b.amount, b.currency, b.period, rates)
+					break
+				case "date":
+					cmp = new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime()
+					break
+				case "days":
+					cmp = daysUntilPayment(a.nextPayment) - daysUntilPayment(b.nextPayment)
+					break
+			}
+			return sortOrder === "asc" ? cmp : -cmp
+		})
+
+		return arr
+	}, [payments, sortBy, sortOrder, serverFilter, providerFilter, rates, systems, providers])
+
+	const handleSort = (key: SortKey) => {
+		if (sortBy === key) {
+			setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+		} else {
+			setSortBy(key)
+			setSortOrder("asc")
+		}
+	}
+
+	const SortIcon = ({ column }: { column: SortKey }) => {
+		if (sortBy !== column) {
+			return <ArrowUpDownIcon className="h-4 w-4 opacity-50" />
+		}
+		return sortOrder === "asc" ? <ArrowUpIcon className="h-4 w-4" /> : <ArrowDownIcon className="h-4 w-4" />
 	}
 
 	const handleDelete = async (id: string) => {
@@ -113,11 +181,11 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const getStatusClasses = (status: "ok" | "warn" | "crit") => {
 		switch (status) {
 			case "crit":
-				return "bg-red-500/10 border"
+				return "bg-red-500/10"
 			case "warn":
-				return "bg-yellow-500/10 border"
+				return "bg-yellow-500/10"
 			default:
-				return "bg-green-500/10 border"
+				return "bg-green-500/10"
 		}
 	}
 
@@ -131,55 +199,85 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center gap-2">
-				<span className="text-sm text-muted-foreground">
-					<Trans>Sort by</Trans>:
-				</span>
-				<div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
-					<Button
-						size="sm"
-						variant={sortBy === "date" ? "default" : "ghost"}
-						onClick={() => setSortBy("date")}
-						className="h-7 px-3"
-					>
-						<Trans>Date</Trans>
-					</Button>
-					<Button
-						size="sm"
-						variant={sortBy === "price" ? "default" : "ghost"}
-						onClick={() => setSortBy("price")}
-						className="h-7 px-3"
-					>
-						<Trans>Price</Trans>
-					</Button>
-				</div>
-			</div>
-
 			<Table>
 				<TableHeader>
 					<TableRow>
 						<TableHead>
-							<Trans>Server</Trans>
+							<div className="space-y-1">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="h-7 px-2 -ml-2 font-medium"
+									onClick={() => handleSort("server")}
+								>
+									<Trans>Server</Trans>
+									<SortIcon column="server" />
+								</Button>
+								<Input
+									placeholder={t`Search...`}
+									value={serverFilter}
+									onChange={(e) => setServerFilter(e.target.value)}
+									className="h-7 text-xs"
+								/>
+							</div>
 						</TableHead>
 						<TableHead>
-							<Trans>Provider</Trans>
+							<div className="space-y-1">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="h-7 px-2 -ml-2 font-medium"
+									onClick={() => handleSort("provider")}
+								>
+									<Trans>Provider</Trans>
+									<SortIcon column="provider" />
+								</Button>
+								<Input
+									placeholder={t`Search...`}
+									value={providerFilter}
+									onChange={(e) => setProviderFilter(e.target.value)}
+									className="h-7 text-xs"
+								/>
+							</div>
 						</TableHead>
 						<TableHead>
-							<Trans>Amount</Trans>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 px-2 -ml-2 font-medium"
+								onClick={() => handleSort("amount")}
+							>
+								<Trans>Amount</Trans>
+								<SortIcon column="amount" />
+							</Button>
 						</TableHead>
 						<TableHead>
-							<Trans>Due Date</Trans>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 px-2 -ml-2 font-medium"
+								onClick={() => handleSort("date")}
+							>
+								<Trans>Due Date</Trans>
+								<SortIcon column="date" />
+							</Button>
 						</TableHead>
 						<TableHead>
-							<Trans>Days Left</Trans>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-7 px-2 -ml-2 font-medium"
+								onClick={() => handleSort("days")}
+							>
+								<Trans>Days Left</Trans>
+								<SortIcon column="days" />
+							</Button>
 						</TableHead>
-						<TableHead className="w-[100px]">
-							<Trans>Actions</Trans>
-						</TableHead>
+						<TableHead className="w-[50px]" />
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{sortedPayments.map((payment) => {
+					{filteredAndSortedPayments.map((payment) => {
 						const days = daysUntilPayment(payment.nextPayment)
 						const status = getPaymentStatus(days)
 						const paymentUrl = getPaymentUrl(payment)

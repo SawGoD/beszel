@@ -76,7 +76,6 @@ msgid "5 min"
 msgstr "5 мин"
 
 #. Table column
-#: src/components/payments/PaymentsTable.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -319,8 +318,8 @@ msgid "Cache / Buffers"
 msgstr "Кэш / Буферы"
 
 #: src/components/routes/payments.tsx
-msgid "Calendar"
-msgstr "Календарь"
+#~ msgid "Calendar"
+#~ msgstr "Календарь"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -572,8 +571,8 @@ msgid "Daily"
 msgstr "Ежедневно"
 
 #: src/components/payments/PaymentsTable.tsx
-msgid "Date"
-msgstr "Дата"
+#~ msgid "Date"
+#~ msgstr "Дата"
 
 #: src/components/payments/PaymentsStats.tsx
 msgid "days"
@@ -1331,8 +1330,8 @@ msgid "Payment added successfully"
 msgstr ""
 
 #: src/components/routes/payments.tsx
-msgid "Payment Calendar"
-msgstr "Календарь платежей"
+#~ msgid "Payment Calendar"
+#~ msgstr "Календарь платежей"
 
 #: src/components/payments/PaymentsCalendar.tsx
 #: src/components/payments/PaymentsMobileCards.tsx
@@ -1433,8 +1432,8 @@ msgid "Preferred Language"
 msgstr "Предпочтительный язык"
 
 #: src/components/payments/PaymentsTable.tsx
-msgid "Price"
-msgstr "Цена"
+#~ msgid "Price"
+#~ msgstr "Цена"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
@@ -1592,6 +1591,11 @@ msgstr "Поиск"
 msgid "Search for systems or settings..."
 msgstr "Поиск систем или настроек..."
 
+#: src/components/payments/PaymentsTable.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Search..."
+msgstr ""
+
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
 msgstr "Смотрите <0>настройки уведомлений</0>, чтобы настроить, как вы получаете оповещения."
@@ -1661,8 +1665,8 @@ msgid "SMTP settings"
 msgstr "Настройки SMTP"
 
 #: src/components/payments/PaymentsTable.tsx
-msgid "Sort by"
-msgstr "Сортировать по"
+#~ msgid "Sort by"
+#~ msgstr "Сортировать по"
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
@@ -2004,8 +2008,8 @@ msgid "View"
 msgstr "Вид"
 
 #: src/components/routes/payments.tsx
-msgid "View all scheduled payments on a calendar"
-msgstr "Просмотр всех запланированных платежей в календаре"
+#~ msgid "View all scheduled payments on a calendar"
+#~ msgstr "Просмотр всех запланированных платежей в календаре"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx

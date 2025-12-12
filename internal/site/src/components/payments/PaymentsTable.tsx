@@ -38,7 +38,7 @@ interface PaymentsTableProps {
 	onEditPayment: (payment: PaymentEntry) => void
 }
 
-type SortKey = "server" | "provider" | "amount" | "date" | "days"
+type SortKey = "amount" | "date" | "days"
 type SortOrder = "asc" | "desc"
 
 export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
@@ -101,15 +101,6 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 		arr.sort((a, b) => {
 			let cmp = 0
 			switch (sortBy) {
-				case "server":
-					cmp = getServerName(a.serverId).localeCompare(getServerName(b.serverId))
-					break
-				case "provider": {
-					const provA = getProvider(a.providerId)?.name || a.providerId
-					const provB = getProvider(b.providerId)?.name || b.providerId
-					cmp = provA.localeCompare(provB)
-					break
-				}
 				case "amount":
 					cmp = monthlyRub(a.amount, a.currency, a.period, rates) - monthlyRub(b.amount, b.currency, b.period, rates)
 					break
@@ -203,48 +194,26 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 				<TableHeader>
 					<TableRow>
 						<TableHead>
-							<div className="space-y-1">
-								<Button
-									variant="ghost"
-									size="sm"
-									className="h-7 px-2 -ml-2 font-medium"
-									onClick={() => handleSort("server")}
-								>
-									<Trans>Server</Trans>
-									<SortIcon column="server" />
-								</Button>
-								<Input
-									placeholder={t`Search...`}
-									value={serverFilter}
-									onChange={(e) => setServerFilter(e.target.value)}
-									className="h-7 text-xs"
-								/>
-							</div>
+							<Input
+								placeholder={t`Server`}
+								value={serverFilter}
+								onChange={(e) => setServerFilter(e.target.value)}
+								className="h-8 text-xs min-w-[120px]"
+							/>
 						</TableHead>
 						<TableHead>
-							<div className="space-y-1">
-								<Button
-									variant="ghost"
-									size="sm"
-									className="h-7 px-2 -ml-2 font-medium"
-									onClick={() => handleSort("provider")}
-								>
-									<Trans>Provider</Trans>
-									<SortIcon column="provider" />
-								</Button>
-								<Input
-									placeholder={t`Search...`}
-									value={providerFilter}
-									onChange={(e) => setProviderFilter(e.target.value)}
-									className="h-7 text-xs"
-								/>
-							</div>
+							<Input
+								placeholder={t`Provider`}
+								value={providerFilter}
+								onChange={(e) => setProviderFilter(e.target.value)}
+								className="h-8 text-xs min-w-[120px]"
+							/>
 						</TableHead>
 						<TableHead>
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 px-2 -ml-2 font-medium"
+								className="h-8 px-2 -ml-2 font-medium"
 								onClick={() => handleSort("amount")}
 							>
 								<Trans>Amount</Trans>
@@ -255,7 +224,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 px-2 -ml-2 font-medium"
+								className="h-8 px-2 -ml-2 font-medium"
 								onClick={() => handleSort("date")}
 							>
 								<Trans>Due Date</Trans>
@@ -266,7 +235,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 px-2 -ml-2 font-medium"
+								className="h-8 px-2 -ml-2 font-medium"
 								onClick={() => handleSort("days")}
 							>
 								<Trans>Days Left</Trans>

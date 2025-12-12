@@ -1,5 +1,7 @@
 import { useStore } from '@nanostores/react'
+import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { toast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -8,7 +10,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ExternalLinkIcon, MoreHorizontalIcon, PencilIcon, TrashIcon } from 'lucide-react'
+import { ExternalLinkIcon, Loader2Icon, MoreHorizontalIcon, PencilIcon, TrashIcon } from 'lucide-react'
 import { $providers, $payments, deleteProvider } from '@/lib/payments/paymentsStore'
 import { extractDomain, getFaviconUrl } from '@/lib/payments/currency'
 import type { Provider } from '@/lib/payments/paymentsTypes'
@@ -22,12 +24,13 @@ export function ProvidersList({ onEditProvider }: ProvidersListProps) {
 	const { t } = useLingui()
 	const providers = useStore($providers)
 	const payments = useStore($payments)
+	const [loadingId, setLoadingId] = useState<string | null>(null)
 
 	const getPaymentCount = (providerId: string) => {
 		return payments.filter((p) => p.providerId === providerId).length
 	}
 
-	const handleDelete = (provider: Provider) => {
+	const handleDelete = async (provider: Provider) => {
 		const count = getPaymentCount(provider.id)
 		const message =
 			count > 0
@@ -35,7 +38,20 @@ export function ProvidersList({ onEditProvider }: ProvidersListProps) {
 				: t`Are you sure you want to delete this provider?`
 
 		if (confirm(message)) {
-			deleteProvider(provider.id)
+			setLoadingId(provider.id)
+			try {
+				await deleteProvider(provider.id)
+				toast({ title: t`Provider deleted` })
+			} catch (error) {
+				console.error('Failed to delete provider:', error)
+				toast({
+					title: t`Failed to delete provider`,
+					description: String(error),
+					variant: 'destructive',
+				})
+			} finally {
+				setLoadingId(null)
+			}
 		}
 	}
 
@@ -107,8 +123,12 @@ export function ProvidersList({ onEditProvider }: ProvidersListProps) {
 
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon" className="h-8 w-8">
-									<MoreHorizontalIcon className="h-4 w-4" />
+								<Button variant="ghost" size="icon" className="h-8 w-8" disabled={loadingId === provider.id}>
+									{loadingId === provider.id ? (
+										<Loader2Icon className="h-4 w-4 animate-spin" />
+									) : (
+										<MoreHorizontalIcon className="h-4 w-4" />
+									)}
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
@@ -120,11 +140,11 @@ export function ProvidersList({ onEditProvider }: ProvidersListProps) {
 										</a>
 									</DropdownMenuItem>
 								)}
-								<DropdownMenuItem onClick={() => onEditProvider(provider)}>
+								<DropdownMenuItem onClick={() => onEditProvider(provider)} disabled={loadingId === provider.id}>
 									<PencilIcon className="me-2 h-4 w-4 text-yellow-500" />
 									<Trans>Edit</Trans>
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => handleDelete(provider)} className="text-destructive">
+								<DropdownMenuItem onClick={() => handleDelete(provider)} className="text-destructive" disabled={loadingId === provider.id}>
 									<TrashIcon className="me-2 h-4 w-4" />
 									<Trans>Delete</Trans>
 								</DropdownMenuItem>

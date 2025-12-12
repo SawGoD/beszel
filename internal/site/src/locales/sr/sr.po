@@ -802,6 +802,24 @@ msgstr "Неуспели атрибути:"
 msgid "Failed to authenticate"
 msgstr "Неуспела аутентификација"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to delete payment"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Failed to delete provider"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Failed to save payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Failed to save provider"
+msgstr ""
+
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -815,6 +833,12 @@ msgstr "Неуспело слање тест обавештења"
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Failed to update alert"
 msgstr "Неуспело ажурирање упозорења"
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to update payment"
+msgstr ""
 
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
@@ -926,11 +950,19 @@ msgid "Import"
 msgstr ""
 
 #: src/components/routes/payments.tsx
+msgid "Import completed with errors:"
+msgstr ""
+
+#: src/components/routes/payments.tsx
 msgid "Import failed. Please check the file format."
 msgstr ""
 
 #: src/components/routes/payments.tsx
 msgid "Import successful!"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Importing..."
 msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
@@ -995,6 +1027,10 @@ msgstr "Просечно опт."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Load state"
 msgstr "Стање учитавања"
+
+#: src/components/routes/payments.tsx
+msgid "Loading payments..."
+msgstr ""
 
 #: src/components/routes/payments.tsx
 msgid "Loading rates..."
@@ -1285,12 +1321,32 @@ msgstr "Паузирано"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "Паузирано ({pausedSystemsLength})"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment added successfully"
+msgstr ""
+
 #: src/components/routes/payments.tsx
 msgid "Payment Calendar"
 msgstr ""
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment deleted"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment marked as paid"
+msgstr ""
+
 #: src/components/routes/payments.tsx
 msgid "Payment Schedule"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment updated successfully"
 msgstr ""
 
 #: src/components/payments/PaymentForm.tsx
@@ -1385,7 +1441,19 @@ msgid "Provider"
 msgstr ""
 
 #: src/components/payments/ProviderForm.tsx
+msgid "Provider added successfully"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Provider deleted"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
 msgid "Provider Name"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider updated successfully"
 msgstr ""
 
 #: src/components/routes/payments.tsx

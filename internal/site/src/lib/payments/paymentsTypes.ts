@@ -145,3 +145,30 @@ export const COUNTRY_NAMES: Record<CountryCode, string> = {
 	CA: 'Canada',
 	BR: 'Brazil',
 }
+
+// ============= PocketBase Record Types =============
+
+import type { RecordModel } from 'pocketbase'
+
+/** PocketBase Provider record */
+export interface ProviderRecord extends RecordModel {
+	user: string
+	name: string
+	url: string
+	currencyDefault: Currency | ''
+	notes: string
+}
+
+/** PocketBase Payment record */
+export interface PaymentRecord extends RecordModel {
+	user: string
+	system: string
+	provider: string
+	period: PaymentPeriod
+	nextPayment: string
+	amount: number
+	currency: Currency
+	country: CountryCode | ''
+	providerUrlOverride: string
+	notes: string
+}

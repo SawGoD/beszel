@@ -1,6 +1,8 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { Loader2Icon } from 'lucide-react'
+import { toast } from '@/components/ui/use-toast'
 import {
 	Dialog,
 	DialogContent,
@@ -54,6 +56,7 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 	const [country, setCountry] = useState<CountryCode | undefined>(undefined)
 	const [providerUrlOverride, setProviderUrlOverride] = useState('')
 	const [notes, setNotes] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	useEffect(() => {
 		if (editPayment) {
@@ -90,8 +93,9 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 		}
 	}, [providerId, providers, editPayment])
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
+		setIsSubmitting(true)
 
 		const paymentData = {
 			serverId,
@@ -105,13 +109,25 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 			notes: notes || undefined,
 		}
 
-		if (editPayment) {
-			updatePayment(editPayment.id, paymentData)
-		} else {
-			addPayment(paymentData)
+		try {
+			if (editPayment) {
+				await updatePayment(editPayment.id, paymentData)
+				toast({ title: t`Payment updated successfully` })
+			} else {
+				await addPayment(paymentData)
+				toast({ title: t`Payment added successfully` })
+			}
+			onOpenChange(false)
+		} catch (error) {
+			console.error('Failed to save payment:', error)
+			toast({
+				title: t`Failed to save payment`,
+				description: String(error),
+				variant: 'destructive',
+			})
+		} finally {
+			setIsSubmitting(false)
 		}
-
-		onOpenChange(false)
 	}
 
 	const isValid = serverId && providerId && amount && parseFloat(amount) > 0 && nextPayment
@@ -315,10 +331,11 @@ export function PaymentForm({ open, onOpenChange, editPayment }: PaymentFormProp
 					</div>
 
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+						<Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
 							<Trans>Cancel</Trans>
 						</Button>
-						<Button type="submit" disabled={!isValid}>
+						<Button type="submit" disabled={!isValid || isSubmitting}>
+							{isSubmitting && <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />}
 							{editPayment ? <Trans>Save Changes</Trans> : <Trans>Add Payment</Trans>}
 						</Button>
 					</DialogFooter>

@@ -14,9 +14,11 @@ import {
 	ChevronLeftIcon,
 	ChevronRightIcon,
 	ExternalLinkIcon,
+	Loader2Icon,
 	PencilIcon,
 	TrashIcon,
 } from 'lucide-react'
+import { toast } from '@/components/ui/use-toast'
 import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from '@/lib/payments/paymentsStore'
 import { $systems } from '@/lib/stores'
 import {
@@ -50,6 +52,7 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 	const today = new Date()
 	const [currentMonth, setCurrentMonth] = useState(today.getMonth())
 	const [currentYear, setCurrentYear] = useState(today.getFullYear())
+	const [loadingId, setLoadingId] = useState<string | null>(null)
 
 	// Group payments by date string (YYYY-MM-DD)
 	const paymentsByDate = useMemo(() => {
@@ -143,13 +146,39 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 		return provider?.url || ''
 	}
 
-	const handleMarkPaid = (id: string) => {
-		markPaymentPaid(id)
+	const handleMarkPaid = async (id: string) => {
+		setLoadingId(id)
+		try {
+			await markPaymentPaid(id)
+			toast({ title: t`Payment marked as paid` })
+		} catch (error) {
+			console.error('Failed to mark payment as paid:', error)
+			toast({
+				title: t`Failed to update payment`,
+				description: String(error),
+				variant: 'destructive',
+			})
+		} finally {
+			setLoadingId(null)
+		}
 	}
 
-	const handleDelete = (id: string) => {
+	const handleDelete = async (id: string) => {
 		if (confirm(t`Are you sure you want to delete this payment?`)) {
-			deletePayment(id)
+			setLoadingId(id)
+			try {
+				await deletePayment(id)
+				toast({ title: t`Payment deleted` })
+			} catch (error) {
+				console.error('Failed to delete payment:', error)
+				toast({
+					title: t`Failed to delete payment`,
+					description: String(error),
+					variant: 'destructive',
+				})
+			} finally {
+				setLoadingId(null)
+			}
 		}
 	}
 
@@ -276,6 +305,7 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="start" className="min-w-[180px]">
 													<div className="px-2 py-1.5 text-sm font-medium">
+														{loadingId === payment.id && <Loader2Icon className="h-3 w-3 animate-spin inline mr-1" />}
 														{getServerName(payment.serverId)}
 														{payment.notes && (
 															<span className="text-muted-foreground font-normal ml-1">
@@ -286,7 +316,7 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 													<div className="px-2 pb-1.5 text-xs text-muted-foreground border-b mb-1">
 														{provider?.name} • {formatRub(payment.amount)} {CURRENCY_SYMBOLS[payment.currency]}
 													</div>
-													<DropdownMenuItem onClick={() => handleMarkPaid(payment.id)}>
+													<DropdownMenuItem onClick={() => handleMarkPaid(payment.id)} disabled={loadingId === payment.id}>
 														<CheckIcon className="me-2 h-4 w-4 text-green-500" />
 														<Trans>Mark Paid</Trans>
 													</DropdownMenuItem>
@@ -298,13 +328,14 @@ export function PaymentsCalendar({ onEditPayment }: PaymentsCalendarProps) {
 															</a>
 														</DropdownMenuItem>
 													)}
-													<DropdownMenuItem onClick={() => onEditPayment(payment)}>
+													<DropdownMenuItem onClick={() => onEditPayment(payment)} disabled={loadingId === payment.id}>
 														<PencilIcon className="me-2 h-4 w-4 text-yellow-500" />
 														<Trans>Edit</Trans>
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														onClick={() => handleDelete(payment.id)}
 														className="text-destructive"
+														disabled={loadingId === payment.id}
 													>
 														<TrashIcon className="me-2 h-4 w-4" />
 														<Trans>Delete</Trans>

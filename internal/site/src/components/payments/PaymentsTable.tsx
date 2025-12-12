@@ -20,10 +20,12 @@ import {
 import {
 	CheckIcon,
 	ExternalLinkIcon,
+	Loader2Icon,
 	MoreHorizontalIcon,
 	PencilIcon,
 	TrashIcon,
 } from 'lucide-react'
+import { toast } from '@/components/ui/use-toast'
 import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from '@/lib/payments/paymentsStore'
 import { $systems } from '@/lib/stores'
 import {
@@ -56,6 +58,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const systems = useStore($systems)
 
 	const [sortBy, setSortBy] = useState<SortKey>('date')
+	const [loadingId, setLoadingId] = useState<string | null>(null)
 
 	const sortedPayments = useMemo(() => {
 		const arr = [...payments]
@@ -94,14 +97,40 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 		return provider?.url || ''
 	}
 
-	const handleDelete = (id: string) => {
+	const handleDelete = async (id: string) => {
 		if (confirm(t`Are you sure you want to delete this payment?`)) {
-			deletePayment(id)
+			setLoadingId(id)
+			try {
+				await deletePayment(id)
+				toast({ title: t`Payment deleted` })
+			} catch (error) {
+				console.error('Failed to delete payment:', error)
+				toast({
+					title: t`Failed to delete payment`,
+					description: String(error),
+					variant: 'destructive',
+				})
+			} finally {
+				setLoadingId(null)
+			}
 		}
 	}
 
-	const handleMarkPaid = (id: string) => {
-		markPaymentPaid(id)
+	const handleMarkPaid = async (id: string) => {
+		setLoadingId(id)
+		try {
+			await markPaymentPaid(id)
+			toast({ title: t`Payment marked as paid` })
+		} catch (error) {
+			console.error('Failed to mark payment as paid:', error)
+			toast({
+				title: t`Failed to update payment`,
+				description: String(error),
+				variant: 'destructive',
+			})
+		} finally {
+			setLoadingId(null)
+		}
 	}
 
 	const getStatusClasses = (status: 'ok' | 'warn' | 'crit') => {
@@ -242,12 +271,16 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 								<TableCell>
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" size="icon" className="h-8 w-8">
-												<MoreHorizontalIcon className="h-4 w-4" />
+											<Button variant="ghost" size="icon" className="h-8 w-8" disabled={loadingId === payment.id}>
+												{loadingId === payment.id ? (
+													<Loader2Icon className="h-4 w-4 animate-spin" />
+												) : (
+													<MoreHorizontalIcon className="h-4 w-4" />
+												)}
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
-											<DropdownMenuItem onClick={() => handleMarkPaid(payment.id)}>
+											<DropdownMenuItem onClick={() => handleMarkPaid(payment.id)} disabled={loadingId === payment.id}>
 												<CheckIcon className="me-2 h-4 w-4 text-green-500" />
 												<Trans>Mark Paid</Trans>
 											</DropdownMenuItem>
@@ -259,13 +292,14 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 													</a>
 												</DropdownMenuItem>
 											)}
-											<DropdownMenuItem onClick={() => onEditPayment(payment)}>
+											<DropdownMenuItem onClick={() => onEditPayment(payment)} disabled={loadingId === payment.id}>
 												<PencilIcon className="me-2 h-4 w-4 text-yellow-500" />
 												<Trans>Edit</Trans>
 											</DropdownMenuItem>
 											<DropdownMenuItem
 												onClick={() => handleDelete(payment.id)}
 												className="text-destructive"
+												disabled={loadingId === payment.id}
 											>
 												<TrashIcon className="me-2 h-4 w-4" />
 												<Trans>Delete</Trans>

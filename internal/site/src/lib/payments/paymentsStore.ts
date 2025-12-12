@@ -1,122 +1,268 @@
 import { atom } from 'nanostores'
-import type { PaymentsState, Provider, PaymentEntry, ExchangeRates } from './paymentsTypes'
+import { pb } from '@/lib/api'
+import type {
+	Provider,
+	PaymentEntry,
+	ExchangeRates,
+	ProviderRecord,
+	PaymentRecord,
+	CountryCode,
+} from './paymentsTypes'
 import { FALLBACK_RATES } from './paymentsTypes'
 
-const LS_KEY = 'beszel-payments-v1'
-
-/** Default empty state */
-const defaultState: PaymentsState = {
-	providers: [],
-	payments: [],
-	rates: FALLBACK_RATES,
-}
-
-/** Load state from localStorage */
-function loadState(): PaymentsState {
-	try {
-		const raw = localStorage.getItem(LS_KEY)
-		if (raw) {
-			const parsed = JSON.parse(raw)
-			return {
-				...defaultState,
-				...parsed,
-				rates: parsed.rates || defaultState.rates,
-			}
-		}
-	} catch (e) {
-		console.warn('Failed to load payments state from localStorage:', e)
-	}
-	return defaultState
-}
-
-/** Save state to localStorage */
-function saveState(state: PaymentsState) {
-	try {
-		localStorage.setItem(LS_KEY, JSON.stringify(state))
-	} catch (e) {
-		console.warn('Failed to save payments state to localStorage:', e)
-	}
-}
-
-// Initialize stores with loaded state
-const initialState = loadState()
+// ============= STORES =============
 
 /** Providers store */
-export const $providers = atom<Provider[]>(initialState.providers)
+export const $providers = atom<Provider[]>([])
 
 /** Payments store */
-export const $payments = atom<PaymentEntry[]>(initialState.payments)
+export const $payments = atom<PaymentEntry[]>([])
 
-/** Exchange rates store */
-export const $rates = atom<ExchangeRates>(initialState.rates)
+/** Exchange rates store (remains in-memory, not persisted to PB) */
+export const $rates = atom<ExchangeRates>(FALLBACK_RATES)
 
 /** Loading state for rates */
 export const $ratesLoading = atom<boolean>(false)
 
-/** Generate unique ID */
-function generateId(): string {
-	return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+/** Loading state for initial data fetch */
+export const $paymentsLoading = atom<boolean>(true)
+
+/** Error state */
+export const $paymentsError = atom<string | null>(null)
+
+// ============= PROVIDER MANAGER =============
+
+export const providerManager = (() => {
+	let unsub: (() => void) | undefined
+
+	/** Convert PB record to Provider type */
+	function toProvider(record: ProviderRecord): Provider {
+		return {
+			id: record.id,
+			name: record.name,
+			url: record.url,
+			currencyDefault: record.currencyDefault || undefined,
+			notes: record.notes || undefined,
+		}
+	}
+
+	/** Fetch all providers */
+	async function fetchAll(): Promise<Provider[]> {
+		const records = await pb.collection<ProviderRecord>('providers').getFullList({ sort: '+name' })
+		return records.map(toProvider)
+	}
+
+	/** Add/update providers in store */
+	function add(providers: Provider[]) {
+		const current = $providers.get()
+		const map = new Map(current.map((p) => [p.id, p]))
+		for (const provider of providers) {
+			map.set(provider.id, provider)
+		}
+		$providers.set(Array.from(map.values()))
+	}
+
+	/** Remove providers from store */
+	function remove(ids: string[]) {
+		const idSet = new Set(ids)
+		$providers.set($providers.get().filter((p) => !idSet.has(p.id)))
+	}
+
+	/** Subscribe to realtime updates */
+	async function subscribe() {
+		unsub = await pb.collection<ProviderRecord>('providers').subscribe('*', ({ action, record }) => {
+			if (action === 'create' || action === 'update') {
+				add([toProvider(record)])
+			} else if (action === 'delete') {
+				remove([record.id])
+			}
+		})
+	}
+
+	/** Unsubscribe from realtime */
+	function unsubscribe() {
+		unsub?.()
+		unsub = undefined
+	}
+
+	/** Refresh all data from server */
+	async function refresh() {
+		const providers = await fetchAll()
+		$providers.set(providers)
+	}
+
+	return { add, remove, subscribe, unsubscribe, refresh, toProvider }
+})()
+
+// ============= PAYMENT MANAGER =============
+
+export const paymentManager = (() => {
+	let unsub: (() => void) | undefined
+
+	/** Convert PB record to PaymentEntry type */
+	function toPayment(record: PaymentRecord): PaymentEntry {
+		return {
+			id: record.id,
+			serverId: record.system,
+			providerId: record.provider,
+			period: record.period,
+			nextPayment: record.nextPayment.split(' ')[0], // PB date "2024-01-01 00:00:00" -> "2024-01-01"
+			amount: record.amount,
+			currency: record.currency,
+			country: (record.country as CountryCode) || undefined,
+			providerUrlOverride: record.providerUrlOverride || undefined,
+			notes: record.notes || undefined,
+		}
+	}
+
+	/** Fetch all payments */
+	async function fetchAll(): Promise<PaymentEntry[]> {
+		const records = await pb.collection<PaymentRecord>('payments').getFullList()
+		return records.map(toPayment)
+	}
+
+	/** Add/update payments in store */
+	function add(payments: PaymentEntry[]) {
+		const current = $payments.get()
+		const map = new Map(current.map((p) => [p.id, p]))
+		for (const payment of payments) {
+			map.set(payment.id, payment)
+		}
+		$payments.set(Array.from(map.values()))
+	}
+
+	/** Remove payments from store */
+	function remove(ids: string[]) {
+		const idSet = new Set(ids)
+		$payments.set($payments.get().filter((p) => !idSet.has(p.id)))
+	}
+
+	/** Subscribe to realtime updates */
+	async function subscribe() {
+		unsub = await pb.collection<PaymentRecord>('payments').subscribe('*', ({ action, record }) => {
+			if (action === 'create' || action === 'update') {
+				add([toPayment(record)])
+			} else if (action === 'delete') {
+				remove([record.id])
+			}
+		})
+	}
+
+	/** Unsubscribe from realtime */
+	function unsubscribe() {
+		unsub?.()
+		unsub = undefined
+	}
+
+	/** Refresh all data from server */
+	async function refresh() {
+		const payments = await fetchAll()
+		$payments.set(payments)
+	}
+
+	return { add, remove, subscribe, unsubscribe, refresh, toPayment }
+})()
+
+// ============= INITIALIZATION =============
+
+/** Initialize payments module - call on app/page start */
+export async function initPayments() {
+	$paymentsLoading.set(true)
+	$paymentsError.set(null)
+
+	try {
+		await Promise.all([providerManager.refresh(), paymentManager.refresh()])
+		await Promise.all([providerManager.subscribe(), paymentManager.subscribe()])
+	} catch (e) {
+		console.error('Failed to init payments:', e)
+		$paymentsError.set('Failed to load payments data')
+	} finally {
+		$paymentsLoading.set(false)
+	}
 }
 
-/** Persist current state */
-function persist() {
-	saveState({
-		providers: $providers.get(),
-		payments: $payments.get(),
-		rates: $rates.get(),
+/** Cleanup subscriptions - call on unmount/logout */
+export function cleanupPayments() {
+	providerManager.unsubscribe()
+	paymentManager.unsubscribe()
+	$providers.set([])
+	$payments.set([])
+	$paymentsLoading.set(true)
+	$paymentsError.set(null)
+}
+
+// ============= PROVIDER CRUD (async) =============
+
+/** Add a new provider */
+export async function addProvider(provider: Omit<Provider, 'id'>): Promise<Provider> {
+	const record = await pb.collection<ProviderRecord>('providers').create({
+		user: pb.authStore.record?.id,
+		name: provider.name,
+		url: provider.url,
+		currencyDefault: provider.currencyDefault || '',
+		notes: provider.notes || '',
 	})
+	return providerManager.toProvider(record)
 }
 
-// Provider actions
-export function addProvider(provider: Omit<Provider, 'id'>): Provider {
-	const newProvider: Provider = {
-		...provider,
-		id: generateId(),
-	}
-	$providers.set([...$providers.get(), newProvider])
-	persist()
-	return newProvider
+/** Update an existing provider */
+export async function updateProvider(id: string, updates: Partial<Omit<Provider, 'id'>>) {
+	const pbUpdates: Record<string, unknown> = {}
+	if (updates.name !== undefined) pbUpdates.name = updates.name
+	if (updates.url !== undefined) pbUpdates.url = updates.url
+	if (updates.currencyDefault !== undefined) pbUpdates.currencyDefault = updates.currencyDefault || ''
+	if (updates.notes !== undefined) pbUpdates.notes = updates.notes || ''
+
+	await pb.collection('providers').update(id, pbUpdates)
 }
 
-export function updateProvider(id: string, updates: Partial<Omit<Provider, 'id'>>) {
-	$providers.set(
-		$providers.get().map((p) => (p.id === id ? { ...p, ...updates } : p))
-	)
-	persist()
+/** Delete a provider (cascade deletes related payments) */
+export async function deleteProvider(id: string) {
+	await pb.collection('providers').delete(id)
 }
 
-export function deleteProvider(id: string) {
-	$providers.set($providers.get().filter((p) => p.id !== id))
-	// Also delete payments linked to this provider
-	$payments.set($payments.get().filter((p) => p.providerId !== id))
-	persist()
+// ============= PAYMENT CRUD (async) =============
+
+/** Add a new payment */
+export async function addPayment(payment: Omit<PaymentEntry, 'id'>): Promise<PaymentEntry> {
+	const record = await pb.collection<PaymentRecord>('payments').create({
+		user: pb.authStore.record?.id,
+		system: payment.serverId,
+		provider: payment.providerId,
+		period: payment.period,
+		nextPayment: payment.nextPayment,
+		amount: payment.amount,
+		currency: payment.currency,
+		country: payment.country || '',
+		providerUrlOverride: payment.providerUrlOverride || '',
+		notes: payment.notes || '',
+	})
+	return paymentManager.toPayment(record)
 }
 
-// Payment actions
-export function addPayment(payment: Omit<PaymentEntry, 'id'>): PaymentEntry {
-	const newPayment: PaymentEntry = {
-		...payment,
-		id: generateId(),
-	}
-	$payments.set([...$payments.get(), newPayment])
-	persist()
-	return newPayment
+/** Update an existing payment */
+export async function updatePayment(id: string, updates: Partial<Omit<PaymentEntry, 'id'>>) {
+	const pbUpdates: Record<string, unknown> = {}
+	if (updates.serverId !== undefined) pbUpdates.system = updates.serverId
+	if (updates.providerId !== undefined) pbUpdates.provider = updates.providerId
+	if (updates.period !== undefined) pbUpdates.period = updates.period
+	if (updates.nextPayment !== undefined) pbUpdates.nextPayment = updates.nextPayment
+	if (updates.amount !== undefined) pbUpdates.amount = updates.amount
+	if (updates.currency !== undefined) pbUpdates.currency = updates.currency
+	if (updates.country !== undefined) pbUpdates.country = updates.country || ''
+	if (updates.providerUrlOverride !== undefined) pbUpdates.providerUrlOverride = updates.providerUrlOverride || ''
+	if (updates.notes !== undefined) pbUpdates.notes = updates.notes || ''
+
+	await pb.collection('payments').update(id, pbUpdates)
 }
 
-export function updatePayment(id: string, updates: Partial<Omit<PaymentEntry, 'id'>>) {
-	$payments.set(
-		$payments.get().map((p) => (p.id === id ? { ...p, ...updates } : p))
-	)
-	persist()
-}
-
-export function deletePayment(id: string) {
-	$payments.set($payments.get().filter((p) => p.id !== id))
-	persist()
+/** Delete a payment */
+export async function deletePayment(id: string) {
+	await pb.collection('payments').delete(id)
 }
 
 /** Mark payment as paid - advances nextPayment date by period */
-export function markPaymentPaid(id: string) {
+export async function markPaymentPaid(id: string) {
 	const payment = $payments.get().find((p) => p.id === id)
 	if (!payment) return
 
@@ -143,38 +289,86 @@ export function markPaymentPaid(id: string) {
 			break
 	}
 
-	updatePayment(id, { nextPayment: nextDate.toISOString().split('T')[0] })
+	await updatePayment(id, { nextPayment: nextDate.toISOString().split('T')[0] })
 }
 
-// Rates actions
+// ============= RATES (in-memory only) =============
+
+/** Set exchange rates */
 export function setRates(rates: ExchangeRates) {
 	$rates.set(rates)
-	persist()
 }
 
-/** Export payments data as JSON */
+// ============= EXPORT / IMPORT =============
+
+/** Export payments data as JSON (for backup) */
 export function exportPaymentsData(): string {
-	return JSON.stringify({
-		providers: $providers.get(),
-		payments: $payments.get(),
-		exportedAt: new Date().toISOString(),
-	}, null, 2)
+	return JSON.stringify(
+		{
+			providers: $providers.get(),
+			payments: $payments.get(),
+			exportedAt: new Date().toISOString(),
+		},
+		null,
+		2
+	)
 }
 
 /** Import payments data from JSON */
-export function importPaymentsData(jsonString: string): boolean {
+export async function importPaymentsData(jsonString: string): Promise<{ success: boolean; errors: string[] }> {
+	const errors: string[] = []
+
 	try {
 		const data = JSON.parse(jsonString)
+		const providerIdMap = new Map<string, string>()
+
+		// Import providers first
 		if (data.providers && Array.isArray(data.providers)) {
-			$providers.set(data.providers)
+			for (const provider of data.providers) {
+				try {
+					const newProvider = await addProvider({
+						name: provider.name,
+						url: provider.url,
+						currencyDefault: provider.currencyDefault,
+						notes: provider.notes,
+					})
+					providerIdMap.set(provider.id, newProvider.id)
+				} catch (e) {
+					errors.push(`Provider "${provider.name}": ${e}`)
+				}
+			}
 		}
+
+		// Import payments
 		if (data.payments && Array.isArray(data.payments)) {
-			$payments.set(data.payments)
+			for (const payment of data.payments) {
+				try {
+					const newProviderId = providerIdMap.get(payment.providerId)
+					if (!newProviderId) {
+						errors.push(`Payment: provider not found for ${payment.providerId}`)
+						continue
+					}
+
+					await addPayment({
+						serverId: payment.serverId,
+						providerId: newProviderId,
+						period: payment.period,
+						nextPayment: payment.nextPayment,
+						amount: payment.amount,
+						currency: payment.currency,
+						country: payment.country,
+						providerUrlOverride: payment.providerUrlOverride,
+						notes: payment.notes,
+					})
+				} catch (e) {
+					errors.push(`Payment: ${e}`)
+				}
+			}
 		}
-		persist()
-		return true
+
+		return { success: errors.length === 0, errors }
 	} catch (e) {
 		console.error('Failed to import payments data:', e)
-		return false
+		return { success: false, errors: [`Parse error: ${e}`] }
 	}
 }

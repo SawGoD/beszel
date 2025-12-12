@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CalendarIcon, DownloadIcon, PlusIcon, UploadIcon } from 'lucide-react'
+import { AlertCircleIcon, CalendarIcon, DownloadIcon, Loader2Icon, PlusIcon, UploadIcon } from 'lucide-react'
 import { FooterRepoLink } from '@/components/footer-repo-link'
 import {
 	PaymentsStats,
@@ -19,8 +19,12 @@ import {
 import {
 	$rates,
 	$ratesLoading,
+	$paymentsLoading,
+	$paymentsError,
 	exportPaymentsData,
 	importPaymentsData,
+	initPayments,
+	cleanupPayments,
 } from '@/lib/payments/paymentsStore'
 import { loadRates, formatRub } from '@/lib/payments/currency'
 import type { PaymentEntry, Provider } from '@/lib/payments/paymentsTypes'
@@ -29,18 +33,26 @@ export default memo(() => {
 	const { t } = useLingui()
 	const rates = useStore($rates)
 	const ratesLoading = useStore($ratesLoading)
+	const paymentsLoading = useStore($paymentsLoading)
+	const paymentsError = useStore($paymentsError)
 
 	const [paymentFormOpen, setPaymentFormOpen] = useState(false)
 	const [providerFormOpen, setProviderFormOpen] = useState(false)
 	const [editingPayment, setEditingPayment] = useState<PaymentEntry | null>(null)
 	const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
+	const [importing, setImporting] = useState(false)
 
 	const fileInputRef = useRef<HTMLInputElement>(null)
 
 	useEffect(() => {
 		document.title = `${t`Payments`} / Beszel`
-		// Load exchange rates on mount
+		// Initialize payments from PocketBase and load exchange rates
+		initPayments()
 		loadRates()
+
+		return () => {
+			cleanupPayments()
+		}
 	}, [t])
 
 	const handleEditPayment = (payment: PaymentEntry) => {
@@ -76,17 +88,25 @@ export default memo(() => {
 		URL.revokeObjectURL(url)
 	}
 
-	const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
 
+		setImporting(true)
 		const reader = new FileReader()
-		reader.onload = (event) => {
-			const content = event.target?.result as string
-			if (importPaymentsData(content)) {
-				alert(t`Import successful!`)
-			} else {
+		reader.onload = async (event) => {
+			try {
+				const content = event.target?.result as string
+				const result = await importPaymentsData(content)
+				if (result.success) {
+					alert(t`Import successful!`)
+				} else {
+					alert(t`Import completed with errors:` + '\n' + result.errors.join('\n'))
+				}
+			} catch {
 				alert(t`Import failed. Please check the file format.`)
+			} finally {
+				setImporting(false)
 			}
 		}
 		reader.readAsText(file)
@@ -125,13 +145,13 @@ export default memo(() => {
 						</Badge>
 
 						<Button variant="outline" size="sm" onClick={handleExport}>
-							<DownloadIcon className="h-4 w-4 me-1" />
+							<UploadIcon className="h-4 w-4 me-1" />
 							<Trans>Export</Trans>
 						</Button>
 
-						<Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-							<UploadIcon className="h-4 w-4 me-1" />
-							<Trans>Import</Trans>
+						<Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+							<DownloadIcon className="h-4 w-4 me-1" />
+							{importing ? <Trans>Importing...</Trans> : <Trans>Import</Trans>}
 						</Button>
 						<input
 							ref={fileInputRef}
@@ -143,8 +163,25 @@ export default memo(() => {
 					</div>
 				</div>
 
+				{/* Loading / Error states */}
+				{paymentsLoading && (
+					<div className="flex items-center justify-center py-8">
+						<Loader2Icon className="h-6 w-6 animate-spin text-muted-foreground" />
+						<span className="ml-2 text-muted-foreground">
+							<Trans>Loading payments...</Trans>
+						</span>
+					</div>
+				)}
+
+				{paymentsError && (
+					<div className="flex items-center justify-center py-4 text-destructive">
+						<AlertCircleIcon className="h-5 w-5 mr-2" />
+						<span>{paymentsError}</span>
+					</div>
+				)}
+
 				{/* Stats */}
-				<PaymentsStats />
+				{!paymentsLoading && <PaymentsStats />}
 
 				{/* Main content */}
 				<Tabs defaultValue="payments" className="space-y-4">

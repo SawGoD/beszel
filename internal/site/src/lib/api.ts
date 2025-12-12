@@ -4,6 +4,7 @@ import { basePath } from "@/components/router"
 import { toast } from "@/components/ui/use-toast"
 import type { ChartTimes, UserSettings } from "@/types"
 import { $alerts, $allSystemsById, $allSystemsByName, $userSettings } from "./stores"
+import { cleanupPayments } from "./payments/paymentsStore"
 import { chartTimeData } from "./utils"
 
 /** PocketBase JS Client */
@@ -31,6 +32,7 @@ export function logOut() {
 	$allSystemsById.set({})
 	$alerts.set({})
 	$userSettings.set({} as UserSettings)
+	cleanupPayments()
 	sessionStorage.setItem("lo", "t") // prevent auto login on logout
 	pb.authStore.clear()
 	pb.realtime.unsubscribe()

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { Loader2Icon } from 'lucide-react'
+import { toast } from '@/components/ui/use-toast'
 import {
 	Dialog,
 	DialogContent,
@@ -35,6 +37,7 @@ export function ProviderForm({ open, onOpenChange, editProvider }: ProviderFormP
 	const [url, setUrl] = useState('')
 	const [currencyDefault, setCurrencyDefault] = useState<Currency | ''>('')
 	const [notes, setNotes] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	useEffect(() => {
 		if (editProvider) {
@@ -51,8 +54,9 @@ export function ProviderForm({ open, onOpenChange, editProvider }: ProviderFormP
 		}
 	}, [editProvider, open])
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
+		setIsSubmitting(true)
 
 		const providerData = {
 			name,
@@ -61,13 +65,25 @@ export function ProviderForm({ open, onOpenChange, editProvider }: ProviderFormP
 			notes: notes || undefined,
 		}
 
-		if (editProvider) {
-			updateProvider(editProvider.id, providerData)
-		} else {
-			addProvider(providerData)
+		try {
+			if (editProvider) {
+				await updateProvider(editProvider.id, providerData)
+				toast({ title: t`Provider updated successfully` })
+			} else {
+				await addProvider(providerData)
+				toast({ title: t`Provider added successfully` })
+			}
+			onOpenChange(false)
+		} catch (error) {
+			console.error('Failed to save provider:', error)
+			toast({
+				title: t`Failed to save provider`,
+				description: String(error),
+				variant: 'destructive',
+			})
+		} finally {
+			setIsSubmitting(false)
 		}
-
-		onOpenChange(false)
 	}
 
 	const isValid = name && url
@@ -153,10 +169,11 @@ export function ProviderForm({ open, onOpenChange, editProvider }: ProviderFormP
 					</div>
 
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+						<Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
 							<Trans>Cancel</Trans>
 						</Button>
-						<Button type="submit" disabled={!isValid}>
+						<Button type="submit" disabled={!isValid || isSubmitting}>
+							{isSubmitting && <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />}
 							{editProvider ? <Trans>Save Changes</Trans> : <Trans>Add Provider</Trans>}
 						</Button>
 					</DialogFooter>

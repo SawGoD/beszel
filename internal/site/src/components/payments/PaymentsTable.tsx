@@ -1,33 +1,14 @@
-import { useStore } from '@nanostores/react'
-import { useMemo, useState } from 'react'
-import { Trans, useLingui } from '@lingui/react/macro'
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-	CheckIcon,
-	ExternalLinkIcon,
-	Loader2Icon,
-	MoreHorizontalIcon,
-	PencilIcon,
-	TrashIcon,
-} from 'lucide-react'
-import { toast } from '@/components/ui/use-toast'
-import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from '@/lib/payments/paymentsStore'
-import { $systems } from '@/lib/stores'
+import { useStore } from "@nanostores/react"
+import { useMemo, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { CheckIcon, ExternalLinkIcon, Loader2Icon, MoreHorizontalIcon, PencilIcon, TrashIcon } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { $payments, $providers, $rates, deletePayment, markPaymentPaid } from "@/lib/payments/paymentsStore"
+import { $systems } from "@/lib/stores"
 import {
 	daysUntilPayment,
 	extractDomain,
@@ -36,19 +17,17 @@ import {
 	getFaviconUrl,
 	getPaymentStatus,
 	monthlyRub,
-} from '@/lib/payments/currency'
-import {
-	CURRENCY_SYMBOLS,
-	PERIOD_SHORT,
-	type PaymentEntry,
-} from '@/lib/payments/paymentsTypes'
-import { CountryFlag } from './CountryFlag'
+	rubToUsd,
+	rubToEur,
+} from "@/lib/payments/currency"
+import { CURRENCY_SYMBOLS, PERIOD_SHORT, type PaymentEntry } from "@/lib/payments/paymentsTypes"
+import { CountryFlag } from "./CountryFlag"
 
 interface PaymentsTableProps {
 	onEditPayment: (payment: PaymentEntry) => void
 }
 
-type SortKey = 'date' | 'price'
+type SortKey = "date" | "price"
 
 export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const { t } = useLingui()
@@ -57,18 +36,16 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const rates = useStore($rates)
 	const systems = useStore($systems)
 
-	const [sortBy, setSortBy] = useState<SortKey>('date')
+	const [sortBy, setSortBy] = useState<SortKey>("date")
 	const [loadingId, setLoadingId] = useState<string | null>(null)
 
 	const sortedPayments = useMemo(() => {
 		const arr = [...payments]
-		if (sortBy === 'date') {
+		if (sortBy === "date") {
 			arr.sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime())
-		} else if (sortBy === 'price') {
+		} else if (sortBy === "price") {
 			arr.sort(
-				(a, b) =>
-					monthlyRub(a.amount, a.currency, a.period, rates) -
-					monthlyRub(b.amount, b.currency, b.period, rates)
+				(a, b) => monthlyRub(a.amount, a.currency, a.period, rates) - monthlyRub(b.amount, b.currency, b.period, rates)
 			)
 		}
 		return arr
@@ -94,7 +71,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 	const getPaymentUrl = (payment: PaymentEntry) => {
 		if (payment.providerUrlOverride) return payment.providerUrlOverride
 		const provider = providers.find((p) => p.id === payment.providerId)
-		return provider?.url || ''
+		return provider?.url || ""
 	}
 
 	const handleDelete = async (id: string) => {
@@ -104,11 +81,11 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 				await deletePayment(id)
 				toast({ title: t`Payment deleted` })
 			} catch (error) {
-				console.error('Failed to delete payment:', error)
+				console.error("Failed to delete payment:", error)
 				toast({
 					title: t`Failed to delete payment`,
 					description: String(error),
-					variant: 'destructive',
+					variant: "destructive",
 				})
 			} finally {
 				setLoadingId(null)
@@ -122,25 +99,25 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 			await markPaymentPaid(id)
 			toast({ title: t`Payment marked as paid` })
 		} catch (error) {
-			console.error('Failed to mark payment as paid:', error)
+			console.error("Failed to mark payment as paid:", error)
 			toast({
 				title: t`Failed to update payment`,
 				description: String(error),
-				variant: 'destructive',
+				variant: "destructive",
 			})
 		} finally {
 			setLoadingId(null)
 		}
 	}
 
-	const getStatusClasses = (status: 'ok' | 'warn' | 'crit') => {
+	const getStatusClasses = (status: "ok" | "warn" | "crit") => {
 		switch (status) {
-			case 'crit':
-				return 'bg-red-500/10 border-l-4 border-l-red-500'
-			case 'warn':
-				return 'bg-yellow-500/10 border-l-4 border-l-yellow-500'
+			case "crit":
+				return "bg-red-500/10 border"
+			case "warn":
+				return "bg-yellow-500/10 border"
 			default:
-				return 'bg-green-500/10 border-l-4 border-l-green-500'
+				return "bg-green-500/10 border"
 		}
 	}
 
@@ -161,16 +138,16 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 				<div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
 					<Button
 						size="sm"
-						variant={sortBy === 'date' ? 'default' : 'ghost'}
-						onClick={() => setSortBy('date')}
+						variant={sortBy === "date" ? "default" : "ghost"}
+						onClick={() => setSortBy("date")}
 						className="h-7 px-3"
 					>
 						<Trans>Date</Trans>
 					</Button>
 					<Button
 						size="sm"
-						variant={sortBy === 'price' ? 'default' : 'ghost'}
-						onClick={() => setSortBy('price')}
+						variant={sortBy === "price" ? "default" : "ghost"}
+						onClick={() => setSortBy("price")}
 						className="h-7 px-3"
 					>
 						<Trans>Price</Trans>
@@ -214,9 +191,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 										{payment.country && <CountryFlag code={payment.country} />}
 										{getServerName(payment.serverId)}
 										{payment.notes && (
-											<span className="text-xs text-muted-foreground truncate max-w-[120px]">
-												({payment.notes})
-											</span>
+											<span className="text-xs text-muted-foreground truncate max-w-[120px]">({payment.notes})</span>
 										)}
 									</span>
 								</TableCell>
@@ -229,7 +204,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 											<Badge
 												variant="outline"
 												className="gap-1.5 py-1 px-2 font-normal cursor-pointer hover:bg-muted"
-												onClick={() => paymentUrl && window.open(paymentUrl, '_blank')}
+												onClick={() => paymentUrl && window.open(paymentUrl, "_blank")}
 											>
 												{favicon && (
 													<img
@@ -237,7 +212,7 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 														alt=""
 														className="h-4 w-4 rounded-sm"
 														onError={(e) => {
-															e.currentTarget.style.display = 'none'
+															e.currentTarget.style.display = "none"
 														}}
 													/>
 												)}
@@ -251,21 +226,18 @@ export function PaymentsTable({ onEditPayment }: PaymentsTableProps) {
 									<span
 										className="font-mono"
 										title={
-											payment.currency !== 'RUB'
-												? `≈ ${formatRub(monthlyRub(payment.amount, payment.currency, payment.period, rates))} ₽/mo`
-												: undefined
+											payment.currency === "RUB"
+												? `≈ $${formatRub(rubToUsd(payment.amount, rates))} | €${formatRub(rubToEur(payment.amount, rates))}`
+												: `≈ ${formatRub(monthlyRub(payment.amount, payment.currency, payment.period, rates))} ₽/mo`
 										}
 									>
-										{formatRub(payment.amount)} {CURRENCY_SYMBOLS[payment.currency]}/
-										{PERIOD_SHORT[payment.period]}
+										{formatRub(payment.amount)} {CURRENCY_SYMBOLS[payment.currency]}/{PERIOD_SHORT[payment.period]}
 									</span>
 								</TableCell>
 								<TableCell>{formatDateRu(payment.nextPayment)}</TableCell>
 								<TableCell>
-									<Badge
-										variant={status === 'crit' ? 'destructive' : status === 'warn' ? 'secondary' : 'outline'}
-									>
-										{Number.isFinite(days) ? `${days} d` : '—'}
+									<Badge variant={status === "crit" ? "destructive" : status === "warn" ? "secondary" : "outline"}>
+										{Number.isFinite(days) ? `${days} d` : "—"}
 									</Badge>
 								</TableCell>
 								<TableCell>

@@ -1,8 +1,8 @@
-import type { Currency, ExchangeRates, PaymentPeriod } from './paymentsTypes'
-import { FALLBACK_RATES } from './paymentsTypes'
-import { $ratesLoading, setRates } from './paymentsStore'
+import type { Currency, ExchangeRates, PaymentPeriod } from "./paymentsTypes"
+import { FALLBACK_RATES } from "./paymentsTypes"
+import { $ratesLoading, setRates } from "./paymentsStore"
 
-const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
+const CBR_URL = "https://www.cbr-xml-daily.ru/daily_json.js"
 const MARKUP = 1.05 // 5% markup
 
 /** Fetch currency rates from CBR with timeout */
@@ -45,14 +45,14 @@ export async function loadRates(): Promise<ExchangeRates> {
 				USD: usd * MARKUP,
 				EUR: eur * MARKUP,
 				updated: data?.Date || new Date().toISOString(),
-				source: 'cbr',
+				source: "cbr",
 			}
 			setRates(rates)
 			return rates
 		}
-		throw new Error('Invalid API data')
+		throw new Error("Invalid API data")
 	} catch (e) {
-		console.warn('Failed to fetch CBR rates, using fallback:', e)
+		console.warn("Failed to fetch CBR rates, using fallback:", e)
 		setRates(FALLBACK_RATES)
 		return FALLBACK_RATES
 	} finally {
@@ -62,26 +62,32 @@ export async function loadRates(): Promise<ExchangeRates> {
 
 /** Convert amount to RUB */
 export function toRub(amount: number, currency: Currency, rates: ExchangeRates): number {
-	if (currency === 'RUB') return amount
-	if (currency === 'USD') return amount * rates.USD
-	if (currency === 'EUR') return amount * rates.EUR
+	if (currency === "RUB") return amount
+	if (currency === "USD") return amount * rates.USD
+	if (currency === "EUR") return amount * rates.EUR
 	return amount
+}
+/** Convert RUB to USD */ export function rubToUsd(amount: number, rates: ExchangeRates): number {
+	return amount / rates.USD
+} /** Convert RUB to EUR */
+export function rubToEur(amount: number, rates: ExchangeRates): number {
+	return amount / rates.EUR
 }
 
 /** Get monthly factor for period */
 export function getMonthlyFactor(period: PaymentPeriod): number {
 	switch (period) {
-		case 'daily':
+		case "daily":
 			return 30
-		case 'weekly':
+		case "weekly":
 			return 365 / 12 / 7
-		case 'monthly':
+		case "monthly":
 			return 1
-		case 'quarterly':
+		case "quarterly":
 			return 1 / 3
-		case 'semiannual':
+		case "semiannual":
 			return 1 / 6
-		case 'annual':
+		case "annual":
 			return 1 / 12
 		default:
 			return 1
@@ -89,12 +95,7 @@ export function getMonthlyFactor(period: PaymentPeriod): number {
 }
 
 /** Calculate monthly cost in RUB */
-export function monthlyRub(
-	amount: number,
-	currency: Currency,
-	period: PaymentPeriod,
-	rates: ExchangeRates
-): number {
+export function monthlyRub(amount: number, currency: Currency, period: PaymentPeriod, rates: ExchangeRates): number {
 	return toRub(amount, currency, rates) * getMonthlyFactor(period)
 }
 
@@ -110,23 +111,23 @@ export function daysUntilPayment(dateStr: string): number {
 }
 
 /** Get payment status based on days remaining */
-export function getPaymentStatus(days: number): 'ok' | 'warn' | 'crit' {
-	if (days <= 1) return 'crit'
-	if (days <= 5) return 'warn'
-	return 'ok'
+export function getPaymentStatus(days: number): "ok" | "warn" | "crit" {
+	if (days <= 1) return "crit"
+	if (days <= 5) return "warn"
+	return "ok"
 }
 
 /** Format number as RUB currency */
 export function formatRub(n: number): string {
-	return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n)
+	return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(n)
 }
 
 /** Format date in Russian format DD.MM.YYYY */
 export function formatDateRu(dateStr: string): string {
-	if (!dateStr) return ''
+	if (!dateStr) return ""
 	const d = new Date(dateStr)
-	if (Number.isNaN(d.getTime())) return ''
-	const pad = (n: number) => String(n).padStart(2, '0')
+	if (Number.isNaN(d.getTime())) return ""
+	const pad = (n: number) => String(n).padStart(2, "0")
 	return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
 }
 
@@ -136,9 +137,9 @@ export function extractDomain(url: string): string | null {
 	try {
 		const urlObj = new URL(url)
 		const hostname = urlObj.hostname.toLowerCase()
-		const parts = hostname.split('.')
+		const parts = hostname.split(".")
 		if (parts.length >= 2) {
-			return parts.slice(-2).join('.')
+			return parts.slice(-2).join(".")
 		}
 		return hostname
 	} catch {

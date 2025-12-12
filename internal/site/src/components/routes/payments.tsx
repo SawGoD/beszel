@@ -207,8 +207,8 @@ export default memo(() => {
 									</CardDescription>
 								</div>
 								<div className="flex items-center gap-2">
-									{/* View toggle - desktop only */}
-									<div className="hidden md:flex gap-1 bg-muted/50 p-1 rounded-lg">
+									{/* View toggle */}
+									<div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
 										<Button
 											size="sm"
 											variant={viewMode === 'table' ? 'default' : 'ghost'}
@@ -227,29 +227,28 @@ export default memo(() => {
 										</Button>
 									</div>
 									<Button onClick={() => setPaymentFormOpen(true)}>
-										<PlusIcon className="h-4 w-4 me-1" />
+										<PlusIcon className="h-4 w-4 sm:me-1" />
 										<span className="hidden sm:inline">
 											<Trans>Add Payment</Trans>
-										</span>
-										<span className="sm:hidden">
-											<Trans>Add</Trans>
 										</span>
 									</Button>
 								</div>
 							</CardHeader>
 							<CardContent>
-								{/* Desktop: Table or Calendar view */}
-								<div className="hidden md:block">
-									{viewMode === 'table' ? (
-										<PaymentsTable onEditPayment={handleEditPayment} />
-									) : (
-										<PaymentsCalendar onEditPayment={handleEditPayment} />
-									)}
-								</div>
-								{/* Mobile: Card view only */}
-								<div className="md:hidden">
-									<PaymentsMobileCards onEditPayment={handleEditPayment} sortBy="date" />
-								</div>
+								{viewMode === 'table' ? (
+									<>
+										{/* Desktop: Table view */}
+										<div className="hidden md:block">
+											<PaymentsTable onEditPayment={handleEditPayment} />
+										</div>
+										{/* Mobile: Card view */}
+										<div className="md:hidden">
+											<PaymentsMobileCards onEditPayment={handleEditPayment} sortBy="date" />
+										</div>
+									</>
+								) : (
+									<PaymentsCalendar onEditPayment={handleEditPayment} />
+								)}
 							</CardContent>
 						</Card>
 					</TabsContent>

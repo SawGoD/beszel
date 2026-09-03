@@ -126,6 +126,22 @@ msgstr "Aktif durum"
 msgid "Add {foo}"
 msgstr "{foo} ekle"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Add a hosting provider or service for your servers."
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentForm.tsx
+#: src/components/routes/payments.tsx
+msgid "Add Payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/payments.tsx
+msgid "Add Provider"
+msgstr ""
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
 msgstr "URL Ekle"
@@ -175,6 +191,10 @@ msgstr "Uyarılar"
 msgid "All Containers"
 msgstr "Tüm Konteynerler"
 
+#: src/components/routes/payments.tsx
+msgid "All scheduled payments sorted by due date"
+msgstr ""
+
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
 #: src/components/routes/home.tsx
@@ -184,13 +204,36 @@ msgstr "Tüm Konteynerler"
 msgid "All Systems"
 msgstr "Tüm Sistemler"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "already added"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Amount"
+msgstr ""
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "{name} silmek istediğinizden emin misiniz?"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Are you sure you want to delete this payment?"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Are you sure you want to delete this provider?"
+msgstr ""
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Emin misiniz?"
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Auto-select this currency when adding payments for this provider."
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
@@ -293,6 +336,10 @@ msgstr "Beszel, OpenID Connect ve birçok OAuth2 kimlik doğrulama sağlayıcıs
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel, popüler bildirim hizmetleriyle entegre olmak için <0>Shoutrrr</0> kullanır."
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Billing URL"
+msgstr ""
+
 #: src/components/add-system.tsx
 msgid "Binary"
 msgstr "İkili"
@@ -327,6 +374,8 @@ msgstr "Başlatılabilir"
 msgid "Can stop"
 msgstr "Durdurulabilir"
 
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -526,6 +575,10 @@ msgctxt "Core system metrics"
 msgid "Core"
 msgstr "Çekirdek"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Country"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -580,6 +633,10 @@ msgstr "Oluşturuldu"
 msgid "Critical (%)"
 msgstr "Kritik (%)"
 
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Critical (today/overdue)"
+msgstr ""
+
 #: src/components/routes/system/disk-io-sheet.tsx
 msgid "Cumulative data read since boot"
 msgstr "Önyüklemeden beri okunan toplam veri"
@@ -604,6 +661,10 @@ msgstr "Kümülatif Yükleme"
 msgid "Cumulative Write"
 msgstr "Toplam yazma"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Currency"
+msgstr ""
+
 #. Context: Battery state
 #. Context: Battery state
 #: src/components/routes/system/charts/sensor-charts.tsx
@@ -621,15 +682,31 @@ msgstr "Döngüler"
 msgid "Daily"
 msgstr "Günlük"
 
+#: src/components/payments/PaymentsStats.tsx
+msgid "days"
+msgstr ""
+
+#: src/components/payments/PaymentsTable.tsx
+msgid "Days Left"
+msgstr ""
+
 #: src/components/routes/system/info-bar.tsx
 msgctxt "Default system layout option"
 msgid "Default"
 msgstr "Varsayılan"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Default Currency"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Varsayılan zaman dilimi"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -714,10 +791,27 @@ msgstr "Kapalı ({downSystemsLength})"
 msgid "Download"
 msgstr "İndir"
 
+#: src/components/payments/PaymentsTable.tsx
+msgid "Due Date"
+msgstr ""
+
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Due Soon"
+msgstr ""
+
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Süre"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "e.g., Hetzner, DigitalOcean, AWS"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -727,6 +821,14 @@ msgstr "Düzenle"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
 msgstr "{foo} düzenle"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Edit Payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Edit Provider"
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -812,6 +914,7 @@ msgstr "Aktif olarak çıktı"
 msgid "Expires after one hour or on hub restart."
 msgstr "Bir saat sonra veya hub yeniden başlatıldığında sona erer."
 
+#: src/components/routes/payments.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Dışa aktar"
@@ -844,6 +947,24 @@ msgstr "Başarısız hizmetler"
 msgid "Failed to authenticate"
 msgstr "Kimlik doğrulama başarısız"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to delete payment"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Failed to delete provider"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Failed to save payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Failed to save provider"
+msgstr ""
+
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -862,10 +983,20 @@ msgstr "Test bildirimi gönderilemedi"
 msgid "Failed to update alert"
 msgstr "Uyarı güncellenemedi"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to update payment"
+msgstr ""
+
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Başarısız: {0}"
+
+#: src/components/routes/payments.tsx
+msgid "Fallback rates"
+msgstr ""
 
 #: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Fans"
@@ -925,6 +1056,12 @@ msgstr "Genel"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Global"
 msgstr "Genel"
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Go to Payment"
+msgstr ""
 
 #: src/components/routes/system.tsx
 msgid "GPU"
@@ -1011,6 +1148,26 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "İmaj"
 
+#: src/components/routes/payments.tsx
+msgid "Import"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import completed with errors:"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import failed. Please check the file format."
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import successful!"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Importing..."
+msgstr ""
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Pasif"
@@ -1044,6 +1201,10 @@ msgstr "Yaşam döngüsü"
 msgid "limit"
 msgstr "Sınır"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Link a payment to a server and provider."
+msgstr ""
+
 #: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Yük Ortalaması"
@@ -1068,6 +1229,14 @@ msgstr "Yük Ort."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Load state"
 msgstr "Yükleme durumu"
+
+#: src/components/routes/payments.tsx
+msgid "Loading payments..."
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Loading rates..."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
@@ -1105,10 +1274,20 @@ msgstr "Ana PID"
 msgid "Manage display and notification preferences."
 msgstr "Görüntüleme ve bildirim tercihlerini yönetin."
 
+#: src/components/routes/payments.tsx
+msgid "Manage your hosting providers"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Manuel kurulum talimatları"
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Mark Paid"
+msgstr ""
 
 #. Chart select field. Please try to keep this short.
 #: src/components/routes/system/chart-card.tsx
@@ -1146,6 +1325,15 @@ msgstr "Konteynerlerin bellek kullanımı"
 msgid "Model"
 msgstr "Model"
 
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Monthly Total"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "more"
+msgstr ""
+
 #: src/components/routes/system/zfs-table.tsx
 msgid "Mountpoint"
 msgstr "Bağlama noktası"
@@ -1179,6 +1367,10 @@ msgstr "Genel arayüzlerin ağ trafiği"
 msgid "Network unit"
 msgstr "Ağ birimi"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Next Payment Date"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1188,6 +1380,15 @@ msgstr "Hayır"
 #: src/components/routes/system/zfs-table.tsx
 msgid "No detail data for this pool."
 msgstr "Bu pool için ayrıntılı veri mevcut değil."
+
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "No payments added yet. Add a provider first, then add payments."
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "No providers added yet. Add your first hosting provider."
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1212,9 +1413,15 @@ msgstr "Bu cihaz için kullanılabilir S.M.A.R.T. özelliği yok."
 msgid "No systems found."
 msgstr "Sistem bulunamadı."
 
+#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/system/zfs-table.tsx
 msgid "None"
 msgstr "Yok"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Notes"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1229,6 +1436,10 @@ msgstr "Bildirimler, son konteyner günlüklerinden alıntılar içerebilir."
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "OAuth 2 / OIDC desteği"
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "OK (6+ days)"
+msgstr ""
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
@@ -1251,6 +1462,10 @@ msgstr "Bir seferlik"
 msgid "One-time password"
 msgstr "Tek kullanımlık şifre"
 
+#: src/components/payments/ProvidersList.tsx
+msgid "Open Billing"
+msgstr ""
+
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1259,6 +1474,15 @@ msgstr "Tek kullanımlık şifre"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Menüyü aç"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Optional notes"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Optional. Override the provider URL for this specific payment."
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1325,6 +1549,46 @@ msgstr "Duraklatıldı ({pausedSystemsLength})"
 msgid "Payload format"
 msgstr "Yük (Payload) formatı"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment added successfully"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment deleted"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment marked as paid"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Payment Schedule"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment updated successfully"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment URL Override"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "payments"
+msgstr ""
+
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+msgid "Payments"
+msgstr ""
+
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
@@ -1337,6 +1601,10 @@ msgstr "Diskin G/Ç işlemleriyle meşgul olduğu sürenin yüzdesi"
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Her durumda harcanan zamanın yüzdesi"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Period"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Permanent"
@@ -1413,6 +1681,32 @@ msgstr "Tercih Edilen Dil"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Süreç başlatıldı"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Provider"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider added successfully"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Provider deleted"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider Name"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider updated successfully"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+msgid "Providers"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Public key"
@@ -1531,6 +1825,11 @@ msgstr "{foo} Kaydet"
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Adresleri enter tuşu veya virgül ile kaydedin. E-posta bildirimlerini devre dışı bırakmak için boş bırakın."
 
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Save Changes"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
@@ -1572,6 +1871,22 @@ msgstr "Uyarıları nasıl alacağınızı yapılandırmak için <0>bildirim aya
 msgid "Select {foo}"
 msgstr "Seç {foo}"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Select country"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Select currency"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select provider"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select server"
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Send a single heartbeat ping to verify your endpoint is working."
 msgstr "Uç noktanızın çalıştığını doğrulamak için tek bir heartbeat ping'i gönderin."
@@ -1591,6 +1906,11 @@ msgstr "Gönderildi"
 #: src/components/routes/system/smart-table.tsx
 msgid "Serial Number"
 msgstr "Seri Numarası"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Server"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
@@ -1764,6 +2084,10 @@ msgstr "Ardından arka uca giriş yapın ve kullanıcılar tablosunda kullanıc�
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "Bu işlem geri alınamaz. Bu, veritabanından {name} için tüm mevcut kayıtları kalıcı olarak silecektir."
 
+#: src/components/payments/ProvidersList.tsx
+msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
+msgstr ""
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Bu, seçilen tüm kayıtları veritabanından kalıcı olarak silecektir."
@@ -1783,6 +2107,10 @@ msgstr "Zaman formatı"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "E-posta(lar)a"
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Today"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1816,6 +2144,11 @@ msgstr "Her arayüz için alınan toplam veri"
 msgid "Total data sent for each interface"
 msgstr "Her arayüz için gönderilen toplam veri"
 
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Total Servers"
+msgstr ""
+
 #: src/components/routes/system/disk-io-sheet.tsx
 msgctxt "Disk I/O"
 msgid "Total time spent on read/write (can exceed 100%)"
@@ -1825,6 +2158,10 @@ msgstr "Okuma/yazma işlemlerinde harcanan toplam süre (%100’ü aşabilir)"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "Toplam: {0}"
+
+#: src/components/routes/payments.tsx
+msgid "Track server payments and billing schedules"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1963,6 +2300,10 @@ msgstr "Yükle"
 msgid "Uptime"
 msgstr "Çalışma Süresi"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "URL to access billing/payment page for this provider."
+msgstr ""
+
 #: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/routes/system/charts/gpu-charts.tsx
@@ -2033,6 +2374,10 @@ msgstr "İstekler"
 msgid "Warning (%)"
 msgstr "Uyarı (%)"
 
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Warning (2-5 days)"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "Uyarı eşikleri"
@@ -2087,4 +2432,3 @@ msgstr "Evet"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "Kullanıcı ayarlarınız güncellendi."
-

@@ -126,6 +126,22 @@ msgstr "Активно състояние"
 msgid "Add {foo}"
 msgstr "Добави {foo}"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Add a hosting provider or service for your servers."
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentForm.tsx
+#: src/components/routes/payments.tsx
+msgid "Add Payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/payments.tsx
+msgid "Add Provider"
+msgstr ""
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
 msgstr "Добави URL"
@@ -175,6 +191,10 @@ msgstr "Тревоги"
 msgid "All Containers"
 msgstr "Всички контейнери"
 
+#: src/components/routes/payments.tsx
+msgid "All scheduled payments sorted by due date"
+msgstr ""
+
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
 #: src/components/routes/home.tsx
@@ -184,13 +204,36 @@ msgstr "Всички контейнери"
 msgid "All Systems"
 msgstr "Всички системи"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "already added"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Amount"
+msgstr ""
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "Сигурен ли си, че искаш да изтриеш {name}?"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Are you sure you want to delete this payment?"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Are you sure you want to delete this provider?"
+msgstr ""
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Сигурни ли сте?"
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Auto-select this currency when adding payments for this provider."
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
@@ -293,6 +336,10 @@ msgstr "Beszel поддържа OpenID Connect и много други OAuth2 �
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel ползва <0>Shoutrrr</0> за да се интегрира с известни услуги за уведомяване."
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Billing URL"
+msgstr ""
+
 #: src/components/add-system.tsx
 msgid "Binary"
 msgstr "Двоичен код"
@@ -327,6 +374,8 @@ msgstr "Може да се стартира"
 msgid "Can stop"
 msgstr "Може да се спре"
 
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -526,6 +575,10 @@ msgctxt "Core system metrics"
 msgid "Core"
 msgstr "Основни"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Country"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -580,6 +633,10 @@ msgstr "Създаден"
 msgid "Critical (%)"
 msgstr "Критично (%)"
 
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Critical (today/overdue)"
+msgstr ""
+
 #: src/components/routes/system/disk-io-sheet.tsx
 msgid "Cumulative data read since boot"
 msgstr "Натрупани прочетени данни от стартирането"
@@ -604,6 +661,10 @@ msgstr "Кумулативно качване"
 msgid "Cumulative Write"
 msgstr "Натрупан запис"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Currency"
+msgstr ""
+
 #. Context: Battery state
 #. Context: Battery state
 #: src/components/routes/system/charts/sensor-charts.tsx
@@ -621,15 +682,31 @@ msgstr "Цикли"
 msgid "Daily"
 msgstr "Дневно"
 
+#: src/components/payments/PaymentsStats.tsx
+msgid "days"
+msgstr ""
+
+#: src/components/payments/PaymentsTable.tsx
+msgid "Days Left"
+msgstr ""
+
 #: src/components/routes/system/info-bar.tsx
 msgctxt "Default system layout option"
 msgid "Default"
 msgstr "Подредба"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "Default Currency"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Времеви диапазон по подразбиране"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -714,10 +791,27 @@ msgstr "Офлайн ({downSystemsLength})"
 msgid "Download"
 msgstr "Изтегляне"
 
+#: src/components/payments/PaymentsTable.tsx
+msgid "Due Date"
+msgstr ""
+
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Due Soon"
+msgstr ""
+
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Продължителност"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "e.g., Hetzner, DigitalOcean, AWS"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -727,6 +821,14 @@ msgstr "Редактирай"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
 msgstr "Редактиране на {foo}"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Edit Payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Edit Provider"
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -812,6 +914,7 @@ msgstr "Излезе активно"
 msgid "Expires after one hour or on hub restart."
 msgstr "Изтича след един час или при рестартиране на хъба."
 
+#: src/components/routes/payments.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Експортиране"
@@ -844,6 +947,24 @@ msgstr "Неуспешни услуги"
 msgid "Failed to authenticate"
 msgstr "Неуспешно удостоверяване"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to delete payment"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Failed to delete provider"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Failed to save payment"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Failed to save provider"
+msgstr ""
+
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -862,10 +983,20 @@ msgstr "Неуспешно изпрати тестова нотификация"
 msgid "Failed to update alert"
 msgstr "Неуспешно обнови тревога"
 
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Failed to update payment"
+msgstr ""
+
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Неуспешни: {0}"
+
+#: src/components/routes/payments.tsx
+msgid "Fallback rates"
+msgstr ""
 
 #: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Fans"
@@ -925,6 +1056,12 @@ msgstr "Общо"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Global"
 msgstr "Глобален"
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Go to Payment"
+msgstr ""
 
 #: src/components/routes/system.tsx
 msgid "GPU"
@@ -1011,6 +1148,26 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "Образ"
 
+#: src/components/routes/payments.tsx
+msgid "Import"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import completed with errors:"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import failed. Please check the file format."
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Import successful!"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Importing..."
+msgstr ""
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Неактивен"
@@ -1044,6 +1201,10 @@ msgstr "Жизнен цикъл"
 msgid "limit"
 msgstr "лимит"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Link a payment to a server and provider."
+msgstr ""
+
 #: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Средно натоварване"
@@ -1068,6 +1229,14 @@ msgstr "Средно натоварване"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Load state"
 msgstr "Състояние на зареждане"
+
+#: src/components/routes/payments.tsx
+msgid "Loading payments..."
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Loading rates..."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
@@ -1105,10 +1274,20 @@ msgstr "Главен PID"
 msgid "Manage display and notification preferences."
 msgstr "Управление на предпочитанията за показване и уведомяване."
 
+#: src/components/routes/payments.tsx
+msgid "Manage your hosting providers"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Инструкции за ръчна настройка"
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Mark Paid"
+msgstr ""
 
 #. Chart select field. Please try to keep this short.
 #: src/components/routes/system/chart-card.tsx
@@ -1146,6 +1325,15 @@ msgstr "Използване на паметта от контейнерите"
 msgid "Model"
 msgstr "Модел"
 
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Monthly Total"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "more"
+msgstr ""
+
 #: src/components/routes/system/zfs-table.tsx
 msgid "Mountpoint"
 msgstr "Точка на монтиране"
@@ -1179,6 +1367,10 @@ msgstr "Мрежов трафик на публични интерфейси"
 msgid "Network unit"
 msgstr "Единица за измерване на скорост"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Next Payment Date"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1188,6 +1380,15 @@ msgstr "Не"
 #: src/components/routes/system/zfs-table.tsx
 msgid "No detail data for this pool."
 msgstr "Няма подробни данни за този пул."
+
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "No payments added yet. Add a provider first, then add payments."
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "No providers added yet. Add your first hosting provider."
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1212,9 +1413,15 @@ msgstr "Няма налични S.M.A.R.T. атрибути за това уст
 msgid "No systems found."
 msgstr "Няма намерени системи."
 
+#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/system/zfs-table.tsx
 msgid "None"
 msgstr "Няма"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Notes"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1229,6 +1436,10 @@ msgstr "Известията може да включват скорошни о�
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "Поддръжка на OAuth 2 / OIDC"
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "OK (6+ days)"
+msgstr ""
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
@@ -1251,6 +1462,10 @@ msgstr "Еднократен"
 msgid "One-time password"
 msgstr "Еднократна парола"
 
+#: src/components/payments/ProvidersList.tsx
+msgid "Open Billing"
+msgstr ""
+
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1259,6 +1474,15 @@ msgstr "Еднократна парола"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Отвори менюто"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Optional notes"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Optional. Override the provider URL for this specific payment."
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1325,6 +1549,46 @@ msgstr "На пауза ({pausedSystemsLength})"
 msgid "Payload format"
 msgstr "Формат на полезния товар"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment added successfully"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment deleted"
+msgstr ""
+
+#: src/components/payments/PaymentsCalendar.tsx
+#: src/components/payments/PaymentsMobileCards.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Payment marked as paid"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+msgid "Payment Schedule"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment updated successfully"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Payment URL Override"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "payments"
+msgstr ""
+
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+msgid "Payments"
+msgstr ""
+
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
@@ -1337,6 +1601,10 @@ msgstr "Процент от времето, в което дискът е зае
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Процент време, прекарано във всяко състояние"
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Period"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Permanent"
@@ -1413,6 +1681,32 @@ msgstr "Предпочитан език"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Процесът стартира"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Provider"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider added successfully"
+msgstr ""
+
+#: src/components/payments/ProvidersList.tsx
+msgid "Provider deleted"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider Name"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Provider updated successfully"
+msgstr ""
+
+#: src/components/routes/payments.tsx
+#: src/components/routes/payments.tsx
+msgid "Providers"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Public key"
@@ -1531,6 +1825,11 @@ msgstr "Запази {foo}"
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Запази адреса с enter или запетая. Остави празно за да изключиш нотификациите чрез имейл."
 
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/ProviderForm.tsx
+msgid "Save Changes"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
@@ -1572,6 +1871,22 @@ msgstr "Виж <0>настройките за нотификациите</0> з�
 msgid "Select {foo}"
 msgstr "Избери {foo}"
 
+#: src/components/payments/PaymentForm.tsx
+msgid "Select country"
+msgstr ""
+
+#: src/components/payments/ProviderForm.tsx
+msgid "Select currency"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select provider"
+msgstr ""
+
+#: src/components/payments/PaymentForm.tsx
+msgid "Select server"
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Send a single heartbeat ping to verify your endpoint is working."
 msgstr "Изпратете единичен heartbeat пинг, за да се уверите, че крайната Ви точка работи."
@@ -1591,6 +1906,11 @@ msgstr "Изпратени"
 #: src/components/routes/system/smart-table.tsx
 msgid "Serial Number"
 msgstr "Сериен номер"
+
+#: src/components/payments/PaymentForm.tsx
+#: src/components/payments/PaymentsTable.tsx
+msgid "Server"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
@@ -1764,6 +2084,10 @@ msgstr "След това влез в backend-а и нулирай парола�
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "Това действие не може да бъде отменено. Това ще изтрие всички записи за {name} от датабазата."
 
+#: src/components/payments/ProvidersList.tsx
+msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
+msgstr ""
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Това ще доведе до трайно изтриване на всички избрани записи от базата данни."
@@ -1783,6 +2107,10 @@ msgstr "Формат на времето"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "До имейл(ите)"
+
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Today"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1816,6 +2144,11 @@ msgstr "Общо получени данни за всеки интерфейс"
 msgid "Total data sent for each interface"
 msgstr "Общо изпратени данни за всеки интерфейс"
 
+#: src/components/payments/PaymentsStats.tsx
+#: src/components/payments/PaymentsStats.tsx
+msgid "Total Servers"
+msgstr ""
+
 #: src/components/routes/system/disk-io-sheet.tsx
 msgctxt "Disk I/O"
 msgid "Total time spent on read/write (can exceed 100%)"
@@ -1825,6 +2158,10 @@ msgstr ""
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "Общо: {0}"
+
+#: src/components/routes/payments.tsx
+msgid "Track server payments and billing schedules"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1963,6 +2300,10 @@ msgstr "Качване"
 msgid "Uptime"
 msgstr "Време на работа"
 
+#: src/components/payments/ProviderForm.tsx
+msgid "URL to access billing/payment page for this provider."
+msgstr ""
+
 #: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/routes/system/charts/gpu-charts.tsx
@@ -2033,6 +2374,10 @@ msgstr "Иска"
 msgid "Warning (%)"
 msgstr "Предупреждение (%)"
 
+#: src/components/payments/PaymentsCalendar.tsx
+msgid "Warning (2-5 days)"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "Прагове за предупреждение"
@@ -2087,4 +2432,3 @@ msgstr "Да"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "Настройките за потребителя ти са обновени."
-

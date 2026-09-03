@@ -8,7 +8,7 @@ msgstr ""
 "Language: da\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-11-14 22:51\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Danish\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} tilgængelig"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "{0} af {1} række(r) valgt."
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# kerne} other {# kerner}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} time} other {{countString} timer}}"
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} minut} other {{countString} minutter}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "{diskName} I/O"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# tråd} other {# tråde}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "1 time"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "1 minut"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "12 timer"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "15 minutter"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "30 dage"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "5 minutter"
 
@@ -79,12 +97,14 @@ msgstr "5 minutter"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "Handlinger"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "Aktiv"
@@ -97,39 +117,14 @@ msgstr "Aktive Alarmer"
 msgid "Active state"
 msgstr "Aktiv tilstand"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
 msgstr "Tilføj {foo}"
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "Tilføj <0>System</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "Tilføj system"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -145,12 +140,17 @@ msgstr "Juster bredden af hovedlayoutet"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "Administrator"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "Efter"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "Efter indstilling af miljøvariablerne skal du genstarte din Beszel-hub for at ændringerne kan træde i kraft."
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "Alarmer"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
 msgstr "Alle containere"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,73 +184,64 @@ msgstr ""
 msgid "All Systems"
 msgstr "Alle systemer"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr ""
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "Er du sikker på, at du vil slette {name}?"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr ""
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Er du sikker?"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr ""
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "Automatisk kopiering kræver en sikker kontekst."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "Tilgængelig"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "Gennemsnitlig"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "Gennemsnitlig CPU udnyttelse af containere"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "Gennemsnit falder under <0>{value}{0}</0>"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
-msgstr "Gennemsnit overstiger <0>{value}{0}</0>"
+msgstr "Gennemsnittet overstiger <0>{value}{0}</0>"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "Gennemsnitligt antal I/O-operationer, der venter på at blive betjent"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "Gennemsnitligt strømforbrug for GPU'er"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "Gennemsnitlig tid fra kø til færdiggørelse pr. operation"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "Gennemsnitlig systembaseret CPU-udnyttelse"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "Gennemsnitlig udnyttelse af {0}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
 msgstr "Gennemsnitlig udnyttelse af GPU-enheder"
 
@@ -261,12 +250,18 @@ msgstr "Gennemsnitlig udnyttelse af GPU-enheder"
 msgid "Backups"
 msgstr "Sikkerhedskopier"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "Båndbredde"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr ""
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "Batteri"
@@ -283,6 +278,13 @@ msgstr "Blev inaktiv"
 msgid "Before"
 msgstr "Før"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "Under {0}{1} i sidste {2, plural, one {# minut} other {# minutter}}"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "Beszel understøtter OpenID Connect og mange OAuth2 godkendelsesudbydere."
@@ -290,10 +292,6 @@ msgstr "Beszel understøtter OpenID Connect og mange OAuth2 godkendelsesudbydere
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel bruger <0>Shoutrrr</0> til at integrere med populære notifikationstjenester."
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr ""
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "Opstartstilstand"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "Bytes (KB/s, MB/s, GB/s)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "Cache / Buffere"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "Kan starte"
 msgid "Can stop"
 msgstr "Kan stoppe"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "Funktioner"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "Kapacitet"
 
@@ -365,7 +358,7 @@ msgstr "Ændre viste enheder for målinger."
 msgid "Change general application options."
 msgstr "Skift generelle applikationsindstillinger."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "Opladning"
 
@@ -378,6 +371,10 @@ msgstr "Oplader"
 msgid "Chart options"
 msgstr "Diagrammuligheder"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "Grafbredde"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
 msgstr "Tjek {email} for et nulstillingslink."
@@ -386,12 +383,22 @@ msgstr "Tjek {email} for et nulstillingslink."
 msgid "Check logs for more details."
 msgstr "Tjek logfiler for flere detaljer."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "Tjek din overvågningstjeneste"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "Tjek din notifikationstjeneste"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "Kontrolsumfejl"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
 msgstr "Ryd"
@@ -403,6 +410,10 @@ msgstr "Klik på en container for at se mere information."
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "Klik på en enhed for at se flere oplysninger."
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "Klik på en pool for at se detaljer om vdev og datasæt."
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -434,10 +445,22 @@ msgstr "Konflikter"
 msgid "Connection is down"
 msgstr "Forbindelsen er nede"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "Container"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "Container-sundhed"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "Containere"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
-msgstr "Forsæt"
+msgstr "Fortsæt"
 
 #: src/lib/utils.ts
 msgid "Copied to clipboard"
@@ -460,9 +483,14 @@ msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "Kopier miljø"
 
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "Kopier fra"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
-msgstr "Kopier host"
+msgstr "Kopier vært"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -472,6 +500,10 @@ msgstr "Kopier Linux kommando"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
 msgstr "Kopier navn"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -489,9 +521,10 @@ msgstr "Kopier <0>docker-compose.yml</0> indholdet for agenten nedenfor, eller r
 msgid "Copy YAML"
 msgstr "Kopier YAML"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr ""
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "Kerne"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -503,20 +536,28 @@ msgstr "CPU"
 msgid "CPU Cores"
 msgstr "CPU-kerner"
 
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "CPU-I/O-ventetid (IOWait)"
+
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "CPU Peak"
 
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "CPU-tid taget af hypervisoren (Steal)"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
-msgstr ""
+msgstr "CPU tid"
 
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "CPU Time Breakdown"
 msgstr "CPU-tidsfordeling"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "Oprettet"
 msgid "Critical (%)"
 msgstr "Kritisk (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "Samlet mængde data læst siden opstart"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "Samlet mængde data skrevet siden opstart"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "Kumulativ download"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "Samlet læsning"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "Kumulativ upload"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "Samlet skrivning"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "Nuværende tilstand"
 
@@ -570,30 +621,15 @@ msgstr "Cykler"
 msgid "Daily"
 msgstr "Dagligt"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr ""
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr ""
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "Standard"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Standard tidsperiode"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "Enhed"
 msgid "Discharging"
 msgstr "Aflader"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Disk"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "Disk I/O"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "Diskenhed"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "Diskforbrug"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "Diskforbrug af {extraFsName}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "Visning"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "Docker CPU forbrug"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "Docker Hukommelsesforbrug"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "Docker Netværk I/O"
 
@@ -663,7 +700,7 @@ msgstr "Dokumentation"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "Nede ({downSystemsLength})"
 msgid "Download"
 msgstr "Hent ned"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr ""
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Varighed"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -708,19 +728,11 @@ msgstr "Rediger"
 msgid "Edit {foo}"
 msgstr "Rediger {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr ""
-
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/otp-forms.tsx
 msgid "Email"
-msgstr "E-mail"
+msgstr "Email"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Email notifications"
@@ -736,21 +748,35 @@ msgstr "Tom"
 msgid "End Time"
 msgstr "Sluttid"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "Endpoint-URL"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "Endpoint-URL til ping (påkrævet)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
-msgstr "Indtast e-mailadresse for at nulstille adgangskoden"
+msgstr "Indtast emailadresse for at nulstille adgangskoden"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
-msgstr "Indtast e-mailadresse..."
+msgstr "Indtast emailadresse..."
 
 #: src/components/login/otp-forms.tsx
 msgid "Enter your one-time password."
 msgstr "Indtast din engangsadgangskode."
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "Efemer"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "Indtast din engangsadgangskode."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "Fejl"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "Eksempel:"
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -768,7 +798,7 @@ msgstr "Overskrider {0}{1} i sidste {2, plural, one {# minut} other {# minutter}
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Exec main PID"
-msgstr ""
+msgstr "Exec vigtigste PID"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
@@ -778,7 +808,10 @@ msgstr "Eksisterende systemer ikke defineret i <0>config.yml</0> vil blive slett
 msgid "Exited active"
 msgstr "Afsluttet aktiv"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "Udløber efter en time eller ved hub-genstart."
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Eksporter"
@@ -803,33 +836,23 @@ msgstr "Mislykkedes"
 msgid "Failed Attributes:"
 msgstr "Mislykkede attributter:"
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "Fejlede tjenester"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "Kunne ikke godkende"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "Kunne ikke gemme indstillinger"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "Kunne ikke sende heartbeat"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "Afsendelse af testnotifikation mislykkedes"
 msgid "Failed to update alert"
 msgstr "Kunne ikke opdatere alarm"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Mislykkedes: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
 msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -869,7 +888,7 @@ msgstr "Fingeraftryk"
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Firmware"
-msgstr ""
+msgstr "Firmware"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "For <0>{min}</0> {min, plural, one {minute} other {minutes}}"
@@ -879,6 +898,12 @@ msgstr "For <0>{min}</0> {min, plural, one {minut} other {minutter}}"
 msgid "Forgot password?"
 msgstr "Glemt adgangskode?"
 
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "Ledig"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy install command"
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "FreeBSD kommando"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "Fuldt opladt"
@@ -900,31 +926,43 @@ msgstr "Generelt"
 msgid "Global"
 msgstr "Global"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
+#: src/components/routes/system.tsx
+msgid "GPU"
 msgstr ""
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "GPU-enheder"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
-msgstr "Gpu Strøm Træk"
+msgstr "GPU Strøm Træk"
 
 #: src/lib/alerts.ts
 msgid "GPU Usage"
 msgstr "GPU-forbrug"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "Gitter"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "Sundhed"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr "Hjerteslag"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "Heartbeat-overvågning"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "Heartbeat sendt succesfuldt"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -935,6 +973,29 @@ msgstr "Homebrew-kommando"
 #: src/components/add-system.tsx
 msgid "Host / IP"
 msgstr "Vært / IP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "HTTP-metode"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "HTTP-metode: POST, GET eller HEAD (standard: POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "I/O Vent"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "I/O Tid"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "I/O Udnyttelse"
 
 #. Context: Battery state
 #: src/lib/i18n.ts
@@ -950,38 +1011,17 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "Billede"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Inaktiv"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr ""
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "Ugyldig email adresse."
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "Kerne"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1002,13 +1042,9 @@ msgstr "Livscyklus"
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "limit"
-msgstr ""
+msgstr "grænse"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Belastning Gennemsnitlig"
 
@@ -1033,18 +1069,11 @@ msgstr "Belastning gns."
 msgid "Load state"
 msgstr "Indlæsningstilstand"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "Indlæser..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "Log ud"
@@ -1070,33 +1099,24 @@ msgstr "Leder du i stedet for efter hvor du kan oprette alarmer? Klik på klokke
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Main PID"
-msgstr ""
+msgstr "Primær PID"
 
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "Administrer display og notifikationsindstillinger."
-
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Manuel opsætningsvejledning"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr ""
-
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "Maks. 1 min"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1110,29 +1130,25 @@ msgstr "Hukommelsesgrænse"
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Memory Peak"
-msgstr ""
+msgstr "Hukommelsesspids"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "Hukommelsesforbrug"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "Hukommelsesforbrug af dockercontainere"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "Containeres hukommelsesforbrug"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "Model"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "Monteringspunkt"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1145,13 +1161,13 @@ msgstr "Navn"
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Net"
-msgstr ""
+msgstr "Net"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "Netværkstrafik af dockercontainere"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "Netværkstrafik for containere"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "Netværkstrafik af offentlige grænseflader"
 msgid "Network unit"
 msgstr "Netværksenhed"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "Nej"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "Ingen detaljerede data for denne pool."
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "Ingen S.M.A.R.T.-attributter tilgængelige for denne enhed."
 msgid "No systems found."
 msgstr "Ingen systemer fundet."
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr ""
+msgstr "Ingen"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr ""
 msgid "Notifications"
 msgstr "Notifikationer"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "Notifikationer kan indeholde uddrag af nylige containerlogfiler."
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "OAuth 2 / OIDC understøttelse"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr ""
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "Ved hver genstart vil systemer i databasen blive opdateret til at matche de systemer, der er defineret i filen."
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "En eller flere containere er usunde"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "En eller flere tjenester er i en fejlet tilstand"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "Engangs"
 msgid "One-time password"
 msgstr "Engangsadgangskode"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Åbn menu"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1327,60 +1321,30 @@ msgstr "Sat på pause"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "Sat på pause ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "Payload-format"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "Gennemsnitlig udnyttelse pr. kerne"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "Procentdel af tiden disk-en er optaget af I/O"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Procentdel af tid brugt i hver tilstand"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
 msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "Vedholdenhed"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,17 +1379,30 @@ msgstr "Se <0>dokumentationen</0> for instruktioner."
 msgid "Please sign in to your account"
 msgstr "Log venligst ind på din konto"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "Poolstatus"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "Poolforbrug"
+
 #: src/components/add-system.tsx
 msgid "Port"
 msgstr "Port"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
+msgstr "Porte"
 
 #. Power On Time
 #: src/components/routes/system/smart-table.tsx
 msgid "Power On"
 msgstr "Tænd"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "Præcis udnyttelse på det registrerede tidspunkt"
 
@@ -1433,38 +1410,12 @@ msgstr "Præcis udnyttelse på det registrerede tidspunkt"
 msgid "Preferred Language"
 msgstr "Foretrukket sprog"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Proces startet"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
 msgstr ""
 
 #. Use 'Key' if your language requires many more characters
@@ -1472,23 +1423,38 @@ msgstr ""
 msgid "Public Key"
 msgstr "Offentlig nøgle"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "Kødybde"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "Stille timer"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "Læs"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "Læsefejl"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "Modtaget"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "Opdater"
 
@@ -1530,10 +1496,12 @@ msgstr "Genstarter"
 msgid "Resume"
 msgstr "Genoptag"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
-msgstr ""
+msgstr "Root"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
@@ -1555,23 +1523,22 @@ msgstr "S.M.A.R.T.-detaljer"
 msgid "S.M.A.R.T. Self-Test"
 msgstr "S.M.A.R.T. selvtest"
 
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "Gem {foo}"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Gem adresse ved hjælp af enter eller komma. Lad feltet stå tomt for at deaktivere e-mail-meddelelser."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr ""
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "Gem indstillinger"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "Gem system"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "Gemt i databasen og udløber ikke, før du deaktiverer det."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1593,10 +1560,9 @@ msgstr "Søg"
 msgid "Search for systems or settings..."
 msgstr "Søg efter systemer eller indstillinger..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "Sekunder mellem pings (standard: 60)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1606,23 +1572,19 @@ msgstr "Se <0>meddelelsesindstillinger</0> for at konfigurere, hvordan du modtag
 msgid "Select {foo}"
 msgstr "Vælg {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "Send et enkelt heartbeat-ping for at bekræfte, at dit endpoint fungerer."
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "Send periodiske udgående pings til en ekstern overvågningstjeneste, så du kan overvåge Beszel uden at eksponere det for internettet."
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "Send test-heartbeat"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "Sendt"
 
@@ -1630,15 +1592,11 @@ msgstr "Sendt"
 msgid "Serial Number"
 msgstr "Serienummer"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "Tjenestedetaljer"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Tjenester"
@@ -1647,10 +1605,17 @@ msgstr "Tjenester"
 msgid "Set percentage thresholds for meter colors."
 msgstr "Indstil procentvise tærskler for målerfarver."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "Indstil følgende miljøvariabler på din Beszel-hub for at aktivere heartbeat-overvågning:"
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "Indstillinger"
 
@@ -1666,10 +1631,6 @@ msgstr "Log ind"
 msgid "SMTP settings"
 msgstr "SMTP-indstillinger"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr ""
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "Sorter efter"
@@ -1682,6 +1643,7 @@ msgstr "Starttid"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "Tilstand"
@@ -1698,17 +1660,23 @@ msgstr "Status"
 msgid "Sub State"
 msgstr "Undertilstand"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Swap plads brugt af systemet"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "Swap forbrug"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,13 +1688,17 @@ msgstr "Swap forbrug"
 msgid "System"
 msgstr "System"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr ""
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Gennemsnitlig system belastning over tid"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Systemd Services"
-msgstr ""
+msgstr "Systemd Services"
 
 #: src/components/navbar.tsx
 msgid "Systems"
@@ -1740,6 +1712,11 @@ msgstr "Systemer kan være administreres i filen <0>config.yml</0> i din datamap
 msgid "Table"
 msgstr "Tabel"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "Faner"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "Opgaver"
@@ -1750,7 +1727,7 @@ msgstr "Opgaver"
 msgid "Temp"
 msgstr "Temperatur"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "Temperatur"
@@ -1759,7 +1736,7 @@ msgstr "Temperatur"
 msgid "Temperature unit"
 msgstr "Temperaturenhed"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "Temperaturer i systemsensorer"
 
@@ -1767,9 +1744,17 @@ msgstr "Temperaturer i systemsensorer"
 msgid "Test <0>URL</0>"
 msgstr "Test <0>URL</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "Test-heartbeat"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "Test notifikation sendt"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "Den overordnede status er <0>ok</0>, når alle systemer kører, <1>warn</1>, når alarmer udløses, og <2>error</2>, når et system er nede."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1779,21 +1764,17 @@ msgstr "Log derefter ind på backend og nulstil adgangskoden til din brugerkonto
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "Denne handling kan ikke fortrydes. Dette vil permanent slette alle aktuelle elementer for {name} fra databasen."
 
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr ""
-
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Dette vil permanent slette alle poster fra databasen."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "Gennemløb af {extraFsName}"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "Gennemløb af rodfilsystemet"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "Gennemløb for ZFS-pool {poolName}"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "Tidsformat"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "Til email(s)"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "Slå gitter til/fra"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "Skift tema"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "Samlet modtaget data for hver interface"
 msgid "Total data sent for each interface"
 msgstr "Samlet sendt data for hver interface"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
 msgstr ""
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "I alt: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,16 +1847,32 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "Udløser når 5 minut belastning gennemsnit overstiger en tærskel"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "Udløses, når en containers helbredskontrol rapporterer en usund tilstand"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
 msgstr "Udløser når en sensor overstiger en tærskel"
 
 #: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "Udløses, når en systemd-tjeneste går i fejlet tilstand"
+
+#: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "Udløses når batteriniveauet falder under en tærskel"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
 msgstr "Udløses når de kombinerede op/ned overstiger en tærskel"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "Udløses, når CPU-I/O-ventetiden overstiger en tærskelværdi"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "Udløses, når CPU-steal-tiden overstiger en tærskelværdi"
 
 #: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
@@ -1920,9 +1900,13 @@ msgstr "Udløser når brugen af en disk overstiger en tærskel"
 msgid "Type"
 msgstr "Type"
 
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "Usund"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
-msgstr ""
+msgstr "Enhed fil"
 
 #. Temperature / network units
 #: src/components/routes/settings/general.tsx
@@ -1935,6 +1919,7 @@ msgid "Universal token"
 msgstr "Universalnøgle"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
 msgstr "Ukendt"
@@ -1942,10 +1927,10 @@ msgstr "Ukendt"
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unlimited"
-msgstr ""
+msgstr "Ubegrænset"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "Oppe"
@@ -1960,6 +1945,7 @@ msgstr "Opdater"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "Opdateret"
@@ -1972,28 +1958,30 @@ msgstr "Opdateret hver 10. minut."
 msgid "Upload"
 msgstr "Overfør"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
 msgstr "Oppetid"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "Forbrug"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "Brug af rodpartition"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "Forbrug af ZFS-pool {poolName}"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "Brugt"
 
@@ -2001,6 +1989,11 @@ msgstr "Brugt"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "Brugere"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "Udnyttelse"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "Værdi"
 msgid "View"
 msgstr "Vis"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr ""
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "Se mere"
@@ -2027,7 +2017,7 @@ msgstr "Se dine 200 nyeste alarmer."
 msgid "Visible Fields"
 msgstr "Synlige felter"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "Venter på nok posteringer til at vise"
 
@@ -2043,10 +2033,6 @@ msgstr "Ønsker"
 msgid "Warning (%)"
 msgstr "Advarsel (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr ""
-
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "Advarselstærskler"
@@ -2056,8 +2042,12 @@ msgid "Webhook / Push notifications"
 msgstr "Webhook / Push notifikationer"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "Når aktiveret tillader denne nøgle agenter at selvregistrere uden forudgående systemoprettelse. Udløber efter en time eller ved hub-genstart."
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "Når aktiveret, tillader denne token agenter at registrere sig selv uden forudgående systemoprettelse."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "Når du bruger POST, inkluderer hvert heartbeat en JSON-payload med resumé af systemstatus, liste over systemer, der er nede, og udløste alarmer."
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,10 +2056,19 @@ msgid "Windows command"
 msgstr "Windows-kommando"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "Skriv"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "Skrivefejl"
 
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
@@ -2088,3 +2087,4 @@ msgstr "Ja"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "Dine brugerindstillinger er opdateret."
+

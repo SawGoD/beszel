@@ -8,7 +8,7 @@ msgstr ""
 "Language: zh\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-11-14 22:51\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Traditional, Hong Kong\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} 可用"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "已選擇 {1} 個項目中的 {0} 個"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# 核心} other {# 核心}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} 小時} other {{countString} 小時}}
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} 分鐘} few {{countString} 分鐘} many {{countString} 分鐘} other {{countString} 分鐘}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "{diskName} 的 I/O"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# 執行緒} other {# 執行緒}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "1小時"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "1 分鐘"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "12小時"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "15 分鐘"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "30天"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "5 分鐘"
 
@@ -79,12 +97,14 @@ msgstr "5 分鐘"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "操作"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "啟用中"
@@ -97,39 +117,14 @@ msgstr "活動警報"
 msgid "Active state"
 msgstr "活動狀態"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "新增<0>系統</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "新增系統"
+msgstr "新增 {foo}"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -145,12 +140,17 @@ msgstr "調整主版面寬度"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "管理員"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "之後"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "設置環境變數後，請重新啟動 Beszel hub 以使更改生效。"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "警報"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
 msgstr "所有容器"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,73 +184,64 @@ msgstr ""
 msgid "All Systems"
 msgstr "所有系統"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr ""
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "您確定要刪除 {name} 嗎？"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr ""
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "您確定嗎？"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr ""
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "自動複製需要安全的上下文。"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "可用"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "平均"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "容器的平均 CPU 使用率"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "平均值降至<0>{value}{0}</0>以下"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
 msgstr "平均值超過 <0>{value}{0}</0>"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "等待服務的平均 I/O 操作數"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "GPU 的平均功耗"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "每次操作的平均隊列到完成時間"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "系統的平均 CPU 使用率"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "{0} 的平均使用率"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
 msgstr "GPU 引擎的平均利用率"
 
@@ -261,12 +250,18 @@ msgstr "GPU 引擎的平均利用率"
 msgid "Backups"
 msgstr "備份"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "帶寬"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr "電池"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "電池"
@@ -283,6 +278,13 @@ msgstr "變為非活動"
 msgid "Before"
 msgstr "之前"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "在過去的{2, plural, one {# 分鐘} other {# 分鐘}}中低於{0}{1}"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "Beszel支持OpenID Connect和許多OAuth2認證提供者。"
@@ -290,10 +292,6 @@ msgstr "Beszel支持OpenID Connect和許多OAuth2認證提供者。"
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel 使用 <0>Shoutrrr</0> 與流行的通知服務集成。"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr ""
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "啟動狀態"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "位元組 (KB/s, MB/s, GB/s)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "快取 / 緩衝區"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "可啟動"
 msgid "Can stop"
 msgstr "可停止"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "能力"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "容量"
 
@@ -365,7 +358,7 @@ msgstr "更改指標的顯示單位。"
 msgid "Change general application options."
 msgstr "更改一般應用選項。"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "充電"
 
@@ -378,6 +371,10 @@ msgstr "充電中"
 msgid "Chart options"
 msgstr "圖表選項"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "圖表寬度"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
 msgstr "檢查 {email} 以獲取重置鏈接。"
@@ -386,12 +383,22 @@ msgstr "檢查 {email} 以獲取重置鏈接。"
 msgid "Check logs for more details."
 msgstr "檢查日誌以取得更多資訊。"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "檢查您的監控服務"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "檢查您的通知服務"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "校驗和錯誤"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
 msgstr "清除"
@@ -403,6 +410,10 @@ msgstr "點擊容器以查看更多資訊。"
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "點擊裝置以查看更多資訊。"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "按一下 pool 以查看 vdev 和 dataset 的詳細資料。"
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -434,6 +445,18 @@ msgstr "衝突"
 msgid "Connection is down"
 msgstr "連線中斷"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "容器"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "容器健康狀態"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "容器"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
@@ -460,6 +483,11 @@ msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "複製環境變數"
 
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "複製自"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
 msgstr "複製主機"
@@ -472,6 +500,10 @@ msgstr "複製 Linux 指令"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
 msgstr "複製名稱"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -489,9 +521,10 @@ msgstr "複製下面的代理程式<0>docker-compose.yml</0>內容，或使用<1
 msgid "Copy YAML"
 msgstr "複製YAML"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr ""
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "核心"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -503,9 +536,17 @@ msgstr "處理器"
 msgid "CPU Cores"
 msgstr "CPU 核心"
 
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "CPU I/O 等待時間 (IOWait)"
+
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "CPU 峰值"
+
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "CPU 被虛擬機監控程式佔用的時間 (Steal)"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
@@ -515,8 +556,8 @@ msgstr "CPU 時間"
 msgid "CPU Time Breakdown"
 msgstr "CPU 時間細分"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "已建立"
 msgid "Critical (%)"
 msgstr "嚴重 (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "自啟動以來累計讀取的資料"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "自啟動以來累計寫入的資料"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "累計下載"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "累計讀取"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "累計上傳"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "累計寫入"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "目前狀態"
 
@@ -570,30 +621,15 @@ msgstr "週期"
 msgid "Daily"
 msgstr "每日"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr ""
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr ""
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "預設"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "預設時間段"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "裝置"
 msgid "Discharging"
 msgstr "放電中"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "磁碟"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "磁碟 I/O"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "磁碟單位"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "磁碟使用"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "{extraFsName} 的磁碟使用量"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "顯示"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "Docker CPU 使用率"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "Docker 記憶體使用率"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "Docker 網絡 I/O"
 
@@ -663,7 +700,7 @@ msgstr "文件"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "中斷 ({downSystemsLength})"
 msgid "Download"
 msgstr "下載"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr ""
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "持續時間"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -706,15 +726,7 @@ msgstr "編輯"
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr ""
+msgstr "編輯 {foo}"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -736,6 +748,14 @@ msgstr "空電"
 msgid "End Time"
 msgstr "結束時間"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "端點 URL"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "要 ping 的端點 URL (必填)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
 msgstr "輸入電子郵件地址以重置密碼"
@@ -748,9 +768,15 @@ msgstr "輸入電子郵件地址..."
 msgid "Enter your one-time password."
 msgstr "輸入您的一次性密碼。"
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "臨時"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "輸入您的一次性密碼。"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "錯誤"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "範例："
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -778,7 +808,10 @@ msgstr "未在<0>config.yml</0>中定義的現有系統將被刪除。請定期�
 msgid "Exited active"
 msgstr "退出活動狀態"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "一小時後或重新啟動集線器時過期。"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "匯出"
@@ -803,33 +836,23 @@ msgstr "失敗"
 msgid "Failed Attributes:"
 msgstr "失敗屬性："
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "失敗的服務"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "認證失敗"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "儲存設定失敗"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "發送 heartbeat 失敗"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "發送測試通知失敗"
 msgid "Failed to update alert"
 msgstr "更新警報失敗"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "失敗: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
 msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -879,6 +898,12 @@ msgstr "持續<0>{min}</0> {min, plural, one {分鐘} other {分鐘}}"
 msgid "Forgot password?"
 msgstr "忘記密碼？"
 
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "可用空間"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy install command"
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "FreeBSD 指令"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "滿電"
@@ -900,17 +926,15 @@ msgstr "一般"
 msgid "Global"
 msgstr "全域"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
+#: src/components/routes/system.tsx
+msgid "GPU"
 msgstr ""
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "GPU 引擎"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
 msgstr "GPU 功耗"
 
@@ -918,13 +942,27 @@ msgstr "GPU 功耗"
 msgid "GPU Usage"
 msgstr "GPU 使用率"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "網格"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "健康狀態"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr "心跳 (Heartbeat)"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "Heartbeat 監控"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "Heartbeat 發送成功"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -935,6 +973,29 @@ msgstr "Homebrew 指令"
 #: src/components/add-system.tsx
 msgid "Host / IP"
 msgstr "主機 / IP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "HTTP 方法"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "HTTP 方法：POST、GET 或 HEAD (預設：POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "I/O 等待"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "I/O 時間"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "I/O 利用率"
 
 #. Context: Battery state
 #: src/lib/i18n.ts
@@ -950,38 +1011,17 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "鏡像"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "未啟用"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr "間隔"
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "無效的電子郵件地址。"
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "核心"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1004,11 +1044,7 @@ msgstr "生命週期"
 msgid "limit"
 msgstr "限制"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "平均負載"
 
@@ -1033,18 +1069,11 @@ msgstr "平均負載"
 msgid "Load state"
 msgstr "載入狀態"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "載入中..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "登出"
@@ -1076,27 +1105,18 @@ msgstr "主進程 ID"
 msgid "Manage display and notification preferences."
 msgstr "管理顯示和通知偏好。"
 
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr ""
-
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "手動設定說明"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr ""
-
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "一分鐘內最大值"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1112,27 +1132,23 @@ msgstr "記憶體限制"
 msgid "Memory Peak"
 msgstr "記憶體峰值"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "記憶體使用"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "Docker 容器的記憶體使用量"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "容器記憶體使用量"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "型號"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "掛載點"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1147,11 +1163,11 @@ msgstr "名稱"
 msgid "Net"
 msgstr "網絡"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "Docker 容器的網絡流量"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "容器網絡流量"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "公共接口的網絡流量"
 msgid "Network unit"
 msgstr "網路單位"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "否"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "此 pool 沒有可用的詳細資料。"
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "此裝置沒有可用的 S.M.A.R.T. 屬性。"
 msgid "No systems found."
 msgstr "未找到系統。"
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr ""
+msgstr "無"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr ""
 msgid "Notifications"
 msgstr "通知"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "通知可能包含最近的容器日誌片段。"
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "支援 OAuth 2 / OIDC"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr ""
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "每次重新啟動時，將會以檔案中的系統定義更新資料庫。"
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "一個或多個容器處於不健康狀態"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "一個或多個服務處於失敗狀態"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "一次性"
 msgid "One-time password"
 msgstr "一次性密碼"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "開啟選單"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1313,7 +1307,7 @@ msgstr "已收到密碼重設請求"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Past"
-msgstr ""
+msgstr "過去"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Pause"
@@ -1327,60 +1321,30 @@ msgstr "已暫停"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "已暫停 ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "負載 (Payload) 格式"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "每個核心的平均使用率"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "磁碟忙於 I/O 操作的時間百分比"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "在每個狀態下花費的時間百分比"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
-msgstr ""
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
+msgstr "永久"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "持久性"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,17 +1379,30 @@ msgstr "請參閱<0>文件</0>以取得說明。"
 msgid "Please sign in to your account"
 msgstr "請登入您的帳號"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "Pool 健康狀態"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "Pool 使用量"
+
 #: src/components/add-system.tsx
 msgid "Port"
 msgstr "端口"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
+msgstr "連接埠"
 
 #. Power On Time
 #: src/components/routes/system/smart-table.tsx
 msgid "Power On"
 msgstr "電源開啟"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "記錄時間的精確使用率"
 
@@ -1433,38 +1410,12 @@ msgstr "記錄時間的精確使用率"
 msgid "Preferred Language"
 msgstr "首選語言"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "進程啟動"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
 msgstr ""
 
 #. Use 'Key' if your language requires many more characters
@@ -1472,23 +1423,38 @@ msgstr ""
 msgid "Public Key"
 msgstr "公鑰"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "隊列深度"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "靜音時段"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "讀取"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "讀取錯誤"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "接收"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "重新整理"
 
@@ -1530,6 +1496,8 @@ msgstr "重啟次數"
 msgid "Resume"
 msgstr "恢復"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
@@ -1555,27 +1523,26 @@ msgstr "S.M.A.R.T. 詳情"
 msgid "S.M.A.R.T. Self-Test"
 msgstr "S.M.A.R.T. 自檢"
 
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "儲存 {foo}"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "使用回車鍵或逗號保存地址。留空以禁用電子郵件通知。"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr ""
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "儲存設定"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "儲存系統"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "儲存在資料庫中，在您停用之前不會過期。"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
-msgstr ""
+msgstr "排程"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule quiet hours where notifications will not be sent, such as during maintenance periods."
@@ -1593,10 +1560,9 @@ msgstr "搜索"
 msgid "Search for systems or settings..."
 msgstr "搜索系統或設置..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "Ping 之間的秒數 (預設：60)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1604,25 +1570,21 @@ msgstr "查看<0>通知設置</0>以配置您接收警報的方式。"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
-msgstr ""
+msgstr "選擇 {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "發送單次 heartbeat ping 以驗證您的端點是否正常運作。"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "定期向外部監控服務發送出站 ping，以便您在不將 Beszel 暴露於網際網路的情況下進行監控。"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "發送測試 heartbeat"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "發送"
 
@@ -1630,15 +1592,11 @@ msgstr "發送"
 msgid "Serial Number"
 msgstr "序列號"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "服務詳情"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "服務"
@@ -1647,10 +1605,17 @@ msgstr "服務"
 msgid "Set percentage thresholds for meter colors."
 msgstr "設定儀表顏色的百分比閾值。"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "在您的 Beszel hub 上設置以下環境變數以啟用 heartbeat 監控："
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "設置"
 
@@ -1666,10 +1631,6 @@ msgstr "登錄"
 msgid "SMTP settings"
 msgstr "SMTP設置"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr ""
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "排序依據"
@@ -1682,6 +1643,7 @@ msgstr "開始時間"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "狀態"
@@ -1698,17 +1660,23 @@ msgstr "狀態"
 msgid "Sub State"
 msgstr "子狀態"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "系統使用的交換空間"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "交換使用"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,7 +1688,11 @@ msgstr "交換使用"
 msgid "System"
 msgstr "系統"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr ""
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "系統平均負載隨時間變化"
 
@@ -1740,6 +1712,11 @@ msgstr "系統可以在您的數據目錄中的<0>config.yml</0>文件中管理�
 msgid "Table"
 msgstr "表格"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "分頁"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "任務數"
@@ -1750,7 +1727,7 @@ msgstr "任務數"
 msgid "Temp"
 msgstr "溫度"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "溫度"
@@ -1759,7 +1736,7 @@ msgstr "溫度"
 msgid "Temperature unit"
 msgstr "溫度單位"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "系統傳感器的溫度"
 
@@ -1767,9 +1744,17 @@ msgstr "系統傳感器的溫度"
 msgid "Test <0>URL</0>"
 msgstr "測試<0>URL</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "測試 heartbeat"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "測試通知已發送"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "當所有系統都正常運行時，整體狀態為 <0>正常</0>；當觸發警報時為 <1>警告</1>；當任何系統故障時為 <2>錯誤</2>。"
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1779,21 +1764,17 @@ msgstr "然後登錄到後端並在用戶表中重置您的用戶帳戶密碼。
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "此操作無法撤銷。這將永久刪除數據庫中{name}的所有當前記錄。"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr ""
-
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "這將從資料庫中永久刪除所有選定的記錄。"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "{extraFsName}的吞吐量"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "根文件系統的吞吐量"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "ZFS pool {poolName} 輸送量"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "時間格式"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "發送到電子郵件"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "切換網格"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "切換主題"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "每個介面的總接收資料量"
 msgid "Total data sent for each interface"
 msgstr "每個介面的總傳送資料量"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
 msgstr ""
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "總計: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,16 +1847,32 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "當 5 分鐘平均負載超過閾值時觸發"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "當容器健康檢查報告不健康狀態時觸發"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
 msgstr "當任何傳感器超過閾值時觸發"
 
 #: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "當任何 systemd 服務進入失敗狀態時觸發"
+
+#: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "當電池電量降至閾值以下時觸發"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
 msgstr "當組合的上/下超過閾值時觸發"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "當 CPU I/O 等待時間超過閾值時觸發"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "當 CPU 竊取時間超過閾值時觸發"
 
 #: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
@@ -1920,6 +1900,10 @@ msgstr "當任何磁碟的使用超過閾值時觸發"
 msgid "Type"
 msgstr "類型"
 
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "不健康"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
 msgstr "單元檔案"
@@ -1935,6 +1919,7 @@ msgid "Universal token"
 msgstr "通用令牌"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
 msgstr "未知"
@@ -1945,7 +1930,7 @@ msgid "Unlimited"
 msgstr "無限制"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "上線"
@@ -1960,6 +1945,7 @@ msgstr "更新"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "已更新"
@@ -1972,28 +1958,30 @@ msgstr "每 10 分鐘更新一次。"
 msgid "Upload"
 msgstr "上傳"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
-msgstr "正常運行時間"
+msgstr "運行時間"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "使用"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "根分區的使用"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "ZFS pool {poolName} 使用量"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "已用"
 
@@ -2001,6 +1989,11 @@ msgstr "已用"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "用戶"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "利用率"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "值"
 msgid "View"
 msgstr "檢視"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr ""
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "查看更多"
@@ -2027,7 +2017,7 @@ msgstr "檢視最近 200 則警報。"
 msgid "Visible Fields"
 msgstr "可見欄位"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "等待足夠的記錄以顯示"
 
@@ -2043,10 +2033,6 @@ msgstr "希望"
 msgid "Warning (%)"
 msgstr "警告 (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr ""
-
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "警告閾值"
@@ -2056,8 +2042,12 @@ msgid "Webhook / Push notifications"
 msgstr "Webhook / 推送通知"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "啟用時，此令牌允許代理程式在無需預先創建系統的情況下自動註冊。在一小時後或中心重啟時過期。"
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "啟用後，此權杖允許代理無需事先建立系統即可自行註冊。"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "使用 POST 時，每個 heartbeat 都包含一個 JSON 負載，其中包含系統狀態摘要、故障系統列表和觸發的警報。"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,10 +2056,19 @@ msgid "Windows command"
 msgstr "Windows 指令"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "寫入"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "寫入錯誤"
 
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
@@ -2088,3 +2087,4 @@ msgstr "是"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "您的用戶設置已更新。"
+

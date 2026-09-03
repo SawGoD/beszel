@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package alerts
 
@@ -9,6 +8,18 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 )
+
+func NewTestAlertManagerWithoutWorker(app hubLike) *AlertManager {
+	return &AlertManager{
+		hub:         app,
+		alertsCache: NewAlertsCache(app),
+	}
+}
+
+// GetSystemAlertsCache returns the internal system alerts cache.
+func (am *AlertManager) GetSystemAlertsCache() *AlertsCache {
+	return am.alertsCache
+}
 
 func (am *AlertManager) GetAlertManager() *AlertManager {
 	return am
@@ -28,19 +39,18 @@ func (am *AlertManager) GetPendingAlertsCount() int {
 }
 
 // ProcessPendingAlerts manually processes all expired alerts (for testing)
-func (am *AlertManager) ProcessPendingAlerts() ([]*core.Record, error) {
+func (am *AlertManager) ProcessPendingAlerts() ([]CachedAlertData, error) {
 	now := time.Now()
 	var lastErr error
-	var processedAlerts []*core.Record
+	var processedAlerts []CachedAlertData
 	am.pendingAlerts.Range(func(key, value any) bool {
 		info := value.(*alertInfo)
 		if now.After(info.expireTime) {
-			// Downtime delay has passed, process alert
-			if err := am.sendStatusAlert("down", info.systemName, info.alertRecord); err != nil {
-				lastErr = err
+			if info.timer != nil {
+				info.timer.Stop()
 			}
-			processedAlerts = append(processedAlerts, info.alertRecord)
-			am.pendingAlerts.Delete(key)
+			am.processPendingAlert(key.(string))
+			processedAlerts = append(processedAlerts, info.alertData)
 		}
 		return true
 	})
@@ -57,6 +67,44 @@ func (am *AlertManager) ForceExpirePendingAlerts() {
 	})
 }
 
+func (am *AlertManager) ResetPendingAlertTimer(alertID string, delay time.Duration) bool {
+	value, loaded := am.pendingAlerts.Load(alertID)
+	if !loaded {
+		return false
+	}
+
+	info := value.(*alertInfo)
+	if info.timer != nil {
+		info.timer.Stop()
+	}
+	info.expireTime = time.Now().Add(delay)
+	info.timer = time.AfterFunc(delay, func() {
+		am.processPendingAlert(alertID)
+	})
+	return true
+}
+
 func ResolveStatusAlerts(app core.App) error {
 	return resolveStatusAlerts(app)
+}
+
+func ResolveSystemdAlerts(app core.App) error {
+	return resolveSystemdAlerts(app)
+}
+
+func (am *AlertManager) RestorePendingStatusAlerts() error {
+	return am.restorePendingStatusAlerts()
+}
+
+func (am *AlertManager) SetAlertTriggered(alert CachedAlertData, triggered bool) error {
+	return am.setAlertTriggered(alert, triggered)
+}
+
+func IsInternalURL(rawURL string) (bool, error) {
+	return isInternalURL(rawURL)
+}
+
+// BuildContainerLogExcerpt exposes buildContainerLogExcerpt for testing.
+func BuildContainerLogExcerpt(raw string) string {
+	return buildContainerLogExcerpt(raw)
 }

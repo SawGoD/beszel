@@ -1,12 +1,13 @@
 //go:build testing
-// +build testing
 
 package agent
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/henrygd/beszel/internal/entities/smart"
@@ -25,7 +26,7 @@ func TestParseSmartForScsi(t *testing.T) {
 		SmartDataMap: make(map[string]*smart.SmartData),
 	}
 
-	hasData, exitStatus := sm.parseSmartForScsi(data)
+	hasData, exitStatus := sm.parseSmartForScsi(data, "")
 	if !hasData {
 		t.Fatalf("expected SCSI data to parse successfully")
 	}
@@ -70,7 +71,7 @@ func TestParseSmartForSata(t *testing.T) {
 		SmartDataMap: make(map[string]*smart.SmartData),
 	}
 
-	hasData, exitStatus := sm.parseSmartForSata(data)
+	hasData, exitStatus := sm.parseSmartForSata(data, "")
 	require.True(t, hasData)
 	assert.Equal(t, 64, exitStatus)
 
@@ -87,6 +88,157 @@ func TestParseSmartForSata(t *testing.T) {
 	if assert.NotEmpty(t, deviceData.Attributes) {
 		assertAttrValue(t, deviceData.Attributes, "Temperature_Celsius", 31)
 	}
+}
+
+func TestParseSmartForSataWarnsForCriticalAttributes(t *testing.T) {
+	for _, attrID := range []int{5, 197, 198} {
+		t.Run("attribute "+strconv.Itoa(attrID), func(t *testing.T) {
+			jsonPayload := []byte(fmt.Sprintf(`{
+				"smartctl": {"exit_status": 0},
+				"device": {"name": "/dev/sda", "type": "sat"},
+				"model_name": "Example",
+				"serial_number": "WARNING%d",
+				"smart_status": {"passed": true},
+				"temperature": {"current": 30},
+				"ata_smart_attributes": {"table": [{"id": %d, "raw": {"value": 1, "string": "1"}}]}
+			}`, attrID, attrID))
+
+			sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+			hasData, _ := sm.parseSmartForSata(jsonPayload, "")
+			require.True(t, hasData)
+			assert.Equal(t, "WARNING", sm.SmartDataMap[fmt.Sprintf("WARNING%d", attrID)].SmartStatus)
+		})
+	}
+}
+
+func TestParseSmartForSataPreservesFailedAndUnknownStatus(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		temperature int
+		want        string
+	}{
+		{name: "failed", temperature: 30, want: "FAILED"},
+		{name: "unknown", want: "UNKNOWN"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			jsonPayload := []byte(fmt.Sprintf(`{
+				"device": {"name": "/dev/sda", "type": "sat"},
+				"serial_number": "PRESERVE%s",
+				"temperature": {"current": %d},
+				"ata_smart_attributes": {"table": [{"id": 197, "raw": {"value": 1, "string": "1"}}]}
+			}`, test.name, test.temperature))
+
+			sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+			hasData, _ := sm.parseSmartForSata(jsonPayload, "")
+			require.True(t, hasData)
+			assert.Equal(t, test.want, sm.SmartDataMap["PRESERVE"+test.name].SmartStatus)
+		})
+	}
+}
+
+func TestParseSmartForSataDeviceStatisticsTemperature(t *testing.T) {
+	jsonPayload := []byte(`{
+		"smartctl": {"exit_status": 0},
+		"device": {"name": "/dev/sdb", "type": "sat"},
+		"model_name": "SanDisk SSD U110 16GB",
+		"serial_number": "DEVSTAT123",
+		"firmware_version": "U21B001",
+		"user_capacity": {"bytes": 16013942784},
+		"smart_status": {"passed": true},
+		"ata_smart_attributes": {"table": []},
+		"ata_device_statistics": {
+			"pages": [
+				{
+					"number": 5,
+					"name": "Temperature Statistics",
+					"table": [
+						{"name": "Current Temperature", "value": 22, "flags": {"valid": true}}
+					]
+				}
+			]
+		}
+	}`)
+
+	sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+	hasData, exitStatus := sm.parseSmartForSata(jsonPayload, "")
+	require.True(t, hasData)
+	assert.Equal(t, 0, exitStatus)
+
+	deviceData, ok := sm.SmartDataMap["DEVSTAT123"]
+	require.True(t, ok, "expected smart data entry for serial DEVSTAT123")
+	assert.Equal(t, uint8(22), deviceData.Temperature)
+}
+
+func TestParseSmartForSataAtaDeviceStatistics(t *testing.T) {
+	// tests that ata_device_statistics values are parsed correctly
+	jsonPayload := []byte(`{
+		"smartctl": {"exit_status": 0},
+		"device": {"name": "/dev/sdb", "type": "sat"},
+		"model_name": "SanDisk SSD U110 16GB",
+		"serial_number": "lksjfh23lhj",
+		"firmware_version": "U21B001",
+		"user_capacity": {"bytes": 16013942784},
+		"smart_status": {"passed": true},
+		"ata_smart_attributes": {"table": []},
+		"ata_device_statistics": {
+			"pages": [
+				{
+					"number": 5,
+					"name": "Temperature Statistics",
+					"table": [
+						{"name": "Current Temperature", "value": 43, "flags": {"valid": true}},
+						{"name": "Specified Minimum Operating Temperature", "value": -20, "flags": {"valid": true}}
+					]
+				}
+			]
+		}
+	}`)
+
+	sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+	hasData, exitStatus := sm.parseSmartForSata(jsonPayload, "")
+	require.True(t, hasData)
+	assert.Equal(t, 0, exitStatus)
+
+	deviceData, ok := sm.SmartDataMap["lksjfh23lhj"]
+	require.True(t, ok, "expected smart data entry for serial lksjfh23lhj")
+	assert.Equal(t, uint8(43), deviceData.Temperature)
+}
+
+func TestParseSmartForSataNegativeDeviceStatistics(t *testing.T) {
+	// Tests that negative values in ata_device_statistics (e.g. min operating temp)
+	// do not cause the entire SAT parser to fail.
+	jsonPayload := []byte(`{
+		"smartctl": {"exit_status": 0},
+		"device": {"name": "/dev/sdb", "type": "sat"},
+		"model_name": "SanDisk SSD U110 16GB",
+		"serial_number": "NEGATIVE123",
+		"firmware_version": "U21B001",
+		"user_capacity": {"bytes": 16013942784},
+		"smart_status": {"passed": true},
+		"temperature": {"current": 38},
+		"ata_smart_attributes": {"table": []},
+		"ata_device_statistics": {
+			"pages": [
+				{
+					"number": 5,
+					"name": "Temperature Statistics",
+					"table": [
+						{"name": "Current Temperature", "value": 38, "flags": {"valid": true}},
+						{"name": "Specified Minimum Operating Temperature", "value": -20, "flags": {"valid": true}}
+					]
+				}
+			]
+		}
+	}`)
+
+	sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+	hasData, exitStatus := sm.parseSmartForSata(jsonPayload, "")
+	require.True(t, hasData)
+	assert.Equal(t, 0, exitStatus)
+
+	deviceData, ok := sm.SmartDataMap["NEGATIVE123"]
+	require.True(t, ok, "expected smart data entry for serial NEGATIVE123")
+	assert.Equal(t, uint8(38), deviceData.Temperature)
 }
 
 func TestParseSmartForSataParentheticalRawValue(t *testing.T) {
@@ -119,7 +271,7 @@ func TestParseSmartForSataParentheticalRawValue(t *testing.T) {
 
 	sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
 
-	hasData, exitStatus := sm.parseSmartForSata(jsonPayload)
+	hasData, exitStatus := sm.parseSmartForSata(jsonPayload, "")
 	require.True(t, hasData)
 	assert.Equal(t, 0, exitStatus)
 
@@ -141,7 +293,7 @@ func TestParseSmartForNvme(t *testing.T) {
 		SmartDataMap: make(map[string]*smart.SmartData),
 	}
 
-	hasData, exitStatus := sm.parseSmartForNvme(data)
+	hasData, exitStatus := sm.parseSmartForNvme(data, "")
 	require.True(t, hasData)
 	assert.Equal(t, 0, exitStatus)
 
@@ -164,13 +316,15 @@ func TestParseSmartForNvme(t *testing.T) {
 func TestHasDataForDevice(t *testing.T) {
 	sm := &SmartManager{
 		SmartDataMap: map[string]*smart.SmartData{
-			"serial-1": {DiskName: "/dev/sda"},
+			"serial-1": {DiskName: "/dev/sda", DiskType: "jms56x,0"},
 			"serial-2": nil,
 		},
 	}
 
-	assert.True(t, sm.hasDataForDevice("/dev/sda"))
-	assert.False(t, sm.hasDataForDevice("/dev/sdb"))
+	assert.True(t, sm.hasDataForDevice(&DeviceInfo{Name: "/dev/sda", Type: "jms56x,0"}))
+	assert.False(t, sm.hasDataForDevice(&DeviceInfo{Name: "/dev/sda", Type: "jms56x,1"}))
+	assert.False(t, sm.hasDataForDevice(&DeviceInfo{Name: "/dev/sdb", Type: "jms56x,0"}))
+	assert.False(t, sm.hasDataForDevice(nil))
 }
 
 func TestDevicesSnapshotReturnsCopy(t *testing.T) {
@@ -193,6 +347,24 @@ func TestDevicesSnapshotReturnsCopy(t *testing.T) {
 
 	sm.SmartDevices = append(sm.SmartDevices, &DeviceInfo{Name: "/dev/nvme1"})
 	assert.Len(t, snapshot, 2)
+}
+
+func TestScanDevicesWithEnvOverrideAndSeparator(t *testing.T) {
+	t.Setenv("SMART_DEVICES_SEPARATOR", "|")
+	t.Setenv("SMART_DEVICES", "/dev/sda:jmb39x-q,0|/dev/nvme0:nvme")
+
+	sm := &SmartManager{
+		SmartDataMap: make(map[string]*smart.SmartData),
+	}
+
+	err := sm.ScanDevices(true)
+	require.NoError(t, err)
+
+	require.Len(t, sm.SmartDevices, 2)
+	assert.Equal(t, "/dev/sda", sm.SmartDevices[0].Name)
+	assert.Equal(t, "jmb39x-q,0", sm.SmartDevices[0].Type)
+	assert.Equal(t, "/dev/nvme0", sm.SmartDevices[1].Name)
+	assert.Equal(t, "nvme", sm.SmartDevices[1].Type)
 }
 
 func TestScanDevicesWithEnvOverride(t *testing.T) {
@@ -249,19 +421,100 @@ func TestSmartctlArgs(t *testing.T) {
 
 	sataDevice := &DeviceInfo{Name: "/dev/sda", Type: "sat"}
 	assert.Equal(t,
-		[]string{"-d", "sat", "-a", "--json=c", "-n", "standby", "/dev/sda"},
+		[]string{"-d", "sat", "-a", "--json=c", "-l", "devstat", "-n", "standby", "/dev/sda"},
 		sm.smartctlArgs(sataDevice, true),
 	)
 
 	assert.Equal(t,
-		[]string{"-d", "sat", "-a", "--json=c", "/dev/sda"},
+		[]string{"-d", "sat", "-a", "--json=c", "-l", "devstat", "/dev/sda"},
 		sm.smartctlArgs(sataDevice, false),
+	)
+
+	nvmeDevice := &DeviceInfo{Name: "/dev/nvme0", Type: "nvme"}
+	assert.Equal(t,
+		[]string{"-d", "nvme", "-a", "--json=c", "-n", "standby", "/dev/nvme0"},
+		sm.smartctlArgs(nvmeDevice, true),
 	)
 
 	assert.Equal(t,
 		[]string{"-a", "--json=c", "-n", "standby"},
 		sm.smartctlArgs(nil, true),
 	)
+}
+
+// TestSmartctlArgsExplicitType verifies that an explicit SMART_DEVICES type hint
+// is always passed to smartctl via -d, while a scan-detected scsi/ata type is
+// still left off so smartctl can auto-detect it (see issue #1345).
+func TestSmartctlArgsExplicitType(t *testing.T) {
+	sm := &SmartManager{}
+
+	// Scan-detected scsi: -d is intentionally omitted.
+	scanScsi := &DeviceInfo{Name: "/dev/sda", Type: "scsi"}
+	assert.Equal(t,
+		[]string{"-a", "--json=c", "/dev/sda"},
+		sm.smartctlArgs(scanScsi, false),
+	)
+
+	// Explicit scsi from SMART_DEVICES: -d scsi must be passed.
+	explicitScsi := &DeviceInfo{Name: "/dev/sda", Type: "scsi", explicitType: true}
+	assert.Equal(t,
+		[]string{"-d", "scsi", "-a", "--json=c", "/dev/sda"},
+		sm.smartctlArgs(explicitScsi, false),
+	)
+
+	// Explicit ata from SMART_DEVICES: -d ata must be passed (devstat still added).
+	explicitAta := &DeviceInfo{Name: "/dev/sdb", Type: "ata", explicitType: true}
+	assert.Equal(t,
+		[]string{"-d", "ata", "-a", "--json=c", "-l", "devstat", "/dev/sdb"},
+		sm.smartctlArgs(explicitAta, false),
+	)
+}
+
+// TestSmartDevicesExplicitTypeFlowsToSmartctlArgs is a regression test for
+// issue #2072: an explicit SMART_DEVICES type (e.g. /dev/sda:scsi) must win over
+// a wrong scan-detected type (sat) and be handed to smartctl as -d scsi.
+func TestSmartDevicesExplicitTypeFlowsToSmartctlArgs(t *testing.T) {
+	sm := &SmartManager{}
+
+	configured, err := sm.parseConfiguredDevices("/dev/sda:scsi")
+	require.NoError(t, err)
+	require.Len(t, configured, 1)
+	assert.True(t, configured[0].explicitType)
+
+	// smartctl --scan misreports this USB drive as sat, which fails on it.
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sda", Type: "sat", Protocol: "ATA"},
+	}
+
+	merged := mergeDeviceLists(nil, scanned, configured)
+	require.Len(t, merged, 1)
+
+	device := merged[0]
+	assert.Equal(t, "scsi", device.Type, "configured type should win over scan-detected sat")
+	assert.True(t, device.explicitType, "explicit hint must survive the merge")
+
+	assert.Equal(t,
+		[]string{"-d", "scsi", "-a", "--json=c", "/dev/sda"},
+		sm.smartctlArgs(device, false),
+		"explicit scsi type must be passed to smartctl, not dropped",
+	)
+}
+
+// TestMergeDeviceListsPreservesExplicitTypeAcrossRescan ensures a verified,
+// explicitly-typed device keeps its explicit flag when a later scan re-reports
+// it with a different auto-detected type.
+func TestMergeDeviceListsPreservesExplicitTypeAcrossRescan(t *testing.T) {
+	existing := []*DeviceInfo{
+		{Name: "/dev/sda", Type: "scsi", parserType: "scsi", typeVerified: true, explicitType: true},
+	}
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sda", Type: "sat"},
+	}
+
+	merged := mergeDeviceLists(existing, scanned, nil)
+	require.Len(t, merged, 1)
+	assert.Equal(t, "scsi", merged[0].Type)
+	assert.True(t, merged[0].explicitType, "explicit type flag should survive a rescan")
 }
 
 func TestResolveRefreshError(t *testing.T) {
@@ -406,6 +659,74 @@ func TestMergeDeviceListsPrefersConfigured(t *testing.T) {
 	assert.Equal(t, "sat", byName["/dev/sdb"].Type)
 }
 
+func TestMergeDeviceListsExpandsConfiguredDevicesWithSamePath(t *testing.T) {
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "sat", InfoName: "scan-info", Protocol: "ATA"},
+	}
+	configured := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "jms56x,0", explicitType: true},
+		{Name: "/dev/sdb", Type: "jms56x,1", explicitType: true},
+	}
+
+	merged := mergeDeviceLists(nil, scanned, configured)
+	require.Len(t, merged, 2)
+
+	byKey := make(map[deviceKey]*DeviceInfo, len(merged))
+	for _, device := range merged {
+		byKey[makeDeviceKey(device.Name, device.Type)] = device
+	}
+
+	first := byKey[makeDeviceKey("/dev/sdb", "jms56x,0")]
+	require.NotNil(t, first)
+	assert.Equal(t, "scan-info", first.InfoName)
+	assert.Equal(t, "ATA", first.Protocol)
+	assert.True(t, first.explicitType)
+
+	second := byKey[makeDeviceKey("/dev/sdb", "jms56x,1")]
+	require.NotNil(t, second)
+	assert.True(t, second.explicitType)
+	assert.NotContains(t, byKey, makeDeviceKey("/dev/sdb", "sat"))
+}
+
+func TestMergeDeviceListsPreservesSamePathVerificationAcrossRescan(t *testing.T) {
+	existing := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "jms56x,0", parserType: "sat", typeVerified: true, explicitType: true},
+		{Name: "/dev/sdb", Type: "jms56x,1", parserType: "sat", typeVerified: true, explicitType: true},
+	}
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "sat", Protocol: "ATA"},
+	}
+	configured := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "jms56x,0", explicitType: true},
+		{Name: "/dev/sdb", Type: "jms56x,1", explicitType: true},
+	}
+
+	merged := mergeDeviceLists(existing, scanned, configured)
+	require.Len(t, merged, 2)
+	byKey := make(map[deviceKey]*DeviceInfo, len(merged))
+	for _, device := range merged {
+		byKey[makeDeviceKey(device.Name, device.Type)] = device
+		assert.True(t, device.typeVerified, device.Type)
+		assert.Equal(t, "sat", device.parserType, device.Type)
+		assert.True(t, device.explicitType, device.Type)
+	}
+	assert.Contains(t, byKey, makeDeviceKey("/dev/sdb", "jms56x,0"))
+	assert.Contains(t, byKey, makeDeviceKey("/dev/sdb", "jms56x,1"))
+}
+
+func TestMergeDeviceListsDeduplicatesConfiguredIdentityAfterRekey(t *testing.T) {
+	scanned := []*DeviceInfo{{Name: "/dev/sdb", Type: "sat"}}
+	configured := []*DeviceInfo{
+		{Name: "/dev/sdb", Type: "jms56x,0", explicitType: true},
+		{Name: "/dev/sdb", Type: "jms56x,0", explicitType: true},
+	}
+
+	merged := mergeDeviceLists(nil, scanned, configured)
+	require.Len(t, merged, 1)
+	assert.Equal(t, "/dev/sdb", merged[0].Name)
+	assert.Equal(t, "jms56x,0", merged[0].Type)
+}
+
 func TestMergeDeviceListsPreservesVerification(t *testing.T) {
 	existing := []*DeviceInfo{
 		{Name: "/dev/sda", Type: "sat+megaraid", parserType: "sat", typeVerified: true},
@@ -442,6 +763,88 @@ func TestMergeDeviceListsUpdatesTypeWhenUnverified(t *testing.T) {
 	assert.Equal(t, "", device.parserType)
 }
 
+func TestMergeDeviceListsHandlesDevicesWithSameNameAndDifferentTypes(t *testing.T) {
+	// There are use cases where the same device name is re-used,
+	// for example, a RAID controller with multiple drives.
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sda", Type: "megaraid,0"},
+		{Name: "/dev/sda", Type: "megaraid,1"},
+		{Name: "/dev/sda", Type: "megaraid,2"},
+	}
+
+	merged := mergeDeviceLists(nil, scanned, nil)
+	require.Len(t, merged, 3, "should have 3 separate devices for RAID controller")
+
+	byKey := make(map[string]*DeviceInfo, len(merged))
+	for _, dev := range merged {
+		key := dev.Name + "|" + dev.Type
+		byKey[key] = dev
+	}
+
+	assert.Contains(t, byKey, "/dev/sda|megaraid,0")
+	assert.Contains(t, byKey, "/dev/sda|megaraid,1")
+	assert.Contains(t, byKey, "/dev/sda|megaraid,2")
+}
+
+func TestMergeDeviceListsHandlesMixedRAIDAndRegular(t *testing.T) {
+	// Test mixing RAID drives with regular devices
+	scanned := []*DeviceInfo{
+		{Name: "/dev/sda", Type: "megaraid,0"},
+		{Name: "/dev/sda", Type: "megaraid,1"},
+		{Name: "/dev/sdb", Type: "sat"},
+		{Name: "/dev/nvme0", Type: "nvme"},
+	}
+
+	merged := mergeDeviceLists(nil, scanned, nil)
+	require.Len(t, merged, 4, "should have 4 separate devices")
+
+	byKey := make(map[string]*DeviceInfo, len(merged))
+	for _, dev := range merged {
+		key := dev.Name + "|" + dev.Type
+		byKey[key] = dev
+	}
+
+	assert.Contains(t, byKey, "/dev/sda|megaraid,0")
+	assert.Contains(t, byKey, "/dev/sda|megaraid,1")
+	assert.Contains(t, byKey, "/dev/sdb|sat")
+	assert.Contains(t, byKey, "/dev/nvme0|nvme")
+}
+
+func TestUpdateSmartDevicesPreservesRAIDDrives(t *testing.T) {
+	// Test that updateSmartDevices correctly validates RAID drives using composite keys
+	sm := &SmartManager{
+		SmartDevices: []*DeviceInfo{
+			{Name: "/dev/sda", Type: "megaraid,0"},
+			{Name: "/dev/sda", Type: "megaraid,1"},
+		},
+		SmartDataMap: map[string]*smart.SmartData{
+			"serial-0": {
+				DiskName:     "/dev/sda",
+				DiskType:     "megaraid,0",
+				SerialNumber: "serial-0",
+			},
+			"serial-1": {
+				DiskName:     "/dev/sda",
+				DiskType:     "megaraid,1",
+				SerialNumber: "serial-1",
+			},
+			"serial-stale": {
+				DiskName:     "/dev/sda",
+				DiskType:     "megaraid,2",
+				SerialNumber: "serial-stale",
+			},
+		},
+	}
+
+	sm.updateSmartDevices(sm.SmartDevices)
+
+	// serial-0 and serial-1 should be preserved (matching devices exist)
+	assert.Contains(t, sm.SmartDataMap, "serial-0")
+	assert.Contains(t, sm.SmartDataMap, "serial-1")
+	// serial-stale should be removed (no matching device)
+	assert.NotContains(t, sm.SmartDataMap, "serial-stale")
+}
+
 func TestParseSmartOutputMarksVerified(t *testing.T) {
 	fixturePath := filepath.Join("test-data", "smart", "nvme0.json")
 	data, err := os.ReadFile(fixturePath)
@@ -468,6 +871,20 @@ func TestParseSmartOutputKeepsCustomType(t *testing.T) {
 	assert.Equal(t, "sat+megaraid", device.Type)
 	assert.Equal(t, "sat", device.parserType)
 	assert.True(t, device.typeVerified)
+	assert.Equal(t, "sat+megaraid", sm.SmartDataMap["9C40918040082"].DiskType)
+}
+
+func TestParseSmartOutputDoesNotNormalizeDeviceIdentity(t *testing.T) {
+	fixturePath := filepath.Join("test-data", "smart", "sda.json")
+	data, err := os.ReadFile(fixturePath)
+	require.NoError(t, err)
+
+	sm := &SmartManager{SmartDataMap: make(map[string]*smart.SmartData)}
+	device := &DeviceInfo{Name: "/dev/sda", Type: "ata", explicitType: true}
+
+	require.True(t, sm.parseSmartOutput(device, data))
+	assert.Equal(t, "sat", device.parserType)
+	assert.Equal(t, "ata", sm.SmartDataMap["9C40918040082"].DiskType)
 }
 
 func TestParseSmartOutputResetsVerificationOnFailure(t *testing.T) {
@@ -589,6 +1006,182 @@ func TestIsVirtualDeviceScsi(t *testing.T) {
 	}
 }
 
+func TestFindAtaDeviceStatisticsValue(t *testing.T) {
+	val42 := int64(42)
+	val100 := int64(100)
+	valMinus20 := int64(-20)
+
+	tests := []struct {
+		name           string
+		data           smart.SmartInfoForSata
+		ataDeviceStats smart.AtaDeviceStatistics
+		entryNumber    uint8
+		entryName      string
+		minValue       int64
+		maxValue       int64
+		expectedValue  *int64
+	}{
+		{
+			name: "value in ataDeviceStats",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Current Temperature", Value: &val42},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: &val42,
+		},
+		{
+			name: "value unmarshaled from data",
+			data: smart.SmartInfoForSata{
+				AtaDeviceStatistics: []byte(`{"pages":[{"number":5,"table":[{"name":"Current Temperature","value":100}]}]}`),
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      255,
+			expectedValue: &val100,
+		},
+		{
+			name: "value out of range (too high)",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Current Temperature", Value: &val100},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      50,
+			expectedValue: nil,
+		},
+		{
+			name: "value out of range (too low)",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Min Temp", Value: &valMinus20},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Min Temp",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: nil,
+		},
+		{
+			name:          "no statistics available",
+			data:          smart.SmartInfoForSata{},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      255,
+			expectedValue: nil,
+		},
+		{
+			name: "wrong page number",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 1,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Current Temperature", Value: &val42},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: nil,
+		},
+		{
+			name: "wrong entry name",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Other Stat", Value: &val42},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: nil,
+		},
+		{
+			name: "case insensitive name match",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "CURRENT TEMPERATURE", Value: &val42},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: &val42,
+		},
+		{
+			name: "entry value is nil",
+			ataDeviceStats: smart.AtaDeviceStatistics{
+				Pages: []smart.AtaDeviceStatisticsPage{
+					{
+						Number: 5,
+						Table: []smart.AtaDeviceStatisticsEntry{
+							{Name: "Current Temperature", Value: nil},
+						},
+					},
+				},
+			},
+			entryNumber:   5,
+			entryName:     "Current Temperature",
+			minValue:      0,
+			maxValue:      100,
+			expectedValue: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := findAtaDeviceStatisticsValue(&tt.data, &tt.ataDeviceStats, tt.entryNumber, tt.entryName, tt.minValue, tt.maxValue)
+			if tt.expectedValue == nil {
+				assert.Nil(t, result)
+			} else {
+				require.NotNil(t, result)
+				assert.Equal(t, *tt.expectedValue, *result)
+			}
+		})
+	}
+}
+
 func TestRefreshExcludedDevices(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -649,7 +1242,7 @@ func TestRefreshExcludedDevices(t *testing.T) {
 				t.Setenv("EXCLUDE_SMART", tt.envValue)
 			} else {
 				// Ensure env var is not set for empty test
-				os.Unsetenv("EXCLUDE_SMART")
+				t.Setenv("EXCLUDE_SMART", "")
 			}
 
 			sm := &SmartManager{}
@@ -779,4 +1372,115 @@ func TestFilterExcludedDevices(t *testing.T) {
 			assert.Equal(t, tt.expectedDevs, result)
 		})
 	}
+}
+
+func TestIsNvmeControllerPath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		// Controller paths (should return true)
+		{"/dev/nvme0", true},
+		{"/dev/nvme1", true},
+		{"/dev/nvme10", true},
+		{"nvme0", true},
+
+		// Namespace paths (should return false)
+		{"/dev/nvme0n1", false},
+		{"/dev/nvme1n1", false},
+		{"/dev/nvme0n1p1", false},
+		{"nvme0n1", false},
+
+		// Non-NVMe paths (should return false)
+		{"/dev/sda", false},
+		{"/dev/sda1", false},
+		{"/dev/hda", false},
+		{"", false},
+		{"/dev/nvme", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			result := isNvmeControllerPath(tt.path)
+			assert.Equal(t, tt.expected, result, "path: %s", tt.path)
+		})
+	}
+}
+
+func TestParseSmartForNvmeAppleSSD(t *testing.T) {
+	// Apple SSDs don't report user_capacity via smartctl; capacity should be fetched
+	// from system_profiler via the darwinNvmeProvider fallback.
+	fixturePath := filepath.Join("test-data", "smart", "apple_nvme.json")
+	data, err := os.ReadFile(fixturePath)
+	require.NoError(t, err)
+
+	providerCalls := 0
+	fakeProvider := func() ([]byte, error) {
+		providerCalls++
+		return []byte(`{
+			"SPNVMeDataType": [{
+				"_items": [{
+					"device_serial": "0ba0147940253c15",
+					"size_in_bytes": 251000193024
+				}]
+			}]
+		}`), nil
+	}
+
+	sm := &SmartManager{
+		SmartDataMap:       make(map[string]*smart.SmartData),
+		darwinNvmeProvider: fakeProvider,
+	}
+
+	hasData, _ := sm.parseSmartForNvme(data, "")
+	require.True(t, hasData)
+
+	deviceData, ok := sm.SmartDataMap["0ba0147940253c15"]
+	require.True(t, ok)
+	assert.Equal(t, "APPLE SSD AP0256Q", deviceData.ModelName)
+	assert.Equal(t, uint64(251000193024), deviceData.Capacity)
+	assert.Equal(t, uint8(42), deviceData.Temperature)
+	assert.Equal(t, "PASSED", deviceData.SmartStatus)
+	assert.Equal(t, 1, providerCalls, "system_profiler should be called once")
+
+	// Second parse: provider should NOT be called again (cache hit)
+	_, _ = sm.parseSmartForNvme(data, "")
+	assert.Equal(t, 1, providerCalls, "system_profiler should not be called again after caching")
+}
+
+func TestLookupDarwinNvmeCapacityMultipleDisks(t *testing.T) {
+	fakeProvider := func() ([]byte, error) {
+		return []byte(`{
+			"SPNVMeDataType": [
+				{
+					"_items": [
+						{"device_serial": "serial-disk0", "size_in_bytes": 251000193024},
+						{"device_serial": "serial-disk1", "size_in_bytes": 1000204886016}
+					]
+				},
+				{
+					"_items": [
+						{"device_serial": "serial-disk2", "size_in_bytes": 512110190592}
+					]
+				}
+			]
+		}`), nil
+	}
+
+	sm := &SmartManager{darwinNvmeProvider: fakeProvider}
+	assert.Equal(t, uint64(251000193024), sm.lookupDarwinNvmeCapacity("serial-disk0"))
+	assert.Equal(t, uint64(1000204886016), sm.lookupDarwinNvmeCapacity("serial-disk1"))
+	assert.Equal(t, uint64(512110190592), sm.lookupDarwinNvmeCapacity("serial-disk2"))
+	assert.Equal(t, uint64(0), sm.lookupDarwinNvmeCapacity("unknown-serial"))
+}
+
+func TestLookupDarwinNvmeCapacityProviderError(t *testing.T) {
+	fakeProvider := func() ([]byte, error) {
+		return nil, errors.New("system_profiler not found")
+	}
+
+	sm := &SmartManager{darwinNvmeProvider: fakeProvider}
+	assert.Equal(t, uint64(0), sm.lookupDarwinNvmeCapacity("any-serial"))
+	// Cache should be initialized even on error so we don't retry (Once already fired)
+	assert.NotNil(t, sm.darwinNvmeCapacity)
 }

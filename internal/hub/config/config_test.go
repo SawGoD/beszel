@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package config_test
 
@@ -65,7 +64,7 @@ func createConfigTestFingerprint(app core.App, systemID, token, fingerprint stri
 
 // TestConfigSyncWithTokens tests the config.SyncSystems function with various token scenarios
 func TestConfigSyncWithTokens(t *testing.T) {
-	testHub, err := tests.NewTestHub()
+	testHub, err := tests.NewTestHub(t.TempDir())
 	require.NoError(t, err)
 	defer testHub.Cleanup()
 

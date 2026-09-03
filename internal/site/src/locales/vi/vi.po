@@ -8,7 +8,7 @@ msgstr ""
 "Language: vi\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-11-14 22:51\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} có sẵn"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "Đã chọn {0} trên {1} hàng."
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# nhân} other {# nhân}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} giờ} other {{countString} giờ}}"
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} phút} few {{countString} phút} many {{countString} phút} other {{countString} phút}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "I/O {diskName}"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# luồng} other {# luồng}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "1 giờ"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "1 phút"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "12 giờ"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "15 phút"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "30 ngày"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "5 phút"
 
@@ -79,12 +97,14 @@ msgstr "5 phút"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "Hành động"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "Hoạt động"
@@ -97,39 +117,14 @@ msgstr "Cảnh báo hoạt động"
 msgid "Active state"
 msgstr "Trạng thái hoạt động"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "Thêm <0>Hệ thống</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "Thêm hệ thống"
+msgstr "Thêm {foo}"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -145,12 +140,17 @@ msgstr "Điều chỉnh chiều rộng bố cục chính"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "Quản trị viên"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "Sau"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "Sau khi thiết lập các biến môi trường, hãy khởi động lại hub Beszel để các thay đổi có hiệu lực."
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "Cảnh báo"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
 msgstr "Tất cả container"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,73 +184,64 @@ msgstr ""
 msgid "All Systems"
 msgstr "Tất cả Hệ thống"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr ""
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "Bạn có chắc chắn muốn xóa {name} không?"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr ""
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Bạn có chắc không?"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr ""
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "Sao chép tự động yêu cầu một ngữ cảnh an toàn."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "Khả dụng"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "Trung bình"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "Sử dụng CPU trung bình của các container"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "Trung bình giảm xuống dưới <0>{value}{0}</0>"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
 msgstr "Trung bình vượt quá <0>{value}{0}</0>"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "Số lượng trung bình các hoạt động I/O đang chờ được xử lý"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "Tiêu thụ điện năng trung bình của GPU"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "Thời gian trung bình từ khi xếp hàng đến khi hoàn thành mỗi hoạt động"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "Sử dụng CPU trung bình toàn hệ thống"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "Mức sử dụng trung bình của {0}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
 msgstr "Mức sử dụng trung bình của động cơ GPU"
 
@@ -261,12 +250,18 @@ msgstr "Mức sử dụng trung bình của động cơ GPU"
 msgid "Backups"
 msgstr "Sao lưu"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "Băng thông"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr "Pin"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "Pin"
@@ -283,6 +278,13 @@ msgstr "Đã trở thành không hoạt động"
 msgid "Before"
 msgstr "Trước"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "Dưới {0}{1} trong {2, plural, one {# phút} other {# phút}} qua"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "Beszel hỗ trợ OpenID Connect và nhiều nhà cung cấp xác thực OAuth2."
@@ -290,10 +292,6 @@ msgstr "Beszel hỗ trợ OpenID Connect và nhiều nhà cung cấp xác thực
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel sử dụng <0>Shoutrrr</0> để tích hợp với các dịch vụ thông báo phổ biến."
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr ""
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "Trạng thái khởi động"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "Byte (KB/giây, MB/giây, GB/giây)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "Bộ nhớ đệm / Bộ đệm"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "Có thể khởi động"
 msgid "Can stop"
 msgstr "Có thể dừng"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "Khả năng"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "Dung lượng"
 
@@ -365,7 +358,7 @@ msgstr "Thay đổi đơn vị hiển thị cho các chỉ số."
 msgid "Change general application options."
 msgstr "Thay đổi các tùy chọn ứng dụng chung."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "Sạc"
 
@@ -378,6 +371,10 @@ msgstr "Đang sạc"
 msgid "Chart options"
 msgstr "Tùy chọn biểu đồ"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "Chiều rộng biểu đồ"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
 msgstr "Kiểm tra {email} để lấy liên kết đặt lại."
@@ -386,12 +383,22 @@ msgstr "Kiểm tra {email} để lấy liên kết đặt lại."
 msgid "Check logs for more details."
 msgstr "Kiểm tra nhật ký để biết thêm chi tiết."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "Kiểm tra dịch vụ giám sát của bạn"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "Kiểm tra dịch vụ thông báo của bạn"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "Lỗi checksum"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
 msgstr "Xóa"
@@ -403,6 +410,10 @@ msgstr "Nhấp vào container để xem thêm thông tin."
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "Nhấp vào thiết bị để xem thêm thông tin."
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "Nhấp vào pool để xem chi tiết về vdev và dataset."
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -434,6 +445,18 @@ msgstr "Xung đột"
 msgid "Connection is down"
 msgstr "Mất kết nối"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "Container"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "Tình trạng sức khỏe container"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "Container"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
@@ -460,6 +483,11 @@ msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "Sao chép môi trường"
 
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "Sao chép từ"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
 msgstr "Sao chép máy chủ"
@@ -472,6 +500,10 @@ msgstr "Sao chép lệnh Linux"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
 msgstr "Sao chép tên"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -489,9 +521,10 @@ msgstr "Sao chép nội dung <0>docker-compose.yml</0> cho tác nhân bên dư�
 msgid "Copy YAML"
 msgstr "Sao chép YAML"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr ""
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "Lõi"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -503,9 +536,17 @@ msgstr ""
 msgid "CPU Cores"
 msgstr "Nhân CPU"
 
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "Thời gian CPU chờ I/O (IOWait)"
+
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "Đỉnh CPU"
+
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "Thời gian CPU bị hypervisor chiếm dụng (Steal)"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
@@ -515,8 +556,8 @@ msgstr "Thời gian CPU"
 msgid "CPU Time Breakdown"
 msgstr "Phân tích thời gian CPU"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "Đã tạo"
 msgid "Critical (%)"
 msgstr "Độ nghiêm trọng (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "Tổng dữ liệu đã đọc kể từ khi khởi động"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "Tổng dữ liệu đã ghi kể từ khi khởi động"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "Tải xuống tích lũy"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "Tổng đọc"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "Tải lên tích lũy"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "Tổng ghi"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "Trạng thái hiện tại"
 
@@ -570,30 +621,15 @@ msgstr "Chu kỳ"
 msgid "Daily"
 msgstr "Hàng ngày"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr ""
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr ""
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "Mặc định"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Thời gian mặc định"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "Thiết bị"
 msgid "Discharging"
 msgstr "Đang xả"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Đĩa"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "Đĩa I/O"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "Đơn vị đĩa"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "Sử dụng Đĩa"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "Sử dụng đĩa của {extraFsName}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "Hiển thị"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "Sử dụng CPU Docker"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "Sử dụng Bộ nhớ Docker"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "Mạng I/O Docker"
 
@@ -663,7 +700,7 @@ msgstr "Tài liệu"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "Mất kết nối ({downSystemsLength})"
 msgid "Download"
 msgstr "Tải xuống"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr ""
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Thời lượng"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -706,15 +726,7 @@ msgstr "Chỉnh sửa"
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr ""
+msgstr "Chỉnh sửa {foo}"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -736,6 +748,14 @@ msgstr "Hết pin"
 msgid "End Time"
 msgstr "Thời gian kết thúc"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "URL điểm cuối"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "URL điểm cuối để ping (bắt buộc)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
 msgstr "Nhập địa chỉ email để đặt lại mật khẩu"
@@ -748,9 +768,15 @@ msgstr "Nhập địa chỉ email..."
 msgid "Enter your one-time password."
 msgstr "Nhập mật khẩu một lần của bạn."
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "Tạm thời"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "Nhập mật khẩu một lần của bạn."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "Lỗi"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "Ví dụ:"
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -778,7 +808,10 @@ msgstr "Các hệ thống hiện có không được định nghĩa trong <0>con
 msgid "Exited active"
 msgstr "Đã thoát khi hoạt động"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "Hết hạn sau một giờ hoặc khi khởi động lại hub."
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Xuất"
@@ -803,33 +836,23 @@ msgstr "Thất bại"
 msgid "Failed Attributes:"
 msgstr "Thuộc tính thất bại:"
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "Dịch vụ bị lỗi"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "Xác thực thất bại"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "Lưu cài đặt thất bại"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "Gửi heartbeat thất bại"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "Gửi thông báo thử nghiệm thất bại"
 msgid "Failed to update alert"
 msgstr "Cập nhật cảnh báo thất bại"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Thất bại: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
 msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -879,6 +898,12 @@ msgstr "Trong <0>{min}</0> {min, plural, one {phút} other {phút}}"
 msgid "Forgot password?"
 msgstr "Quên mật khẩu?"
 
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "Trống"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy install command"
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "Lệnh FreeBSD"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "Đầy pin"
@@ -900,17 +926,15 @@ msgstr "Chung"
 msgid "Global"
 msgstr "Toàn cầu"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
+#: src/components/routes/system.tsx
+msgid "GPU"
 msgstr ""
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "Động cơ GPU"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
 msgstr "Mức tiêu thụ điện của GPU"
 
@@ -918,13 +942,27 @@ msgstr "Mức tiêu thụ điện của GPU"
 msgid "GPU Usage"
 msgstr "Sử dụng GPU"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "Lưới"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "Sức khỏe"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr ""
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "Giám sát Heartbeat"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "Heartbeat đã được gửi thành công"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -935,6 +973,29 @@ msgstr "Lệnh Homebrew"
 #: src/components/add-system.tsx
 msgid "Host / IP"
 msgstr "Máy chủ / IP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "Phương thức HTTP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "Phương thức HTTP: POST, GET hoặc HEAD (mặc định: POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "I/O Chờ"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "Thời gian I/O"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "Sử dụng I/O"
 
 #. Context: Battery state
 #: src/lib/i18n.ts
@@ -950,38 +1011,17 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "Hình ảnh"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Không hoạt động"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr "Khoảng thời gian"
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "Địa chỉ email không hợp lệ."
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "Nhân"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1004,11 +1044,7 @@ msgstr "Vòng đời"
 msgid "limit"
 msgstr "giới hạn"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Tải trung bình"
 
@@ -1033,18 +1069,11 @@ msgstr "Tải TB"
 msgid "Load state"
 msgstr "Trạng thái tải"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "Đang tải..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "Đăng xuất"
@@ -1076,27 +1105,18 @@ msgstr "PID chính"
 msgid "Manage display and notification preferences."
 msgstr "Quản lý tùy chọn hiển thị và thông báo."
 
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr ""
-
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Hướng dẫn cài đặt thủ công"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr ""
-
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "Tối đa 1 phút"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1112,27 +1132,23 @@ msgstr "Giới hạn bộ nhớ"
 msgid "Memory Peak"
 msgstr "Đỉnh bộ nhớ"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "Sử dụng Bộ nhớ"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "Sử dụng bộ nhớ của các container Docker"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "Mức sử dụng bộ nhớ của các container"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "Mô hình"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "Điểm gắn kết"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1147,11 +1163,11 @@ msgstr "Tên"
 msgid "Net"
 msgstr "Mạng"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "Lưu lượng mạng của các container Docker"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "Lưu lượng mạng của các container"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "Lưu lượng mạng của các giao diện công cộng"
 msgid "Network unit"
 msgstr "Đơn vị mạng"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "Không"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "Không có dữ liệu chi tiết cho pool này."
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "Không có thuộc tính S.M.A.R.T. nào khả dụng cho thiết bị n
 msgid "No systems found."
 msgstr "Không tìm thấy hệ thống."
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr ""
+msgstr "Không có"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr ""
 msgid "Notifications"
 msgstr "Thông báo"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "Thông báo có thể bao gồm các đoạn trích gần đây từ nhật ký container."
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "Hỗ trợ OAuth 2 / OIDC"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr ""
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "Mỗi khi khởi động lại, các hệ thống trong cơ sở dữ liệu sẽ được cập nhật để khớp với các hệ thống được định nghĩa trong tệp."
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "Một hoặc nhiều container đang ở trạng thái không khỏe mạnh"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "Một hoặc nhiều dịch vụ đang ở trạng thái thất bại"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "Một lần"
 msgid "One-time password"
 msgstr "Mật khẩu một lần"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Mở menu"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1327,60 +1321,30 @@ msgstr "Đã tạm dừng"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "Đã tạm dừng ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "Định dạng tải trọng (payload)"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "Tỷ lệ sử dụng trung bình mỗi nhân"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "Phần trăm thời gian đĩa bận rộn với các hoạt động I/O"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Phần trăm thời gian dành cho mỗi trạng thái"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
-msgstr ""
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
+msgstr "Vĩnh viễn"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "Tính bền vững"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,8 +1379,21 @@ msgstr "Vui lòng xem <0>tài liệu</0> để biết hướng dẫn."
 msgid "Please sign in to your account"
 msgstr "Vui lòng đăng nhập vào tài khoản của bạn"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "Tình trạng pool"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "Mức sử dụng pool"
+
 #: src/components/add-system.tsx
 msgid "Port"
+msgstr "Cổng"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
 msgstr "Cổng"
 
 #. Power On Time
@@ -1424,8 +1401,8 @@ msgstr "Cổng"
 msgid "Power On"
 msgstr "Bật nguồn"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "Sử dụng chính xác tại thời điểm ghi nhận"
 
@@ -1433,38 +1410,12 @@ msgstr "Sử dụng chính xác tại thời điểm ghi nhận"
 msgid "Preferred Language"
 msgstr "Ngôn ngữ Ưa thích"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Tiến trình đã khởi động"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
 msgstr ""
 
 #. Use 'Key' if your language requires many more characters
@@ -1472,23 +1423,38 @@ msgstr ""
 msgid "Public Key"
 msgstr "Khóa"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "Độ sâu hàng đợi"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "Giờ yên tĩnh"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "Đọc"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "Lỗi đọc"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "Đã nhận"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "Làm mới"
 
@@ -1530,6 +1496,8 @@ msgstr "Khởi động lại"
 msgid "Resume"
 msgstr "Tiếp tục"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
@@ -1555,23 +1523,22 @@ msgstr "Chi tiết S.M.A.R.T."
 msgid "S.M.A.R.T. Self-Test"
 msgstr "Tự kiểm tra S.M.A.R.T."
 
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "Lưu {foo}"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Lưu địa chỉ bằng cách sử dụng phím enter hoặc dấu phẩy. Để trống để vô hiệu hóa thông báo email."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr ""
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "Lưu Cài đặt"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "Lưu hệ thống"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "Được lưu trong cơ sở dữ liệu và không hết hạn cho đến khi bạn tắt nó."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1593,10 +1560,9 @@ msgstr "Tìm kiếm"
 msgid "Search for systems or settings..."
 msgstr "Tìm kiếm hệ thống hoặc cài đặt..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "Số giây giữa các lần ping (mặc định: 60)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1604,25 +1570,21 @@ msgstr "Xem <0>cài đặt thông báo</0> để cấu hình cách bạn nhận 
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
-msgstr ""
+msgstr "Chọn {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "Gửi một ping heartbeat duy nhất để xác minh điểm cuối của bạn đang hoạt động."
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "Gửi các ping gửi đi định kỳ đến dịch vụ giám sát bên ngoài để bạn có thể giám sát Beszel mà không cần để lộ nó với internet."
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "Gửi heartbeat thử nghiệm"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "Đã gửi"
 
@@ -1630,15 +1592,11 @@ msgstr "Đã gửi"
 msgid "Serial Number"
 msgstr "Số seri"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "Chi tiết dịch vụ"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Dịch vụ"
@@ -1647,10 +1605,17 @@ msgstr "Dịch vụ"
 msgid "Set percentage thresholds for meter colors."
 msgstr "Đặt ngưỡng cho màu sắc đồng hồ."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "Thiết lập các biến môi trường sau trên hub Beszel của bạn để bật giám sát heartbeat:"
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "Cài đặt"
 
@@ -1666,10 +1631,6 @@ msgstr "Đăng nhập"
 msgid "SMTP settings"
 msgstr "Cài đặt SMTP"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr ""
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "Sắp xếp theo"
@@ -1682,6 +1643,7 @@ msgstr "Thời gian bắt đầu"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "Trạng thái"
@@ -1698,17 +1660,23 @@ msgstr "Trạng thái"
 msgid "Sub State"
 msgstr "Trạng thái phụ"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Không gian hoán đổi được sử dụng bởi hệ thống"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "Sử dụng Hoán đổi"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,7 +1688,11 @@ msgstr "Sử dụng Hoán đổi"
 msgid "System"
 msgstr "Hệ thống"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr ""
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Tải trung bình của hệ thống theo thời gian"
 
@@ -1740,6 +1712,11 @@ msgstr "Các hệ thống có thể được quản lý trong tệp <0>config.ym
 msgid "Table"
 msgstr "Bảng"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "Tab"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "Tác vụ"
@@ -1750,7 +1727,7 @@ msgstr "Tác vụ"
 msgid "Temp"
 msgstr "Nhiệt độ"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "Nhiệt độ"
@@ -1759,7 +1736,7 @@ msgstr "Nhiệt độ"
 msgid "Temperature unit"
 msgstr "Đơn vị nhiệt độ"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "Nhiệt độ của các cảm biến hệ thống"
 
@@ -1767,9 +1744,17 @@ msgstr "Nhiệt độ của các cảm biến hệ thống"
 msgid "Test <0>URL</0>"
 msgstr "Kiểm tra <0>URL</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "Thử nghiệm heartbeat"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "Thông báo thử nghiệm đã được gửi"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "Trạng thái tổng thể là <0>ok</0> khi tất cả các hệ thống đều hoạt động, <1>cảnh báo</1> khi các cảnh báo được kích hoạt và <2>lỗi</2> khi có bất kỳ hệ thống nào bị hỏng."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1779,21 +1764,17 @@ msgstr "Sau đó đăng nhập vào backend và đặt lại mật khẩu tài k
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "Hành động này không thể hoàn tác. Điều này sẽ xóa vĩnh viễn tất cả các bản ghi hiện tại cho {name} khỏi cơ sở dữ liệu."
 
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr ""
-
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Thao tác này sẽ xóa vĩnh viễn tất cả các bản ghi đã chọn khỏi cơ sở dữ liệu."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "Thông lượng của {extraFsName}"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "Thông lượng của hệ thống tệp gốc"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "Thông lượng ZFS pool {poolName}"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "Định dạng thời gian"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "Đến email(s)"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "Chuyển đổi lưới"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "Chuyển đổi chủ đề"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "Tổng dữ liệu nhận được cho mỗi giao diện"
 msgid "Total data sent for each interface"
 msgstr "Tổng dữ liệu gửi đi cho mỗi giao diện"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
 msgstr ""
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "Tổng: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,16 +1847,32 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "Kích hoạt khi tải trung bình 5 phút vượt quá ngưỡng"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "Kích hoạt khi kiểm tra sức khỏe container báo trạng thái không khỏe mạnh"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
 msgstr "Kích hoạt khi bất kỳ cảm biến nào vượt quá ngưỡng"
 
 #: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "Kích hoạt khi bất kỳ dịch vụ systemd nào chuyển sang trạng thái thất bại"
+
+#: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "Kích hoạt khi mức pin giảm xuống dưới ngưỡng"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
 msgstr "Kích hoạt khi kết hợp lên/xuống vượt quá ngưỡng"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "Kích hoạt khi thời gian CPU chờ I/O vượt ngưỡng"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "Kích hoạt khi thời gian CPU bị chiếm dụng vượt ngưỡng"
 
 #: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
@@ -1920,6 +1900,10 @@ msgstr "Kích hoạt khi sử dụng bất kỳ đĩa nào vượt quá ngưỡn
 msgid "Type"
 msgstr "Loại"
 
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "Không khỏe mạnh"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
 msgstr "Tệp đơn vị"
@@ -1935,6 +1919,7 @@ msgid "Universal token"
 msgstr "Token chung"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
 msgstr "Không xác định"
@@ -1945,7 +1930,7 @@ msgid "Unlimited"
 msgstr "Không giới hạn"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "Hoạt động"
@@ -1960,6 +1945,7 @@ msgstr "Cập nhật"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "Đã cập nhật"
@@ -1972,28 +1958,30 @@ msgstr "Cập nhật mỗi 10 phút."
 msgid "Upload"
 msgstr "Tải lên"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
 msgstr "Thời gian hoạt động"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "Sử dụng"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "Sử dụng phân vùng gốc"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "Mức sử dụng ZFS pool {poolName}"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "Đã sử dụng"
 
@@ -2001,6 +1989,11 @@ msgstr "Đã sử dụng"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "Người dùng"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "Sử dụng"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "Giá trị"
 msgid "View"
 msgstr "Xem"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr ""
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "Xem thêm"
@@ -2027,7 +2017,7 @@ msgstr "Xem 200 cảnh báo gần đây nhất của bạn."
 msgid "Visible Fields"
 msgstr "Các cột hiển thị"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "Đang chờ đủ bản ghi để hiển thị"
 
@@ -2043,10 +2033,6 @@ msgstr "Muốn"
 msgid "Warning (%)"
 msgstr "Cảnh báo (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr ""
-
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "Ngưỡng cảnh báo"
@@ -2056,8 +2042,12 @@ msgid "Webhook / Push notifications"
 msgstr "Thông báo Webhook / Push"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "Khi được bật, token này cho phép các tác nhân tự đăng ký mà không cần tạo hệ thống trước. Hết hạn sau một giờ hoặc khi khởi động lại trung tâm."
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "Khi được bật, token này cho phép các tác nhân tự đăng ký mà không cần tạo hệ thống trước."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "Khi sử dụng POST, mỗi heartbeat bao gồm một tải trọng JSON với bản tóm tắt trạng thái hệ thống, danh sách các hệ thống bị hỏng và các cảnh báo đã được kích hoạt."
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,10 +2056,19 @@ msgid "Windows command"
 msgstr "Lệnh Windows"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "Ghi"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "Lỗi ghi"
 
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
@@ -2088,3 +2087,4 @@ msgstr "Có"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "Cài đặt người dùng của bạn đã được cập nhật."
+

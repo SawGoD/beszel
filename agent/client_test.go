@@ -1,12 +1,22 @@
 //go:build testing
-// +build testing
 
 package agent
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +26,7 @@ import (
 	"github.com/henrygd/beszel/internal/common"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/lxzan/gws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
@@ -52,11 +63,18 @@ func TestNewWebSocketClient(t *testing.T) {
 			errorMsg:    "HUB_URL environment variable not set",
 		},
 		{
-			name:        "invalid URL",
+			name:        "malformed URL",
 			hubURL:      "ht\ttp://invalid",
 			token:       "test-token",
 			expectError: true,
-			errorMsg:    "invalid hub URL",
+			errorMsg:    "invalid HUB_URL",
+		},
+		{
+			name:        "URL without host",
+			hubURL:      "http:/api",
+			token:       "test-token",
+			expectError: true,
+			errorMsg:    "invalid HUB_URL",
 		},
 		{
 			name:        "missing token",
@@ -71,19 +89,11 @@ func TestNewWebSocketClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Set up environment
 			if tc.hubURL != "" {
-				os.Setenv("BESZEL_AGENT_HUB_URL", tc.hubURL)
-			} else {
-				os.Unsetenv("BESZEL_AGENT_HUB_URL")
+				t.Setenv("BESZEL_AGENT_HUB_URL", tc.hubURL)
 			}
 			if tc.token != "" {
-				os.Setenv("BESZEL_AGENT_TOKEN", tc.token)
-			} else {
-				os.Unsetenv("BESZEL_AGENT_TOKEN")
+				t.Setenv("BESZEL_AGENT_TOKEN", tc.token)
 			}
-			defer func() {
-				os.Unsetenv("BESZEL_AGENT_HUB_URL")
-				os.Unsetenv("BESZEL_AGENT_TOKEN")
-			}()
 
 			client, err := newWebSocketClient(agent)
 
@@ -139,12 +149,8 @@ func TestWebSocketClient_GetOptions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Set up environment
-			os.Setenv("BESZEL_AGENT_HUB_URL", tc.inputURL)
-			os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-			defer func() {
-				os.Unsetenv("BESZEL_AGENT_HUB_URL")
-				os.Unsetenv("BESZEL_AGENT_TOKEN")
-			}()
+			t.Setenv("BESZEL_AGENT_HUB_URL", tc.inputURL)
+			t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 			client, err := newWebSocketClient(agent)
 			require.NoError(t, err)
@@ -170,6 +176,155 @@ func TestWebSocketClient_GetOptions(t *testing.T) {
 	}
 }
 
+func TestWebSocketClient_TLSVerification(t *testing.T) {
+	agent := createTestAgent(t)
+	serverCert, serverCertPEM := newSelfSignedServerCertificate(t)
+	upgrader := gws.NewUpgrader(&gws.BuiltinEventHandler{}, nil)
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r)
+		if err == nil {
+			go conn.ReadLoop()
+		}
+	}))
+	server.TLS = &tls.Config{Certificates: []tls.Certificate{serverCert}}
+	server.StartTLS()
+	t.Cleanup(server.Close)
+
+	caCertFile := filepath.Join(t.TempDir(), "hub-ca.crt")
+	require.NoError(t, os.WriteFile(caCertFile, serverCertPEM, 0600))
+
+	newClient := func(t *testing.T, caCertFile string) *WebSocketClient {
+		t.Helper()
+		t.Setenv("BESZEL_AGENT_HUB_URL", server.URL)
+		t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
+		t.Setenv("BESZEL_AGENT_CA_CERT_FILE", caCertFile)
+		client, err := newWebSocketClient(agent)
+		require.NoError(t, err)
+		return client
+	}
+
+	t.Run("system roots are used by default", func(t *testing.T) {
+		client := newClient(t, "")
+		assert.Nil(t, client.getOptions().TlsConfig)
+		_, _, err := gws.NewClient(&gws.BuiltinEventHandler{}, client.getOptions())
+		require.Error(t, err)
+	})
+
+	t.Run("custom CA trusts self-signed certificate", func(t *testing.T) {
+		systemRoots, err := x509.SystemCertPool()
+		require.NoError(t, err)
+		client := newClient(t, caCertFile)
+		assert.Greater(t, len(client.getOptions().TlsConfig.RootCAs.Subjects()), len(systemRoots.Subjects()))
+		conn, _, err := gws.NewClient(&gws.BuiltinEventHandler{}, client.getOptions())
+		require.NoError(t, err)
+		require.NoError(t, conn.NetConn().Close())
+	})
+
+	t.Run("custom CA does not bypass hostname verification", func(t *testing.T) {
+		client := newClient(t, caCertFile)
+		client.getOptions().TlsConfig.ServerName = "wrong.example.com"
+		_, _, err := gws.NewClient(&gws.BuiltinEventHandler{}, client.getOptions())
+		require.Error(t, err)
+	})
+}
+
+func TestWebSocketClient_NonTLSConnection(t *testing.T) {
+	agent := createTestAgent(t)
+	upgrader := gws.NewUpgrader(&gws.BuiltinEventHandler{}, nil)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r)
+		if err == nil {
+			go conn.ReadLoop()
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	t.Setenv("BESZEL_AGENT_HUB_URL", server.URL)
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
+	t.Setenv("BESZEL_AGENT_CA_CERT_FILE", "")
+	client, err := newWebSocketClient(agent)
+	require.NoError(t, err)
+	assert.Nil(t, client.getOptions().TlsConfig)
+
+	conn, _, err := gws.NewClient(&gws.BuiltinEventHandler{}, client.getOptions())
+	require.NoError(t, err)
+	require.NoError(t, conn.NetConn().Close())
+}
+
+func TestGetTLSConfigErrors(t *testing.T) {
+	tempDir := t.TempDir()
+	testCases := []struct {
+		name       string
+		path       string
+		contents   []byte
+		errorMatch string
+	}{
+		{
+			name:       "missing file",
+			path:       filepath.Join(tempDir, "missing.pem"),
+			errorMatch: "read CA_CERT_FILE",
+		},
+		{
+			name:       "unreadable path",
+			path:       tempDir,
+			errorMatch: "read CA_CERT_FILE",
+		},
+		{
+			name:       "empty file",
+			path:       filepath.Join(tempDir, "empty.pem"),
+			contents:   []byte{},
+			errorMatch: "does not contain any valid PEM certificates",
+		},
+		{
+			name:       "malformed file",
+			path:       filepath.Join(tempDir, "malformed.pem"),
+			contents:   []byte("not a PEM certificate"),
+			errorMatch: "does not contain any valid PEM certificates",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.contents != nil {
+				require.NoError(t, os.WriteFile(tc.path, tc.contents, 0600))
+			}
+			t.Setenv("BESZEL_AGENT_CA_CERT_FILE", tc.path)
+
+			tlsConfig, err := getTLSConfig()
+			require.Error(t, err)
+			assert.Nil(t, tlsConfig)
+			assert.Contains(t, err.Error(), tc.errorMatch)
+			assert.Contains(t, err.Error(), tc.path)
+		})
+	}
+}
+
+func newSelfSignedServerCertificate(t *testing.T) (tls.Certificate, []byte) {
+	t.Helper()
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "127.0.0.1"},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(time.Hour),
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
+	require.NoError(t, err)
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
+	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
+	require.NoError(t, err)
+	return certificate, certPEM
+}
+
 // TestWebSocketClient_VerifySignature tests signature verification
 func TestWebSocketClient_VerifySignature(t *testing.T) {
 	agent := createTestAgent(t)
@@ -186,12 +341,8 @@ func TestWebSocketClient_VerifySignature(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set up environment
-	os.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	client, err := newWebSocketClient(agent)
 	require.NoError(t, err)
@@ -259,12 +410,8 @@ func TestWebSocketClient_HandleHubRequest(t *testing.T) {
 	agent := createTestAgent(t)
 
 	// Set up environment
-	os.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	client, err := newWebSocketClient(agent)
 	require.NoError(t, err)
@@ -351,13 +498,8 @@ func TestGetUserAgent(t *testing.T) {
 func TestWebSocketClient_Close(t *testing.T) {
 	agent := createTestAgent(t)
 
-	// Set up environment
-	os.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	client, err := newWebSocketClient(agent)
 	require.NoError(t, err)
@@ -372,13 +514,8 @@ func TestWebSocketClient_Close(t *testing.T) {
 func TestWebSocketClient_ConnectRateLimit(t *testing.T) {
 	agent := createTestAgent(t)
 
-	// Set up environment
-	os.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	client, err := newWebSocketClient(agent)
 	require.NoError(t, err)
@@ -394,20 +531,10 @@ func TestWebSocketClient_ConnectRateLimit(t *testing.T) {
 
 // TestGetToken tests the getToken function with various scenarios
 func TestGetToken(t *testing.T) {
-	unsetEnvVars := func() {
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-		os.Unsetenv("TOKEN")
-		os.Unsetenv("BESZEL_AGENT_TOKEN_FILE")
-		os.Unsetenv("TOKEN_FILE")
-	}
-
 	t.Run("token from TOKEN environment variable", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Set TOKEN env var
 		expectedToken := "test-token-from-env"
-		os.Setenv("TOKEN", expectedToken)
-		defer os.Unsetenv("TOKEN")
+		t.Setenv("TOKEN", expectedToken)
 
 		token, err := getToken()
 		assert.NoError(t, err)
@@ -415,12 +542,9 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("token from BESZEL_AGENT_TOKEN environment variable", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Set BESZEL_AGENT_TOKEN env var (should take precedence)
 		expectedToken := "test-token-from-beszel-env"
-		os.Setenv("BESZEL_AGENT_TOKEN", expectedToken)
-		defer os.Unsetenv("BESZEL_AGENT_TOKEN")
+		t.Setenv("BESZEL_AGENT_TOKEN", expectedToken)
 
 		token, err := getToken()
 		assert.NoError(t, err)
@@ -428,8 +552,6 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("token from TOKEN_FILE", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Create a temporary token file
 		expectedToken := "test-token-from-file"
 		tokenFile, err := os.CreateTemp("", "token-test-*.txt")
@@ -441,17 +563,49 @@ func TestGetToken(t *testing.T) {
 		tokenFile.Close()
 
 		// Set TOKEN_FILE env var
-		os.Setenv("TOKEN_FILE", tokenFile.Name())
-		defer os.Unsetenv("TOKEN_FILE")
+		t.Setenv("TOKEN_FILE", tokenFile.Name())
 
 		token, err := getToken()
 		assert.NoError(t, err)
 		assert.Equal(t, expectedToken, token)
 	})
 
-	t.Run("token from BESZEL_AGENT_TOKEN_FILE", func(t *testing.T) {
-		unsetEnvVars()
+	t.Run("TOKEN_FILE with surrounding blank lines and comments", func(t *testing.T) {
+		expectedToken := "test-token-with-noise"
+		tokenFile := filepath.Join(t.TempDir(), "token")
+		require.NoError(t, os.WriteFile(tokenFile, []byte("# hub token\n\n"+expectedToken+"\n\n"), 0o600))
 
+		t.Setenv("TOKEN_FILE", tokenFile)
+
+		token, err := getToken()
+		assert.NoError(t, err)
+		assert.Equal(t, expectedToken, token)
+	})
+
+	t.Run("TOKEN_FILE with multiple tokens is rejected", func(t *testing.T) {
+		tokenFile := filepath.Join(t.TempDir(), "token")
+		require.NoError(t, os.WriteFile(tokenFile, []byte("11111111-1111-1111-1111-111111111111\n22222222-2222-2222-2222-222222222222\n"), 0o600))
+
+		t.Setenv("TOKEN_FILE", tokenFile)
+
+		token, err := getToken()
+		require.Error(t, err)
+		assert.Empty(t, token)
+		assert.Contains(t, err.Error(), "must contain a single token")
+	})
+
+	t.Run("TOKEN_FILE holding only comments behaves like an empty file", func(t *testing.T) {
+		tokenFile := filepath.Join(t.TempDir(), "token")
+		require.NoError(t, os.WriteFile(tokenFile, []byte("\n# only a comment\n"), 0o600))
+
+		t.Setenv("TOKEN_FILE", tokenFile)
+
+		token, err := getToken()
+		assert.NoError(t, err)
+		assert.Equal(t, "", token)
+	})
+
+	t.Run("token from BESZEL_AGENT_TOKEN_FILE", func(t *testing.T) {
 		// Create a temporary token file
 		expectedToken := "test-token-from-beszel-file"
 		tokenFile, err := os.CreateTemp("", "token-test-*.txt")
@@ -463,8 +617,7 @@ func TestGetToken(t *testing.T) {
 		tokenFile.Close()
 
 		// Set BESZEL_AGENT_TOKEN_FILE env var (should take precedence)
-		os.Setenv("BESZEL_AGENT_TOKEN_FILE", tokenFile.Name())
-		defer os.Unsetenv("BESZEL_AGENT_TOKEN_FILE")
+		t.Setenv("BESZEL_AGENT_TOKEN_FILE", tokenFile.Name())
 
 		token, err := getToken()
 		assert.NoError(t, err)
@@ -472,8 +625,6 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("TOKEN takes precedence over TOKEN_FILE", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Create a temporary token file
 		fileToken := "token-from-file"
 		tokenFile, err := os.CreateTemp("", "token-test-*.txt")
@@ -486,12 +637,8 @@ func TestGetToken(t *testing.T) {
 
 		// Set both TOKEN and TOKEN_FILE
 		envToken := "token-from-env"
-		os.Setenv("TOKEN", envToken)
-		os.Setenv("TOKEN_FILE", tokenFile.Name())
-		defer func() {
-			os.Unsetenv("TOKEN")
-			os.Unsetenv("TOKEN_FILE")
-		}()
+		t.Setenv("TOKEN", envToken)
+		t.Setenv("TOKEN_FILE", tokenFile.Name())
 
 		token, err := getToken()
 		assert.NoError(t, err)
@@ -499,7 +646,10 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("error when neither TOKEN nor TOKEN_FILE is set", func(t *testing.T) {
-		unsetEnvVars()
+		t.Setenv("BESZEL_AGENT_TOKEN", "")
+		t.Setenv("TOKEN", "")
+		t.Setenv("BESZEL_AGENT_TOKEN_FILE", "")
+		t.Setenv("TOKEN_FILE", "")
 
 		token, err := getToken()
 		assert.Error(t, err)
@@ -508,11 +658,8 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("error when TOKEN_FILE points to non-existent file", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Set TOKEN_FILE to a non-existent file
-		os.Setenv("TOKEN_FILE", "/non/existent/file.txt")
-		defer os.Unsetenv("TOKEN_FILE")
+		t.Setenv("TOKEN_FILE", "/non/existent/file.txt")
 
 		token, err := getToken()
 		assert.Error(t, err)
@@ -521,8 +668,6 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("handles empty token file", func(t *testing.T) {
-		unsetEnvVars()
-
 		// Create an empty token file
 		tokenFile, err := os.CreateTemp("", "token-test-*.txt")
 		require.NoError(t, err)
@@ -530,8 +675,7 @@ func TestGetToken(t *testing.T) {
 		tokenFile.Close()
 
 		// Set TOKEN_FILE env var
-		os.Setenv("TOKEN_FILE", tokenFile.Name())
-		defer os.Unsetenv("TOKEN_FILE")
+		t.Setenv("TOKEN_FILE", tokenFile.Name())
 
 		token, err := getToken()
 		assert.NoError(t, err)
@@ -539,8 +683,6 @@ func TestGetToken(t *testing.T) {
 	})
 
 	t.Run("strips whitespace from TOKEN_FILE", func(t *testing.T) {
-		unsetEnvVars()
-
 		tokenWithWhitespace := "  test-token-with-whitespace  \n\t"
 		expectedToken := "test-token-with-whitespace"
 		tokenFile, err := os.CreateTemp("", "token-test-*.txt")
@@ -551,8 +693,7 @@ func TestGetToken(t *testing.T) {
 		require.NoError(t, err)
 		tokenFile.Close()
 
-		os.Setenv("TOKEN_FILE", tokenFile.Name())
-		defer os.Unsetenv("TOKEN_FILE")
+		t.Setenv("TOKEN_FILE", tokenFile.Name())
 
 		token, err := getToken()
 		assert.NoError(t, err)

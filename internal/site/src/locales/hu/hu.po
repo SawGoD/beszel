@@ -8,7 +8,7 @@ msgstr ""
 "Language: hu\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-11-14 22:51\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Hungarian\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} elérhető"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "{0} a(z) {1} sorból kiválasztva."
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# mag} other {# mag}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} óra} other {{countString} óra}}"
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} perc} few {{countString} perc} many {{countString} perc} other {{countString} perc}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "{diskName} I/O"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# szál} other {# szál}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "1 óra"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "1 perc"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "12 óra"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "15 perc"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "30 nap"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "5 perc"
 
@@ -79,12 +97,14 @@ msgstr "5 perc"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "Műveletek"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "Aktív"
@@ -97,39 +117,14 @@ msgstr "Aktív riasztások"
 msgid "Active state"
 msgstr "Aktív állapot"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "Hozzáadás <0>System</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "Rendszer hozzáadása"
+msgstr "Hozzáadás {foo}"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -137,7 +132,7 @@ msgstr "URL hozzáadása"
 
 #: src/components/routes/settings/general.tsx
 msgid "Adjust display options for charts."
-msgstr "Állítsa be a diagram megjelenítését."
+msgstr "A diagramok megjelenítésének beállítása."
 
 #: src/components/routes/settings/general.tsx
 msgid "Adjust the width of the main layout"
@@ -145,12 +140,17 @@ msgstr "A fő elrendezés szélességének beállítása"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "Adminisztráció"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "Utána"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "A környezeti változók beállítása után indítsa újra a Beszel hubot a módosítások érvénybe léptetéséhez."
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "Riasztások"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
-msgstr "Összes konténer"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr ""
+msgstr "Minden konténer"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,73 +184,64 @@ msgstr ""
 msgid "All Systems"
 msgstr "Minden rendszer"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr ""
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "Biztosan törölni szeretnéd {name}-t?"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr ""
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Biztos vagy benne?"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr ""
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "Az automatikus másolás biztonságos környezetet igényel."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "Elérhető"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "Átlag"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "Konténerek átlagos CPU kihasználtsága"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "Az átlag esik <0>{value}{0}</0> alá"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
 msgstr "Az átlag meghaladja a <0>{value}{0}</0> értéket"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "Kiszolgálásra váró I/O műveletek átlagos száma"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "GPU-k átlagos energiafogyasztása"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "Műveletenkénti átlagos várakozási és befejezési idő"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "Rendszerszintű CPU átlagos kihasználtság"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "{0} átlagos kihasználtsága"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
 msgstr "GPU-k átlagos kihasználtsága"
 
@@ -261,12 +250,18 @@ msgstr "GPU-k átlagos kihasználtsága"
 msgid "Backups"
 msgstr "Biztonsági mentések"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "Sávszélesség"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr "Akku"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "Akkumulátor"
@@ -283,6 +278,13 @@ msgstr "Inaktívvá vált"
 msgid "Before"
 msgstr "Előtte"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "{0}{1} alatt az elmúlt {2, plural, one {# percben} other {# percben}}"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "A Beszel támogatja az OpenID Connect-et és számos OAuth2 hitelesítési szolgáltatót."
@@ -290,10 +292,6 @@ msgstr "A Beszel támogatja az OpenID Connect-et és számos OAuth2 hitelesíté
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "A Beszel a <0>Shoutrrr</0>-t használja a népszerű értesítési szolgáltatások integrálására."
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr ""
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "Indítási állapot"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "Byte-ok (KB/s, MB/s, GB/s)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "Gyorsítótár / Pufferelések"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "Indítható"
 msgid "Can stop"
 msgstr "Leállítható"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "Képességek"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "Kapacitás"
 
@@ -365,7 +358,7 @@ msgstr "A mértékegységek megjelenítésének megváltoztatása."
 msgid "Change general application options."
 msgstr "Általános alkalmazásbeállítások módosítása."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "Töltés"
 
@@ -378,6 +371,10 @@ msgstr "Töltődik"
 msgid "Chart options"
 msgstr "Diagram beállítások"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "Grafikon szélessége"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
 msgstr "Ellenőrizd a {email} címet a visszaállító linkért."
@@ -386,12 +383,22 @@ msgstr "Ellenőrizd a {email} címet a visszaállító linkért."
 msgid "Check logs for more details."
 msgstr "Ellenőrizd a naplót a további részletekért."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "Ellenőrizze a megfigyelő szolgáltatást"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "Ellenőrizd az értesítési szolgáltatásodat"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "Ellenőrzőösszeg-hibák"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
 msgstr "Törlés"
@@ -403,6 +410,10 @@ msgstr "Kattintson egy konténerre a további információk megtekintéséhez."
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "Kattintson egy eszközre további információk megtekintéséhez."
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "Kattintson egy tárkészletre a vdev- és adatkészlet-részletek megtekintéséhez."
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -434,6 +445,18 @@ msgstr "Konfliktusok"
 msgid "Connection is down"
 msgstr "Kapcsolat megszakadt"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "Konténer"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "Konténer állapota"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "Konténerek"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
@@ -460,6 +483,11 @@ msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "Környezet másolása"
 
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "Másolás innen:"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
 msgstr "Hoszt másolása"
@@ -472,6 +500,10 @@ msgstr "Linux parancs másolása"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
 msgstr "Név másolása"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -489,9 +521,10 @@ msgstr "Másold az alábbi ügynök <0>docker-compose.yml</0> tartalmát, vagy r
 msgid "Copy YAML"
 msgstr "YAML másolása"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr ""
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "Mag"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -503,9 +536,17 @@ msgstr "CPU"
 msgid "CPU Cores"
 msgstr "CPU magok"
 
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "CPU I/O-várakozási idő (IOWait)"
+
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "CPU csúcs"
+
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "A hipervizor által elvett CPU-idő (Steal)"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
@@ -515,8 +556,8 @@ msgstr "CPU idő"
 msgid "CPU Time Breakdown"
 msgstr "CPU idő felbontása"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "Létrehozva"
 msgid "Critical (%)"
 msgstr "Kritikus (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "A rendszerindítás óta összesen olvasott adat"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "A rendszerindítás óta összesen írt adat"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "Kumulatív letöltés"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "Összes olvasás"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "Kumulatív feltöltés"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "Összes írás"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "Jelenlegi állapot"
 
@@ -570,30 +621,15 @@ msgstr "Ciklusok"
 msgid "Daily"
 msgstr "Napi"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr ""
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr ""
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "Alapértelmezett"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Alapértelmezett időszak"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "Eszköz"
 msgid "Discharging"
 msgstr "Kisül"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Lemez"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "Lemez I/O"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "Lemez mértékegysége"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "Lemezhasználat"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "Lemezhasználat a {extraFsName}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "Megjelenítés"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "Docker CPU használat"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "Docker memória használat"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "Docker hálózat I/O"
 
@@ -663,7 +700,7 @@ msgstr "Dokumentáció"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "Offline ({downSystemsLength})"
 msgid "Download"
 msgstr "Letöltés"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr ""
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Időtartam"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -706,15 +726,7 @@ msgstr "Szerkesztés"
 #: src/components/add-system.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr ""
+msgstr "Szerkesztés {foo}"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -736,6 +748,14 @@ msgstr "Üres"
 msgid "End Time"
 msgstr "Befejezés ideje"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "Végpont URL"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "Pingelendő végpont URL (kötelező)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
 msgstr "E-mail cím megadása a jelszó visszaállításához"
@@ -748,9 +768,15 @@ msgstr "Adja meg az e-mail címet..."
 msgid "Enter your one-time password."
 msgstr "Adja meg az egyszeri jelszavát."
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "Ideiglenes"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "Adja meg az egyszeri jelszavát."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "Hiba"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "Példa:"
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -768,7 +798,7 @@ msgstr "Túllépi a {0}{1} értéket az elmúlt {2, plural, one {# percben} othe
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Exec main PID"
-msgstr ""
+msgstr "Fő folyamat PID"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
@@ -778,7 +808,10 @@ msgstr "A <0>config.yml</0> fájlban nem definiált meglévő rendszerek törlé
 msgid "Exited active"
 msgstr "Aktívként kilépett"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "Lejár egy óra után vagy a hub újraindításakor."
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Exportálás"
@@ -803,33 +836,23 @@ msgstr "Sikertelen"
 msgid "Failed Attributes:"
 msgstr "Sikertelen attribútumok:"
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "Sikertelen szolgáltatások"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "Hitelesítés sikertelen"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "Nem sikerült menteni a beállításokat"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "Nem sikerült elküldeni a szívverést (heartbeat)"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "Teszt értesítés elküldése sikertelen"
 msgid "Failed to update alert"
 msgstr "Nem sikerült frissíteni a riasztást"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Sikertelen: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
 msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -869,15 +888,21 @@ msgstr "Ujjlenyomat"
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Firmware"
-msgstr ""
+msgstr "Firmware"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "For <0>{min}</0> {min, plural, one {minute} other {minutes}}"
-msgstr "A <0>{min}</0> {min, plural, one {perc} other {percek}}"
+msgstr "<0>{min}</0> {min, plural, one {percig} other {percig}}"
 
 #: src/components/login/auth-form.tsx
 msgid "Forgot password?"
 msgstr "Elfelejtette a jelszavát?"
+
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "Szabad"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "FreeBSD parancs"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "Tele"
@@ -900,17 +926,15 @@ msgstr "Általános"
 msgid "Global"
 msgstr "Globális"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
+#: src/components/routes/system.tsx
+msgid "GPU"
 msgstr ""
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "GPU-k"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
 msgstr "GPU áramfelvétele"
 
@@ -918,13 +942,27 @@ msgstr "GPU áramfelvétele"
 msgid "GPU Usage"
 msgstr "GPU használat"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "Rács"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "Egészség"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr ""
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "Heartbeat figyelés"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "Heartbeat sikeresen elküldve"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -935,6 +973,29 @@ msgstr "Homebrew parancs"
 #: src/components/add-system.tsx
 msgid "Host / IP"
 msgstr "Állomás / IP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "HTTP metódus"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "HTTP metódus: POST, GET vagy HEAD (alapértelmezett: POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "I/O várakozás"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "I/O idő"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "I/O kihasználtság"
 
 #. Context: Battery state
 #: src/lib/i18n.ts
@@ -950,38 +1011,17 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "Kép"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Inaktív"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr "Intervallum"
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "Érvénytelen e-mail cím."
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "Kernel"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1004,11 +1044,7 @@ msgstr "Életciklus"
 msgid "limit"
 msgstr "korlát"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Terhelési átlag"
 
@@ -1033,18 +1069,11 @@ msgstr "Terhelési átlag"
 msgid "Load state"
 msgstr "Betöltési állapot"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "Betöltés..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "Kijelentkezés"
@@ -1070,33 +1099,24 @@ msgstr "Inkább azt keresi, hogy hol hozhat létre riasztásokat? Kattintson a c
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Main PID"
-msgstr ""
+msgstr "Fő PID"
 
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "A megjelenítési és értesítési beállítások kezelése."
-
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Manuális beállítási lépések"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr ""
-
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "Maximum 1 perc"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1112,27 +1132,23 @@ msgstr "Memória korlát"
 msgid "Memory Peak"
 msgstr "Memória csúcs"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "Memóriahasználat"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "Docker konténerek memória használata"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "Konténerek memóriahasználata"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "Modell"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "Csatolási pont"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1147,11 +1163,11 @@ msgstr "Név"
 msgid "Net"
 msgstr "Hálózat"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "Docker konténerek hálózati forgalma"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "Konténerek hálózati forgalma"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "Nyilvános interfészek hálózati forgalma"
 msgid "Network unit"
 msgstr "Sávszélesség mértékegysége"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "Nem"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "Ehhez a tárkészlethez nem érhetők el részletes adatok."
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "Ehhez az eszközhöz nem állnak rendelkezésre S.M.A.R.T. attribútumok
 msgid "No systems found."
 msgstr "Nem található rendszer."
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr ""
+msgstr "Nincs"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr ""
 msgid "Notifications"
 msgstr "Értesítések"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "Az értesítések tartalmazhatnak részleteket a konténerek legutóbbi naplóiból."
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "OAuth 2 / OIDC támogatás"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr ""
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "Minden újraindításkor az adatbázisban lévő rendszerek frissítésre kerülnek, hogy megfeleljenek a fájlban meghatározott rendszereknek."
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "Egy vagy több konténer állapota nem megfelelő"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "Egy vagy több szolgáltatás sikertelen állapotban van"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "Egyszeri"
 msgid "One-time password"
 msgstr "Egyszeri jelszó"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Menü megnyitása"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1327,60 +1321,30 @@ msgstr "Szüneteltetve"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "Szüneteltetve ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "Payload formátum"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "Átlagos kihasználtság magonként"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "Az az időtartam százalékban, amíg a lemez I/O műveletekkel van elfoglalva"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Az idő százalékos aránya minden állapotban"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
-msgstr ""
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
+msgstr "Állandó"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "Tartósság"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,17 +1379,30 @@ msgstr "Kérjük, nézze meg <0>a dokumentációt</0> az utasításokért."
 msgid "Please sign in to your account"
 msgstr "Kérjük, jelentkezzen be a fiókjába"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "Tárkészlet állapota"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "Tárkészlet kihasználtsága"
+
 #: src/components/add-system.tsx
 msgid "Port"
 msgstr "Port"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
+msgstr "Portok"
 
 #. Power On Time
 #: src/components/routes/system/smart-table.tsx
 msgid "Power On"
 msgstr "Bekapcsolás"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "Pontos kihasználás a rögzített időpontban"
 
@@ -1433,38 +1410,12 @@ msgstr "Pontos kihasználás a rögzített időpontban"
 msgid "Preferred Language"
 msgstr "Preferált nyelv"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Folyamat elindítva"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
 msgstr ""
 
 #. Use 'Key' if your language requires many more characters
@@ -1472,23 +1423,38 @@ msgstr ""
 msgid "Public Key"
 msgstr "Nyilvános kulcs"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "Várakozási sor mélysége"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "Csendes órák"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "Olvasás"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "Olvasási hibák"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "Fogadott"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "Frissítés"
 
@@ -1530,6 +1496,8 @@ msgstr "Újraindítások"
 msgid "Resume"
 msgstr "Folytatás"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
@@ -1555,23 +1523,22 @@ msgstr "S.M.A.R.T. Részletek"
 msgid "S.M.A.R.T. Self-Test"
 msgstr "S.M.A.R.T. Önteszt"
 
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "{foo} mentése"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Mentse el a címet az Enter billentyű vagy a vessző használatával. Hagyja üresen az e-mail értesítések letiltásához."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr ""
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "Beállítások mentése"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "Rendszer mentése"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "Elmentve az adatbázisban és nem jár le, amíg ki nem kapcsolod."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1593,10 +1560,9 @@ msgstr "Keresés"
 msgid "Search for systems or settings..."
 msgstr "Keresés rendszerek vagy beállítások után..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "Pingek közötti másodpercek (alapértelmezett: 60)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1604,25 +1570,21 @@ msgstr "Lásd <0>az értesítési beállításokat</0>, hogy konfigurálja, hogy
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Select {foo}"
-msgstr ""
+msgstr "{foo} kiválasztása"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "Küldjön egyetlen heartbeat pinget a végpont működésének ellenőrzéséhez."
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "Küldjön időszakos kimenő pingeket egy külső megfigyelő szolgáltatásnak, így a Beszel-t az internetnek való kitettség nélkül is megfigyelheti."
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "Teszt heartbeat küldése"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "Elküldve"
 
@@ -1630,15 +1592,11 @@ msgstr "Elküldve"
 msgid "Serial Number"
 msgstr "Sorozatszám"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "Szolgáltatás részletei"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Szolgáltatások"
@@ -1647,10 +1605,17 @@ msgstr "Szolgáltatások"
 msgid "Set percentage thresholds for meter colors."
 msgstr "Százalékos küszöbértékek beállítása a mérőszínekhez."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "Állítsa be a következő környezeti változókat a Beszel hubon a heartbeat figyelés engedélyezéséhez:"
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "Beállítások"
 
@@ -1666,10 +1631,6 @@ msgstr "Bejelentkezés"
 msgid "SMTP settings"
 msgstr "SMTP beállítások"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr ""
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "Rendezés"
@@ -1682,6 +1643,7 @@ msgstr "Kezdési idő"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "Állapot"
@@ -1698,17 +1660,23 @@ msgstr "Állapot"
 msgid "Sub State"
 msgstr "Részállapot"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Rendszer által használt swap terület"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "Swap használat"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,7 +1688,11 @@ msgstr "Swap használat"
 msgid "System"
 msgstr "Rendszer"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr ""
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Rendszer terhelési átlaga"
 
@@ -1740,6 +1712,11 @@ msgstr "A rendszereket egy <0>config.yml</0> fájlban lehet kezelni az adatköny
 msgid "Table"
 msgstr "Tábla"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "Lapok"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "Feladatok"
@@ -1750,7 +1727,7 @@ msgstr "Feladatok"
 msgid "Temp"
 msgstr "Hőmérséklet"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "Hőmérséklet"
@@ -1759,7 +1736,7 @@ msgstr "Hőmérséklet"
 msgid "Temperature unit"
 msgstr "Hőmérséklet mértékegysége"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "A rendszer érzékelőinek hőmérséklete"
 
@@ -1767,9 +1744,17 @@ msgstr "A rendszer érzékelőinek hőmérséklete"
 msgid "Test <0>URL</0>"
 msgstr "Teszt <0>URL</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "Teszt heartbeat"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "Teszt értesítés elküldve"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "Az összesített állapot <0>ok</0>, ha minden rendszer fut, <1>warn</1>, ha riasztások léptek fel, és <2>error</2>, ha bármelyik rendszer leállt."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1779,21 +1764,17 @@ msgstr "Ezután jelentkezzen be a backendbe, és állítsa vissza a felhasznál�
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "Ezt a műveletet nem lehet visszavonni! Véglegesen törli a {name} összes jelenlegi rekordját az adatbázisból!"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr ""
-
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Ez véglegesen törli az összes kijelölt bejegyzést az adatbázisból."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "A {extraFsName} átviteli teljesítménye"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "A gyökér fájlrendszer átviteli teljesítménye"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "{poolName} ZFS-tárkészlet átviteli sebessége"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "Időformátum"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "E-mailben"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "Rács ki- és bekapcsolása"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "Téma váltása"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "Összes fogadott adat minden interfészenként"
 msgid "Total data sent for each interface"
 msgstr "Összes elküldött adat minden interfészenként"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
 msgstr ""
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "Összesen: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,20 +1847,36 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "Riaszt, ha az 5 perces terhelési átlag túllép egy küszöbértéket"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "Akkor aktiválódik, amikor egy konténer állapotellenőrzése hibás állapotot jelez"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
-msgstr "Bekapcsol, ha bármelyik érzékelő túllép egy küszöbértéket"
+msgstr "Riaszt, ha bármelyik hőmérséklet érzékelő túllép egy küszöbértéket"
+
+#: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "Akkor aktiválódik, amikor bármely systemd-szolgáltatás sikertelen állapotba kerül"
 
 #: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "Riaszt, ha az akkumulátor töltöttségi szintje egy küszöbérték alá esik"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
-msgstr "Bekapcsol, ha bármelyik érzékelő túllép egy küszöbértéket"
+msgstr "Riaszt, ha a sávszélesség-használat túllép egy küszöbértéket"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "Akkor aktiválódik, ha a CPU I/O-várakozási ideje meghaladja a küszöbértéket"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "Akkor aktiválódik, ha a CPU steal ideje meghaladja a küszöbértéket"
 
 #: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
-msgstr "Bekapcsol, ha a CPU érzékelő túllép egy küszöbértéket"
+msgstr "Riaszt, ha a CPU használat túllép egy küszöbértéket"
 
 #: src/lib/alerts.ts
 msgid "Triggers when GPU usage exceeds a threshold"
@@ -1904,21 +1884,25 @@ msgstr "Riaszt, ha a GPU használat túllép egy küszöbértéket"
 
 #: src/lib/alerts.ts
 msgid "Triggers when memory usage exceeds a threshold"
-msgstr "Bekapcsol, ha a Ram érzékelő túllép egy küszöbértéket"
+msgstr "Riaszt, ha a memóriahasználat túllép egy küszöbértéket"
 
 #: src/lib/alerts.ts
 msgid "Triggers when status switches between up and down"
-msgstr "Bekapcsol, amikor az állapot fel és le között változik"
+msgstr "Riaszt, amikor a rendszer online állapota változik"
 
 #: src/lib/alerts.ts
 msgid "Triggers when usage of any disk exceeds a threshold"
-msgstr "Bekapcsol, ha a lemez érzékelő túllép egy küszöbértéket"
+msgstr "Riaszt, ha a lemezhasználat túllép egy küszöbértéket"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
 msgid "Type"
 msgstr "Típus"
+
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "Nem egészséges"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
@@ -1935,6 +1919,7 @@ msgid "Universal token"
 msgstr "Univerzális token"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
 msgstr "Ismeretlen"
@@ -1945,7 +1930,7 @@ msgid "Unlimited"
 msgstr "Korlátlan"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "Online"
@@ -1960,6 +1945,7 @@ msgstr "Frissítés"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "Frissítve"
@@ -1972,28 +1958,30 @@ msgstr "10 percenként frissítve."
 msgid "Upload"
 msgstr "Feltöltés"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
 msgstr "Üzemidő"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "Használat"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "Root partíció kihasználtsága"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "{poolName} ZFS-tárkészlet kihasználtsága"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "Felhasznált"
 
@@ -2001,6 +1989,11 @@ msgstr "Felhasznált"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "Felhasználók"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "Kihasználtság"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "Érték"
 msgid "View"
 msgstr "Nézet"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr ""
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "Továbbiak megjelenítése"
@@ -2027,7 +2017,7 @@ msgstr "Legfrissebb 200 riasztásod áttekintése."
 msgid "Visible Fields"
 msgstr "Látható mezők"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "Elegendő rekordra várva a megjelenítéshez"
 
@@ -2043,10 +2033,6 @@ msgstr "Igényel"
 msgid "Warning (%)"
 msgstr "Figyelmeztetés (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr ""
-
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "Figyelmeztetési küszöbértékek"
@@ -2056,8 +2042,12 @@ msgid "Webhook / Push notifications"
 msgstr "Webhook / Push értesítések"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "Ha engedélyezve van, ez a token lehetővé teszi az ügynökök önregisztrációját előzetes rendszerlétrehozás nélkül. Egy óra után vagy a hub újraindításakor lejár."
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "Ha engedélyezve van, ez a token lehetővé teszi az ügynökök számára a regisztrációt a rendszer előzetes létrehozása nélkül."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "POST használata esetén minden heartbeat tartalmaz egy JSON payload-ot a rendszerállapot összefoglalójával, a leállt rendszerek listájával és a kiváltott riasztásokkal."
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,10 +2056,19 @@ msgid "Windows command"
 msgstr "Windows parancs"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "Írás"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "Írási hibák"
 
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
@@ -2088,3 +2087,4 @@ msgstr "Igen"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "A felhasználói beállítások frissítésre kerültek."
+

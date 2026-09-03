@@ -8,28 +8,32 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/entities/smart"
-
-	"golang.org/x/exp/slog"
 )
 
 // SmartManager manages data collection for SMART devices
 type SmartManager struct {
 	sync.Mutex
-	SmartDataMap    map[string]*smart.SmartData
-	SmartDevices    []*DeviceInfo
-	refreshMutex    sync.Mutex
-	lastScanTime    time.Time
-	binPath         string
-	excludedDevices map[string]struct{}
+	SmartDataMap       map[string]*smart.SmartData
+	SmartDevices       []*DeviceInfo
+	refreshMutex       sync.Mutex
+	lastScanTime       time.Time
+	smartctlPath       string
+	excludedDevices    map[string]struct{}
+	darwinNvmeOnce     sync.Once
+	darwinNvmeCapacity map[string]uint64      // serial → bytes cache, written once via darwinNvmeOnce
+	darwinNvmeProvider func() ([]byte, error) // overridable for testing
 }
 
 type scanOutput struct {
@@ -51,12 +55,24 @@ type DeviceInfo struct {
 	typeVerified bool
 	// parserType holds the parser type (nvme, sat, scsi) that last succeeded.
 	parserType string
+	// explicitType reports whether Type came from an explicit ":type" hint in
+	// SMART_DEVICES. Such a type is a deliberate user override and must always be
+	// passed to smartctl via -d, even for scsi/ata where a scan-detected type is
+	// otherwise left off (see smartctlArgs and issue #1345).
+	explicitType bool
+}
+
+// deviceKey is a composite key for a device, used to identify a device uniquely.
+type deviceKey struct {
+	name       string
+	deviceType string
 }
 
 var errNoValidSmartData = fmt.Errorf("no valid SMART data found") // Error for missing data
 
-// Refresh updates SMART data for all known devices
-func (sm *SmartManager) Refresh(forceScan bool) error {
+// Refresh updates SMART data for all known devices and reports whether every
+// discovered device was collected successfully.
+func (sm *SmartManager) Refresh(forceScan bool) (bool, error) {
 	sm.refreshMutex.Lock()
 	defer sm.refreshMutex.Unlock()
 
@@ -77,7 +93,7 @@ func (sm *SmartManager) Refresh(forceScan bool) error {
 		}
 	}
 
-	return sm.resolveRefreshError(scanErr, collectErr)
+	return scanErr == nil && collectErr == nil, sm.resolveRefreshError(scanErr, collectErr)
 }
 
 // devicesSnapshot returns a copy of the current device slice to avoid iterating
@@ -150,7 +166,7 @@ func (sm *SmartManager) ScanDevices(force bool) error {
 	currentDevices := sm.devicesSnapshot()
 
 	var configuredDevices []*DeviceInfo
-	if configuredRaw, ok := GetEnv("SMART_DEVICES"); ok {
+	if configuredRaw, ok := utils.GetEnv("SMART_DEVICES"); ok {
 		slog.Info("SMART_DEVICES", "value", configuredRaw)
 		config := strings.TrimSpace(configuredRaw)
 		if config == "" {
@@ -164,25 +180,40 @@ func (sm *SmartManager) ScanDevices(force bool) error {
 		configuredDevices = parsedDevices
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, sm.binPath, "--scan", "-j")
-	output, err := cmd.Output()
-
 	var (
 		scanErr        error
 		scannedDevices []*DeviceInfo
 		hasValidScan   bool
 	)
 
-	if err != nil {
-		scanErr = err
-	} else {
-		scannedDevices, hasValidScan = sm.parseScan(output)
-		if !hasValidScan {
-			scanErr = errNoValidSmartData
+	if sm.smartctlPath != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		cmd := exec.CommandContext(ctx, sm.smartctlPath, "--scan", "-j")
+		output, err := cmd.Output()
+		if err != nil {
+			scanErr = err
+		} else {
+			scannedDevices, hasValidScan = sm.parseScan(output)
+			if !hasValidScan {
+				scanErr = errNoValidSmartData
+			}
 		}
+	}
+
+	// Add eMMC devices (Linux only) by reading sysfs health fields. This does not
+	// require smartctl and does not scan the whole device.
+	if emmcDevices := scanEmmcDevices(); len(emmcDevices) > 0 {
+		scannedDevices = append(scannedDevices, emmcDevices...)
+		hasValidScan = true
+	}
+
+	// Add Linux mdraid arrays by reading sysfs health fields. This does not
+	// require smartctl and does not scan the whole device.
+	if raidDevices := scanMdraidDevices(); len(raidDevices) > 0 {
+		scannedDevices = append(scannedDevices, raidDevices...)
+		hasValidScan = true
 	}
 
 	finalDevices := mergeDeviceLists(currentDevices, scannedDevices, configuredDevices)
@@ -201,7 +232,11 @@ func (sm *SmartManager) ScanDevices(force bool) error {
 }
 
 func (sm *SmartManager) parseConfiguredDevices(config string) ([]*DeviceInfo, error) {
-	entries := strings.Split(config, ",")
+	splitChar, _ := utils.GetEnv("SMART_DEVICES_SEPARATOR")
+	if splitChar == "" {
+		splitChar = ","
+	}
+	entries := strings.Split(config, splitChar)
 	devices := make([]*DeviceInfo, 0, len(entries))
 	for _, entry := range entries {
 		entry = strings.TrimSpace(entry)
@@ -222,8 +257,9 @@ func (sm *SmartManager) parseConfiguredDevices(config string) ([]*DeviceInfo, er
 		}
 
 		devices = append(devices, &DeviceInfo{
-			Name: name,
-			Type: devType,
+			Name:         name,
+			Type:         devType,
+			explicitType: devType != "",
 		})
 	}
 
@@ -235,7 +271,7 @@ func (sm *SmartManager) parseConfiguredDevices(config string) ([]*DeviceInfo, er
 }
 
 func (sm *SmartManager) refreshExcludedDevices() {
-	rawValue, _ := GetEnv("EXCLUDE_SMART")
+	rawValue, _ := utils.GetEnv("EXCLUDE_SMART")
 	sm.excludedDevices = make(map[string]struct{})
 
 	for entry := range strings.SplitSeq(rawValue, ",") {
@@ -325,6 +361,13 @@ func normalizeParserType(value string) string {
 	}
 }
 
+// makeDeviceKey creates a composite key from device name and type.
+// This allows multiple drives under the same device path (e.g., RAID controllers)
+// to be tracked separately.
+func makeDeviceKey(name, deviceType string) deviceKey {
+	return deviceKey{name: name, deviceType: deviceType}
+}
+
 // parseSmartOutput attempts each SMART parser, optionally detecting the type when
 // it is not provided, and updates the device info when a parser succeeds.
 func (sm *SmartManager) parseSmartOutput(deviceInfo *DeviceInfo, output []byte) bool {
@@ -332,9 +375,15 @@ func (sm *SmartManager) parseSmartOutput(deviceInfo *DeviceInfo, output []byte) 
 		Type  string
 		Parse func([]byte) (bool, int)
 	}{
-		{Type: "nvme", Parse: sm.parseSmartForNvme},
-		{Type: "sat", Parse: sm.parseSmartForSata},
-		{Type: "scsi", Parse: sm.parseSmartForScsi},
+		{Type: "nvme", Parse: func(output []byte) (bool, int) {
+			return sm.parseSmartForNvme(output, deviceInfo.Type)
+		}},
+		{Type: "sat", Parse: func(output []byte) (bool, int) {
+			return sm.parseSmartForSata(output, deviceInfo.Type)
+		}},
+		{Type: "scsi", Parse: func(output []byte) (bool, int) {
+			return sm.parseSmartForScsi(output, deviceInfo.Type)
+		}},
 	}
 
 	deviceType := normalizeParserType(deviceInfo.parserType)
@@ -425,21 +474,40 @@ func (sm *SmartManager) CollectSmart(deviceInfo *DeviceInfo) error {
 		return errNoValidSmartData
 	}
 
-	// slog.Info("collecting SMART data", "device", deviceInfo.Name, "type", deviceInfo.Type, "has_existing_data", sm.hasDataForDevice(deviceInfo.Name))
+	// mdraid health is not exposed via SMART; Linux exposes array state in sysfs.
+	if deviceInfo != nil {
+		if ok, err := sm.collectMdraidHealth(deviceInfo); ok {
+			return err
+		}
+	}
+	// eMMC health is not exposed via SMART on Linux, but the kernel provides
+	// wear / EOL indicators via sysfs. Prefer that path when available.
+	if deviceInfo != nil {
+		if ok, err := sm.collectEmmcHealth(deviceInfo); ok {
+			return err
+		}
+	}
 
-	// Check if we have any existing data for this device
-	hasExistingData := sm.hasDataForDevice(deviceInfo.Name)
+	if sm.smartctlPath == "" {
+		return errNoValidSmartData
+	}
+
+	// slog.Info("collecting SMART data", "device", deviceInfo.Name, "type", deviceInfo.Type, "has_existing_data", sm.hasDataForDevice(deviceInfo))
+
+	// Check if we have existing data for this exact device identity. Multiple
+	// bridge slots can share a path, so a name-only match is not sufficient.
+	hasExistingData := sm.hasDataForDevice(deviceInfo)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	// Try with -n standby first if we have existing data
-	args := sm.smartctlArgs(deviceInfo, true)
-	cmd := exec.CommandContext(ctx, sm.binPath, args...)
+	args := sm.smartctlArgs(deviceInfo, hasExistingData)
+	cmd := exec.CommandContext(ctx, sm.smartctlPath, args...)
 	output, err := cmd.CombinedOutput()
 
 	// Check if device is in standby (exit status 2)
-	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
+	if exitErr, ok := errors.AsType[*exec.ExitError](err); ok && exitErr.ExitCode() == 2 {
 		if hasExistingData {
 			// Device is in standby and we have cached data, keep using cache
 			return nil
@@ -448,11 +516,39 @@ func (sm *SmartManager) CollectSmart(deviceInfo *DeviceInfo) error {
 		ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel2()
 		args = sm.smartctlArgs(deviceInfo, false)
-		cmd = exec.CommandContext(ctx2, sm.binPath, args...)
+		cmd = exec.CommandContext(ctx2, sm.smartctlPath, args...)
 		output, err = cmd.CombinedOutput()
 	}
 
 	hasValidData := sm.parseSmartOutput(deviceInfo, output)
+
+	// If NVMe controller path failed, try namespace path as fallback.
+	// NVMe controllers (/dev/nvme0) don't always support SMART queries. See github.com/henrygd/beszel/issues/1504
+	if !hasValidData && err != nil && isNvmeControllerPath(deviceInfo.Name) {
+		controllerPath := deviceInfo.Name
+		namespacePath := controllerPath + "n1"
+		if !sm.isExcludedDevice(namespacePath) {
+			deviceInfo.Name = namespacePath
+
+			ctx3, cancel3 := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel3()
+			args = sm.smartctlArgs(deviceInfo, false)
+			cmd = exec.CommandContext(ctx3, sm.smartctlPath, args...)
+			output, err = cmd.CombinedOutput()
+			hasValidData = sm.parseSmartOutput(deviceInfo, output)
+
+			// Auto-exclude the controller path so future scans don't re-add it
+			if hasValidData {
+				sm.Lock()
+				if sm.excludedDevices == nil {
+					sm.excludedDevices = make(map[string]struct{})
+				}
+				sm.excludedDevices[controllerPath] = struct{}{}
+				sm.Unlock()
+				slog.Debug("auto-excluded NVMe controller path", "path", controllerPath)
+			}
+		}
+	}
 
 	if !hasValidData {
 		if err != nil {
@@ -469,17 +565,28 @@ func (sm *SmartManager) CollectSmart(deviceInfo *DeviceInfo) error {
 // smartctlArgs returns the arguments for the smartctl command
 // based on the device type and whether to include standby mode
 func (sm *SmartManager) smartctlArgs(deviceInfo *DeviceInfo, includeStandby bool) []string {
-	args := make([]string, 0, 7)
+	args := make([]string, 0, 9)
+	var deviceType, parserType string
 
 	if deviceInfo != nil {
-		deviceType := strings.ToLower(deviceInfo.Type)
+		deviceType = strings.ToLower(deviceInfo.Type)
+		parserType = strings.ToLower(deviceInfo.parserType)
 		// types sometimes misidentified in scan; see github.com/henrygd/beszel/issues/1345
-		if deviceType != "" && deviceType != "scsi" && deviceType != "ata" {
+		// An explicit SMART_DEVICES ":type" hint is a deliberate override, so always
+		// pass it through; otherwise scsi/ata are left off so smartctl can auto-detect.
+		if deviceType != "" && (deviceInfo.explicitType || (deviceType != "scsi" && deviceType != "ata")) {
 			args = append(args, "-d", deviceInfo.Type)
 		}
 	}
 
 	args = append(args, "-a", "--json=c")
+	effectiveType := parserType
+	if effectiveType == "" {
+		effectiveType = deviceType
+	}
+	if effectiveType == "sat" || effectiveType == "ata" {
+		args = append(args, "-l", "devstat")
+	}
 
 	if includeStandby {
 		args = append(args, "-n", "standby")
@@ -492,14 +599,18 @@ func (sm *SmartManager) smartctlArgs(deviceInfo *DeviceInfo, includeStandby bool
 	return args
 }
 
-// hasDataForDevice checks if we have cached SMART data for a specific device
-func (sm *SmartManager) hasDataForDevice(deviceName string) bool {
+// hasDataForDevice checks if we have cached SMART data for a specific device identity.
+func (sm *SmartManager) hasDataForDevice(deviceInfo *DeviceInfo) bool {
+	if deviceInfo == nil {
+		return false
+	}
+
 	sm.Lock()
 	defer sm.Unlock()
 
-	// Check if any cached data has this device name
+	deviceKey := makeDeviceKey(deviceInfo.Name, deviceInfo.Type)
 	for _, data := range sm.SmartDataMap {
-		if data != nil && data.DiskName == deviceName {
+		if data != nil && makeDeviceKey(data.DiskName, data.DiskType) == deviceKey {
 			return true
 		}
 	}
@@ -540,6 +651,28 @@ func mergeDeviceLists(existing, scanned, configured []*DeviceInfo) []*DeviceInfo
 		return existing
 	}
 
+	// buildUniqueNameIndex returns devices that appear exactly once by name.
+	// It is used to safely apply name-only fallbacks without RAID ambiguity.
+	buildUniqueNameIndex := func(devices []*DeviceInfo) map[string]*DeviceInfo {
+		counts := make(map[string]int, len(devices))
+		for _, dev := range devices {
+			if dev == nil || dev.Name == "" {
+				continue
+			}
+			counts[dev.Name]++
+		}
+		unique := make(map[string]*DeviceInfo, len(counts))
+		for _, dev := range devices {
+			if dev == nil || dev.Name == "" {
+				continue
+			}
+			if counts[dev.Name] == 1 {
+				unique[dev.Name] = dev
+			}
+		}
+		return unique
+	}
+
 	// preserveVerifiedType copies the verified type/parser metadata from an existing
 	// device record so that subsequent scans/config updates never downgrade a
 	// previously verified device.
@@ -550,71 +683,105 @@ func mergeDeviceLists(existing, scanned, configured []*DeviceInfo) []*DeviceInfo
 		target.Type = prev.Type
 		target.typeVerified = true
 		target.parserType = prev.parserType
+		if prev.explicitType {
+			target.explicitType = true
+		}
 	}
 
-	existingIndex := make(map[string]*DeviceInfo, len(existing))
+	// applyConfiguredMetadata updates a matched device with any configured
+	// overrides, preserving verified type data when present.
+	applyConfiguredMetadata := func(existingDev, configuredDev *DeviceInfo) {
+		// Only update the type if it has not been verified yet; otherwise we
+		// keep the existing verified metadata intact.
+		if configuredDev.Type != "" && !existingDev.typeVerified {
+			newType := strings.TrimSpace(configuredDev.Type)
+			existingDev.Type = newType
+			existingDev.typeVerified = false
+			existingDev.parserType = normalizeParserType(newType)
+		}
+		if configuredDev.explicitType {
+			existingDev.explicitType = true
+		}
+		if configuredDev.InfoName != "" {
+			existingDev.InfoName = configuredDev.InfoName
+		}
+		if configuredDev.Protocol != "" {
+			existingDev.Protocol = configuredDev.Protocol
+		}
+	}
+
+	existingIndex := make(map[deviceKey]*DeviceInfo, len(existing))
 	for _, dev := range existing {
 		if dev == nil || dev.Name == "" {
 			continue
 		}
-		existingIndex[dev.Name] = dev
+		existingIndex[makeDeviceKey(dev.Name, dev.Type)] = dev
 	}
+	existingByName := buildUniqueNameIndex(existing)
 
 	finalDevices := make([]*DeviceInfo, 0, len(scanned)+len(configured))
-	deviceIndex := make(map[string]*DeviceInfo, len(scanned)+len(configured))
+	deviceIndex := make(map[deviceKey]*DeviceInfo, len(scanned)+len(configured))
 
 	// Start with the newly scanned devices so we always surface fresh metadata,
 	// but ensure we retain any previously verified parser assignment.
-	for _, dev := range scanned {
-		if dev == nil || dev.Name == "" {
+	for _, scannedDevice := range scanned {
+		if scannedDevice == nil || scannedDevice.Name == "" {
 			continue
 		}
 
 		// Work on a copy so we can safely adjust metadata without mutating the
 		// input slices that may be reused elsewhere.
-		copyDev := *dev
-		if prev := existingIndex[copyDev.Name]; prev != nil {
+		copyDev := *scannedDevice
+		key := makeDeviceKey(copyDev.Name, copyDev.Type)
+		if prev := existingIndex[key]; prev != nil {
+			preserveVerifiedType(&copyDev, prev)
+		} else if prev := existingByName[copyDev.Name]; prev != nil {
 			preserveVerifiedType(&copyDev, prev)
 		}
 
 		finalDevices = append(finalDevices, &copyDev)
-		deviceIndex[copyDev.Name] = finalDevices[len(finalDevices)-1]
+		copyKey := makeDeviceKey(copyDev.Name, copyDev.Type)
+		deviceIndex[copyKey] = finalDevices[len(finalDevices)-1]
 	}
+	deviceIndexByName := buildUniqueNameIndex(finalDevices)
 
 	// Merge configured devices on top so users can override scan results (except
 	// for verified type information).
-	for _, dev := range configured {
-		if dev == nil || dev.Name == "" {
+	for _, configuredDevice := range configured {
+		if configuredDevice == nil || configuredDevice.Name == "" {
 			continue
 		}
 
-		if existingDev, ok := deviceIndex[dev.Name]; ok {
-			// Only update the type if it has not been verified yet; otherwise we
-			// keep the existing verified metadata intact.
-			if dev.Type != "" && !existingDev.typeVerified {
-				newType := strings.TrimSpace(dev.Type)
-				existingDev.Type = newType
-				existingDev.typeVerified = false
-				existingDev.parserType = normalizeParserType(newType)
+		key := makeDeviceKey(configuredDevice.Name, configuredDevice.Type)
+		if existingDev, ok := deviceIndex[key]; ok {
+			applyConfiguredMetadata(existingDev, configuredDevice)
+			continue
+		}
+		if existingDev := deviceIndexByName[configuredDevice.Name]; existingDev != nil {
+			oldKey := makeDeviceKey(existingDev.Name, existingDev.Type)
+			if prev := existingIndex[key]; prev != nil {
+				preserveVerifiedType(existingDev, prev)
 			}
-			if dev.InfoName != "" {
-				existingDev.InfoName = dev.InfoName
-			}
-			if dev.Protocol != "" {
-				existingDev.Protocol = dev.Protocol
-			}
+			applyConfiguredMetadata(existingDev, configuredDevice)
+			delete(deviceIndex, oldKey)
+			deviceIndex[makeDeviceKey(existingDev.Name, existingDev.Type)] = existingDev
+			delete(deviceIndexByName, configuredDevice.Name)
 			continue
 		}
 
-		copyDev := *dev
-		if prev := existingIndex[copyDev.Name]; prev != nil {
+		copyDev := *configuredDevice
+		key = makeDeviceKey(copyDev.Name, copyDev.Type)
+		if prev := existingIndex[key]; prev != nil {
+			preserveVerifiedType(&copyDev, prev)
+		} else if prev := existingByName[copyDev.Name]; prev != nil {
 			preserveVerifiedType(&copyDev, prev)
 		} else if copyDev.Type != "" {
 			copyDev.parserType = normalizeParserType(copyDev.Type)
 		}
 
 		finalDevices = append(finalDevices, &copyDev)
-		deviceIndex[copyDev.Name] = finalDevices[len(finalDevices)-1]
+		copyKey := makeDeviceKey(copyDev.Name, copyDev.Type)
+		deviceIndex[copyKey] = finalDevices[len(finalDevices)-1]
 	}
 
 	return finalDevices
@@ -632,12 +799,14 @@ func (sm *SmartManager) updateSmartDevices(devices []*DeviceInfo) {
 		return
 	}
 
-	validNames := make(map[string]struct{}, len(devices))
+	validKeys := make(map[deviceKey]struct{}, len(devices))
+	nameCounts := make(map[string]int, len(devices))
 	for _, device := range devices {
 		if device == nil || device.Name == "" {
 			continue
 		}
-		validNames[device.Name] = struct{}{}
+		validKeys[makeDeviceKey(device.Name, device.Type)] = struct{}{}
+		nameCounts[device.Name]++
 	}
 
 	for key, data := range sm.SmartDataMap {
@@ -646,7 +815,11 @@ func (sm *SmartManager) updateSmartDevices(devices []*DeviceInfo) {
 			continue
 		}
 
-		if _, ok := validNames[data.DiskName]; ok {
+		if data.DiskType == "" {
+			if nameCounts[data.DiskName] == 1 {
+				continue
+			}
+		} else if _, ok := validKeys[makeDeviceKey(data.DiskName, data.DiskType)]; ok {
 			continue
 		}
 
@@ -696,9 +869,11 @@ func (sm *SmartManager) isVirtualDeviceFromStrings(fields ...string) bool {
 	return false
 }
 
-// parseSmartForSata parses the output of smartctl --all -j for SATA/ATA devices and updates the SmartDataMap
+// parseSmartForSata parses the output of smartctl --all -j for SATA/ATA devices and updates the SmartDataMap.
+// deviceType is the exact type used to identify and query the device; when set,
+// it takes precedence over the generic type reported by smartctl.
 // Returns hasValidData and exitStatus
-func (sm *SmartManager) parseSmartForSata(output []byte) (bool, int) {
+func (sm *SmartManager) parseSmartForSata(output []byte, deviceType string) (bool, int) {
 	var data smart.SmartInfoForSata
 
 	if err := json.Unmarshal(output, &data); err != nil {
@@ -737,6 +912,17 @@ func (sm *SmartManager) parseSmartForSata(output []byte) (bool, int) {
 	smartData.SmartStatus = getSmartStatus(smartData.Temperature, data.SmartStatus.Passed)
 	smartData.DiskName = data.Device.Name
 	smartData.DiskType = data.Device.Type
+	if deviceType != "" {
+		smartData.DiskType = deviceType
+	}
+
+	// get values from ata_device_statistics if necessary
+	var ataDeviceStats smart.AtaDeviceStatistics
+	if smartData.Temperature == 0 {
+		if temp := findAtaDeviceStatisticsValue(&data, &ataDeviceStats, 5, "Current Temperature", 0, 255); temp != nil {
+			smartData.Temperature = uint8(*temp)
+		}
+	}
 
 	// update SmartAttributes
 	smartData.Attributes = make([]*smart.SmartAttribute, 0, len(data.AtaSmartAttributes.Table))
@@ -744,6 +930,9 @@ func (sm *SmartManager) parseSmartForSata(output []byte) (bool, int) {
 		rawValue := uint64(attr.Raw.Value)
 		if parsed, ok := smart.ParseSmartRawValueString(attr.Raw.String); ok {
 			rawValue = parsed
+		}
+		if smartData.SmartStatus == "PASSED" && rawValue > 0 && (attr.ID == 5 || attr.ID == 197 || attr.ID == 198) {
+			smartData.SmartStatus = "WARNING"
 		}
 		smartAttr := &smart.SmartAttribute{
 			ID:         attr.ID,
@@ -772,7 +961,37 @@ func getSmartStatus(temperature uint8, passed bool) string {
 	}
 }
 
-func (sm *SmartManager) parseSmartForScsi(output []byte) (bool, int) {
+// findAtaDeviceStatisticsEntry centralizes ATA devstat lookups so additional
+// metrics can be pulled from the same structure in the future.
+func findAtaDeviceStatisticsValue(data *smart.SmartInfoForSata, ataDeviceStats *smart.AtaDeviceStatistics, entryNumber uint8, entryName string, minValue, maxValue int64) *int64 {
+	if len(ataDeviceStats.Pages) == 0 {
+		if len(data.AtaDeviceStatistics) == 0 {
+			return nil
+		}
+		if err := json.Unmarshal(data.AtaDeviceStatistics, ataDeviceStats); err != nil {
+			return nil
+		}
+	}
+	for pageIdx := range ataDeviceStats.Pages {
+		page := &ataDeviceStats.Pages[pageIdx]
+		if page.Number != entryNumber {
+			continue
+		}
+		for entryIdx := range page.Table {
+			entry := &page.Table[entryIdx]
+			if !strings.EqualFold(entry.Name, entryName) {
+				continue
+			}
+			if entry.Value == nil || *entry.Value < minValue || *entry.Value > maxValue {
+				return nil
+			}
+			return entry.Value
+		}
+	}
+	return nil
+}
+
+func (sm *SmartManager) parseSmartForScsi(output []byte, deviceType string) (bool, int) {
 	var data smart.SmartInfoForScsi
 
 	if err := json.Unmarshal(output, &data); err != nil {
@@ -807,6 +1026,9 @@ func (sm *SmartManager) parseSmartForScsi(output []byte) (bool, int) {
 	smartData.SmartStatus = getSmartStatus(smartData.Temperature, data.SmartStatus.Passed)
 	smartData.DiskName = data.Device.Name
 	smartData.DiskType = data.Device.Type
+	if deviceType != "" {
+		smartData.DiskType = deviceType
+	}
 
 	attributes := make([]*smart.SmartAttribute, 0, 10)
 	attributes = append(attributes, &smart.SmartAttribute{Name: "PowerOnHours", RawValue: data.PowerOnTime.Hours})
@@ -858,9 +1080,57 @@ func parseScsiGigabytesProcessed(value string) int64 {
 	return parsed
 }
 
-// parseSmartForNvme parses the output of smartctl --all -j /dev/nvmeX and updates the SmartDataMap
+// lookupDarwinNvmeCapacity returns the capacity in bytes for a given NVMe serial number on Darwin.
+// It uses system_profiler SPNVMeDataType to get capacity since Apple SSDs don't report user_capacity
+// via smartctl. Results are cached after the first call via sync.Once.
+func (sm *SmartManager) lookupDarwinNvmeCapacity(serial string) uint64 {
+	sm.darwinNvmeOnce.Do(func() {
+		sm.darwinNvmeCapacity = make(map[string]uint64)
+
+		provider := sm.darwinNvmeProvider
+		if provider == nil {
+			provider = func() ([]byte, error) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				return exec.CommandContext(ctx, "system_profiler", "SPNVMeDataType", "-json").Output()
+			}
+		}
+
+		out, err := provider()
+		if err != nil {
+			slog.Debug("system_profiler NVMe lookup failed", "err", err)
+			return
+		}
+
+		var result struct {
+			SPNVMeDataType []struct {
+				Items []struct {
+					DeviceSerial string `json:"device_serial"`
+					SizeInBytes  uint64 `json:"size_in_bytes"`
+				} `json:"_items"`
+			} `json:"SPNVMeDataType"`
+		}
+		if err := json.Unmarshal(out, &result); err != nil {
+			slog.Debug("system_profiler NVMe parse failed", "err", err)
+			return
+		}
+
+		for _, controller := range result.SPNVMeDataType {
+			for _, item := range controller.Items {
+				if item.DeviceSerial != "" && item.SizeInBytes > 0 {
+					sm.darwinNvmeCapacity[item.DeviceSerial] = item.SizeInBytes
+				}
+			}
+		}
+	})
+	return sm.darwinNvmeCapacity[serial]
+}
+
+// parseSmartForNvme parses the output of smartctl --all -j /dev/nvmeX and updates the SmartDataMap.
+// deviceType is the exact type used to identify and query the device; when set,
+// it takes precedence over the generic type reported by smartctl.
 // Returns hasValidData and exitStatus
-func (sm *SmartManager) parseSmartForNvme(output []byte) (bool, int) {
+func (sm *SmartManager) parseSmartForNvme(output []byte, deviceType string) (bool, int) {
 	data := &smart.SmartInfoForNvme{}
 
 	if err := json.Unmarshal(output, &data); err != nil {
@@ -894,10 +1164,19 @@ func (sm *SmartManager) parseSmartForNvme(output []byte) (bool, int) {
 	smartData.SerialNumber = data.SerialNumber
 	smartData.FirmwareVersion = data.FirmwareVersion
 	smartData.Capacity = data.UserCapacity.Bytes
+	if smartData.Capacity == 0 {
+		smartData.Capacity = data.NVMeTotalCapacity
+	}
+	if smartData.Capacity == 0 && (runtime.GOOS == "darwin" || sm.darwinNvmeProvider != nil) {
+		smartData.Capacity = sm.lookupDarwinNvmeCapacity(data.SerialNumber)
+	}
 	smartData.Temperature = data.NVMeSmartHealthInformationLog.Temperature
 	smartData.SmartStatus = getSmartStatus(smartData.Temperature, data.SmartStatus.Passed)
 	smartData.DiskName = data.Device.Name
 	smartData.DiskType = data.Device.Type
+	if deviceType != "" {
+		smartData.DiskType = deviceType
+	}
 
 	// nvme attributes does not follow the same format as ata attributes,
 	// so we manually map each field to SmartAttributes
@@ -929,32 +1208,42 @@ func (sm *SmartManager) parseSmartForNvme(output []byte) (bool, int) {
 
 // detectSmartctl checks if smartctl is installed, returns an error if not
 func (sm *SmartManager) detectSmartctl() (string, error) {
-	isWindows := runtime.GOOS == "windows"
-
-	// Load embedded smartctl.exe for Windows amd64 builds.
-	if isWindows && runtime.GOARCH == "amd64" {
-		if path, err := ensureEmbeddedSmartctl(); err == nil {
-			return path, nil
+	if runtime.GOOS == "windows" {
+		// Load embedded smartctl.exe for Windows amd64 builds.
+		if runtime.GOARCH == "amd64" {
+			if path, err := ensureEmbeddedSmartctl(); err == nil {
+				return path, nil
+			}
 		}
-	}
-
-	if path, err := exec.LookPath("smartctl"); err == nil {
-		return path, nil
-	}
-	locations := []string{}
-	if isWindows {
-		locations = append(locations,
-			"C:\\Program Files\\smartmontools\\bin\\smartctl.exe",
-		)
-	} else {
-		locations = append(locations, "/opt/homebrew/bin/smartctl")
-	}
-	for _, location := range locations {
+		// Try to find smartctl in the default installation location
+		const location = "C:\\Program Files\\smartmontools\\bin\\smartctl.exe"
 		if _, err := os.Stat(location); err == nil {
 			return location, nil
 		}
 	}
-	return "", errors.New("smartctl not found")
+
+	return utils.LookPathHomebrew("smartctl")
+}
+
+// isNvmeControllerPath checks if the path matches an NVMe controller pattern
+// like /dev/nvme0, /dev/nvme1, etc. (without namespace suffix like n1)
+func isNvmeControllerPath(path string) bool {
+	base := filepath.Base(path)
+	if !strings.HasPrefix(base, "nvme") {
+		return false
+	}
+	suffix := strings.TrimPrefix(base, "nvme")
+	if suffix == "" {
+		return false
+	}
+	// Controller paths are just "nvme" + digits (e.g., nvme0, nvme1)
+	// Namespace paths have "n" after the controller number (e.g., nvme0n1)
+	for _, c := range suffix {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // NewSmartManager creates and initializes a new SmartManager
@@ -964,11 +1253,17 @@ func NewSmartManager() (*SmartManager, error) {
 	}
 	sm.refreshExcludedDevices()
 	path, err := sm.detectSmartctl()
+	slog.Debug("smartctl", "path", path, "err", err)
 	if err != nil {
-		slog.Debug(err.Error())
+		// Keep the previous fail-fast behavior unless this Linux host exposes
+		// eMMC or mdraid health via sysfs, in which case smartctl is optional.
+		if runtime.GOOS == "linux" {
+			if len(scanEmmcDevices()) > 0 || len(scanMdraidDevices()) > 0 {
+				return sm, nil
+			}
+		}
 		return nil, err
 	}
-	slog.Debug("smartctl", "path", path)
-	sm.binPath = path
+	sm.smartctlPath = path
 	return sm, nil
 }

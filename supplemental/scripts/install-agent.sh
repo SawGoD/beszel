@@ -5,11 +5,37 @@ is_alpine() {
 }
 
 is_openwrt() {
-  grep -qi "OpenWrt" /etc/os-release
+  [ -f /etc/os-release ] && grep -qi "OpenWrt" /etc/os-release
 }
 
 is_freebsd() {
   [ "$(uname -s)" = "FreeBSD" ]
+}
+
+is_opnsense() {
+  [ -f /usr/local/sbin/opnsense-version ] || [ -f /usr/local/etc/opnsense-version ] || [ -f /etc/opnsense-release ]
+}
+
+is_pfsense() {
+  [ -f /etc/rc.bootup ] && grep -qi "pfSense" /etc/rc.bootup
+}
+
+is_glibc() {
+  # Prefer glibc-enabled agent (NVML via purego) on linux/amd64 glibc systems.
+  # Check common dynamic loader paths first (fast + reliable).
+  for p in \
+    /lib64/ld-linux-x86-64.so.2 \
+    /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+    /lib/ld-linux-x86-64.so.2; do
+    [ -e "$p" ] && return 0
+  done
+
+  # Fallback to ldd output if available.
+  if command -v ldd >/dev/null 2>&1; then
+    ldd --version 2>&1 | grep -qiE 'gnu libc|glibc' && return 0
+  fi
+
+  return 1
 }
 
 
@@ -69,6 +95,37 @@ ensure_trailing_slash() {
   else
     echo "$1"
   fi
+}
+
+# Read the listen address from the active service configuration. Existing
+# service files are kept as they are, so the configured address can differ from
+# $PORT, which falls back to the default when -p is not passed. LISTEN is
+# checked before PORT to match the agent's own precedence, and the value is read
+# as text so host:port and unix socket paths survive.
+configured_address() {
+  if is_alpine || is_openwrt; then
+    address_file=/etc/init.d/beszel-agent
+  elif is_freebsd; then
+    address_file="$AGENT_DIR/env"
+  else
+    address_file=/etc/systemd/system/beszel-agent.service
+  fi
+
+  [ -f "$address_file" ] || return 0
+
+  address_value=$(sed -n 's/.*LISTEN="\{0,1\}\([^"]*\)"\{0,1\}.*/\1/p' "$address_file" | head -n 1)
+  if [ -z "$address_value" ]; then
+    address_value=$(sed -n 's/.*PORT="\{0,1\}\([^"]*\)"\{0,1\}.*/\1/p' "$address_file" | head -n 1)
+  fi
+
+  printf '%s\n' "$address_value"
+}
+
+# Escape text for use in the replacement portion of a sed s command whose
+# delimiter is |. This only escapes sed replacement metacharacters; quoting
+# for the destination configuration syntax is handled separately.
+escape_sed_replacement() {
+  printf '%s' "$1" | sed 's/[\\&|]/\\&/g'
 }
 
 # Generate FreeBSD rc service content
@@ -161,6 +218,21 @@ run_rc_command "$1"
 EOF
 }
 
+# Generate the boot hook used by the firewall appliances, neither of which
+# starts an enabled rc.d service at boot. The script body is identical for
+# both; only the install path differs (see the boot hook installation below).
+# The running-check guards against a double start, since pfSense may also run
+# the hook again during network events.
+generate_appliance_boot_script() {
+  cat <<'EOF'
+#!/bin/sh
+
+if ! /usr/sbin/service beszel-agent status >/dev/null 2>&1; then
+    /usr/sbin/service beszel-agent onestart
+fi
+EOF
+}
+
 # Detect system architecture
 detect_architecture() {
   local arch=$(uname -m)
@@ -174,8 +246,14 @@ detect_architecture() {
     x86_64)
       arch="amd64"
       ;;
-    armv6l|armv7l)
+    armv5*)
+      arch="armv5"
+      ;;
+    armv6l)
       arch="arm"
+      ;;
+    armv7l)
+      arch="armv7"
       ;;
     aarch64)
       arch="arm64"
@@ -217,6 +295,12 @@ KEY=""
 TOKEN=""
 HUB_URL=""
 AUTO_UPDATE_FLAG="" # empty string means prompt, "true" means auto-enable, "false" means skip
+# Track which of the reconfigurable values were explicitly passed as arguments,
+# so a reinstall only overwrites the fields the caller actually asked to change.
+KEY_PROVIDED=false
+PORT_PROVIDED=false
+TOKEN_PROVIDED=false
+HUB_URL_PROVIDED=false
 VERSION="latest"
 
 # Check for help flag
@@ -247,10 +331,10 @@ build_sudo_args() {
     if [ -n "$QUOTED_ARGS" ]; then
       QUOTED_ARGS="$QUOTED_ARGS "
     fi
-    QUOTED_ARGS="$QUOTED_ARGS'$(echo "$1" | sed "s/'/'\\\\''/g")'"
+    QUOTED_ARGS="$QUOTED_ARGS'$(printf '%s' "$1" | sed "s/'/'\\\\''/g")'"
     shift
   done
-  echo "$QUOTED_ARGS"
+  printf '%s\n' "$QUOTED_ARGS"
 }
 
 # Check if running as root and re-execute with sudo if needed
@@ -272,18 +356,22 @@ while [ $# -gt 0 ]; do
   -k)
     shift
     KEY="$1"
+    KEY_PROVIDED=true
     ;;
   -p)
     shift
     PORT="$1"
+    PORT_PROVIDED=true
     ;;
   -t)
     shift
     TOKEN="$1"
+    TOKEN_PROVIDED=true
     ;;
   -url)
     shift
     HUB_URL="$1"
+    HUB_URL_PROVIDED=true
     ;;
   -v | --version)
     shift
@@ -355,6 +443,20 @@ else
   BIN_PATH="/opt/beszel-agent/beszel-agent"
 fi
 
+# Stop existing service if it exists (for upgrades)
+if [ "$UNINSTALL" != true ] && [ -f "$BIN_PATH" ]; then
+  echo "Existing installation detected. Stopping service for upgrade..."
+  if is_alpine; then
+    rc-service beszel-agent stop 2>/dev/null || true
+  elif is_openwrt; then
+    /etc/init.d/beszel-agent stop 2>/dev/null || true
+  elif is_freebsd; then
+    service beszel-agent stop 2>/dev/null || true
+  else
+    systemctl stop beszel-agent.service 2>/dev/null || true
+  fi
+fi
+
 # Uninstall process
 if [ "$UNINSTALL" = true ]; then
   # Clean up SELinux contexts before removing files
@@ -401,14 +503,19 @@ if [ "$UNINSTALL" = true ]; then
 
     echo "Removing the FreeBSD service files..."
     rm -f /usr/local/etc/rc.d/beszel-agent
+    rm -f /usr/local/etc/rc.d/beszel-agent-start.sh
+
+    # Remove the OPNsense boot hook if it exists
+    rm -f /usr/local/etc/rc.syshook.d/start/99-beszel-agent
 
     # Remove the daily update cron job if it exists
     echo "Removing the daily update cron job..."
     rm -f /etc/cron.d/beszel-agent
 
-    # Remove log files
+    # Remove log files. The rc script derives its logfile from $name
+    # (beszel_agent), not from the script filename (beszel-agent).
     echo "Removing log files..."
-    rm -f /var/log/beszel-agent.log
+    rm -f /var/log/beszel_agent.log
 
     # Remove env file and directories
     echo "Removing environment configuration file..."
@@ -419,7 +526,7 @@ if [ "$UNINSTALL" = true ]; then
   else
     echo "Stopping and disabling the agent service..."
     systemctl stop beszel-agent.service
-    systemctl disable beszel-agent.service
+    systemctl disable beszel-agent.service >/dev/null 2>&1
 
     echo "Removing the systemd service file..."
     rm /etc/systemd/system/beszel-agent.service
@@ -427,7 +534,7 @@ if [ "$UNINSTALL" = true ]; then
     # Remove the update timer and service if they exist
     echo "Removing the daily update service and timer..."
     systemctl stop beszel-agent-update.timer 2>/dev/null
-    systemctl disable beszel-agent-update.timer 2>/dev/null
+    systemctl disable beszel-agent-update.timer >/dev/null 2>&1
     rm -f /etc/systemd/system/beszel-agent-update.service
     rm -f /etc/systemd/system/beszel-agent-update.timer
 
@@ -489,14 +596,18 @@ else
   echo "Warning: Please ensure 'tar' and 'curl' and 'sha256sum (coreutils)' are installed."
 fi
 
-# If no SSH key is provided, ask for the SSH key interactively
+# If no SSH key is provided, ask for the SSH key interactively (skip if upgrading)
 if [ -z "$KEY" ]; then
-  printf "Enter your SSH key: "
-  read KEY
+  if [ -f "$BIN_PATH" ]; then
+    echo "Upgrading existing installation. Using existing service configuration."
+  else
+    printf "Enter your SSH key: "
+    read KEY
+  fi
 fi
 
 # Remove newlines from KEY
-KEY=$(echo "$KEY" | tr -d '\n')
+KEY=$(printf '%s' "$KEY" | tr -d '\n')
 
 # TOKEN and HUB_URL are optional for backwards compatibility - no interactive prompts
 # They will be set as empty environment variables if not provided
@@ -504,24 +615,26 @@ KEY=$(echo "$KEY" | tr -d '\n')
 # Verify checksum
 if command -v sha256sum >/dev/null; then
   CHECK_CMD="sha256sum"
-elif command -v md5 >/dev/null; then
-  CHECK_CMD="md5 -q"
+elif command -v sha256 >/dev/null; then
+  # FreeBSD uses 'sha256' instead of 'sha256sum', with different output format
+  CHECK_CMD="sha256 -q"
 else
-  echo "No MD5 checksum utility found"
+  echo "No SHA256 checksum utility found"
   exit 1
 fi
 
 # Create a dedicated user for the service if it doesn't exist
-echo "Creating a dedicated user for the Beszel Agent service..."
+AGENT_USER="beszel"
+echo "Configuring the dedicated user for the Beszel Agent service..."
 if is_alpine; then
   if ! id -u beszel >/dev/null 2>&1; then
     addgroup beszel
     adduser -S -D -H -s /sbin/nologin -G beszel beszel
   fi
   # Add the user to the docker group to allow access to the Docker socket if group docker exists
-  if getent group docker; then
+  if getent group docker >/dev/null 2>&1; then
     echo "Adding beszel to docker group"
-    usermod -aG docker beszel
+    addgroup beszel docker
   fi
   
 elif is_openwrt; then
@@ -553,13 +666,18 @@ elif is_openwrt; then
   fi
 
 elif is_freebsd; then
-  if ! id -u beszel >/dev/null 2>&1; then
-    pw user add beszel -d /nonexistent -s /usr/sbin/nologin -c "beszel user"
-  fi
-  # Add the user to the wheel group to allow self-updates
-  if pw group show wheel >/dev/null 2>&1; then
-    echo "Adding beszel to wheel group for self-updates"
-    pw group mod wheel -m beszel
+  if is_opnsense || is_pfsense; then
+    echo "Firewall appliance detected: skipping user creation (using daemon user instead)"
+    AGENT_USER="daemon"
+  else
+    if ! id -u beszel >/dev/null 2>&1; then
+      pw user add beszel -d /nonexistent -s /usr/sbin/nologin -c "beszel user"
+    fi
+    # Add the user to the wheel group to allow self-updates
+    if pw group show wheel >/dev/null 2>&1; then
+      echo "Adding beszel to wheel group for self-updates"
+      pw group mod wheel -m beszel
+    fi
   fi
 
 else
@@ -567,12 +685,12 @@ else
     useradd --system --home-dir /nonexistent --shell /bin/false beszel
   fi
   # Add the user to the docker group to allow access to the Docker socket if group docker exists
-  if getent group docker; then
+  if getent group docker >/dev/null 2>&1; then
     echo "Adding beszel to docker group"
     usermod -aG docker beszel
   fi
   # Add the user to the disk group to allow access to disk devices if group disk exists
-  if getent group disk; then
+  if getent group disk >/dev/null 2>&1; then
     echo "Adding beszel to disk group"
     usermod -aG disk beszel
   fi
@@ -583,7 +701,7 @@ fi
 if [ ! -d "$AGENT_DIR" ]; then
   echo "Creating the directory for the Beszel Agent..."
   mkdir -p "$AGENT_DIR"
-  chown beszel:beszel "$AGENT_DIR"
+  chown "${AGENT_USER}:${AGENT_USER}" "$AGENT_DIR"
   chmod 755 "$AGENT_DIR"
 fi
 
@@ -592,11 +710,13 @@ if [ ! -d "$BIN_DIR" ]; then
 fi
 
 # Download and install the Beszel Agent
-echo "Downloading and installing the agent..."
 
 OS=$(uname -s | sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')
 ARCH=$(detect_architecture)
 FILE_NAME="beszel-agent_${OS}_${ARCH}.tar.gz"
+if [ "$OS" = "linux" ] && [ "$ARCH" = "amd64" ] && is_glibc; then
+  FILE_NAME="beszel-agent_${OS}_${ARCH}_glibc.tar.gz"
+fi
 
 # Determine version to install
 if [ "$VERSION" = "latest" ]; then
@@ -616,19 +736,29 @@ else
   INSTALL_VERSION=$(echo "$INSTALL_VERSION" | sed 's/^v//')
 fi
 
-echo "Downloading and installing agent version ${INSTALL_VERSION} from ${GITHUB_URL} ..."
+echo "Downloading beszel-agent v${INSTALL_VERSION}..."
 
 # Download checksums file
 TEMP_DIR=$(mktemp -d)
 cd "$TEMP_DIR" || exit 1
-CHECKSUM=$(curl -sL "$GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/beszel_${INSTALL_VERSION}_checksums.txt" | grep "$FILE_NAME" | cut -d' ' -f1)
+CHECKSUM=$(curl -fsSL "$GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/beszel_${INSTALL_VERSION}_checksums.txt" | grep "$FILE_NAME" | cut -d' ' -f1)
 if [ -z "$CHECKSUM" ] || ! echo "$CHECKSUM" | grep -qE "^[a-fA-F0-9]{64}$"; then
   echo "Failed to get checksum or invalid checksum format"
+  echo "Try again with --mirror (or --mirror <url>) if GitHub is not reachable."
+  rm -rf "$TEMP_DIR"
   exit 1
 fi
 
-if ! curl -#L "$GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/$FILE_NAME" -o "$FILE_NAME"; then
-  echo "Failed to download the agent from ""$GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/$FILE_NAME"
+if ! curl -fL# --retry 3 --retry-delay 2 --connect-timeout 10 "$GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/$FILE_NAME" -o "$FILE_NAME"; then
+  echo "Failed to download the agent from $GITHUB_URL/henrygd/beszel/releases/download/v${INSTALL_VERSION}/$FILE_NAME"
+  echo "Try again with --mirror (or --mirror <url>) if GitHub is not reachable."
+  rm -rf "$TEMP_DIR"
+  exit 1
+fi
+
+if ! tar -tzf "$FILE_NAME" >/dev/null 2>&1; then
+  echo "Downloaded archive is invalid or incomplete (possible network/proxy issue)."
+  echo "Try again with --mirror (or --mirror <url>) if the download path is unstable."
   rm -rf "$TEMP_DIR"
   exit 1
 fi
@@ -645,8 +775,19 @@ if ! tar -xzf "$FILE_NAME" beszel-agent; then
   exit 1
 fi
 
+if [ ! -s "$TEMP_DIR/beszel-agent" ]; then
+  echo "Downloaded binary is missing or empty."
+  rm -rf "$TEMP_DIR"
+  exit 1
+fi
+
+if [ -f "$BIN_PATH" ]; then
+  echo "Backing up existing binary..."
+  cp "$BIN_PATH" "$BIN_PATH.bak"
+fi
+
 mv beszel-agent "$BIN_PATH"
-chown beszel:beszel "$BIN_PATH"
+chown "${AGENT_USER}:${AGENT_USER}" "$BIN_PATH"
 chmod 755 "$BIN_PATH"
 
 # Set SELinux context if needed
@@ -655,9 +796,16 @@ set_selinux_context
 # Cleanup
 rm -rf "$TEMP_DIR"
 
-# Make sure /etc/machine-id exists for persistent fingerprint
-if [ ! -f /etc/machine-id ]; then
-  cat /proc/sys/kernel/random/uuid | tr -d '-' > /etc/machine-id
+# Make sure /etc/machine-id exists and is non-empty for persistent fingerprint
+if [ ! -s /etc/machine-id ]; then
+  if [ -r /proc/sys/kernel/random/uuid ]; then
+    tr -d '-' < /proc/sys/kernel/random/uuid > /etc/machine-id
+  elif command -v uuidgen >/dev/null; then
+    # FreeBSD has no /proc/sys/kernel/random/uuid
+    uuidgen | tr -d '-' > /etc/machine-id
+  else
+    echo "No UUID source found, skipping /etc/machine-id creation"
+  fi
 fi
 
 # Check for NVIDIA GPUs and grant device permissions for systemd service
@@ -673,8 +821,9 @@ detect_nvidia_devices() {
 
 # Modify service installation part, add Alpine check before systemd service creation
 if is_alpine; then
-  echo "Creating OpenRC service for Alpine Linux..."
-  cat >/etc/init.d/beszel-agent <<EOF
+  if [ ! -f /etc/init.d/beszel-agent ]; then
+    echo "Creating OpenRC service for Alpine Linux..."
+    cat >/etc/init.d/beszel-agent <<EOF
 #!/sbin/openrc-run
 
 name="beszel-agent"
@@ -700,13 +849,23 @@ depend() {
     after firewall
 }
 EOF
-
-  chmod +x /etc/init.d/beszel-agent
-  rc-update add beszel-agent default
+    chmod +x /etc/init.d/beszel-agent
+    rc-update add beszel-agent default
+  else
+    echo "Alpine OpenRC service file already exists. Updating environment variables..."
+    SED_PORT=$(escape_sed_replacement "$PORT")
+    SED_KEY=$(escape_sed_replacement "$KEY")
+    SED_TOKEN=$(escape_sed_replacement "$TOKEN")
+    SED_HUB_URL=$(escape_sed_replacement "$HUB_URL")
+    [ "$PORT_PROVIDED" = "true" ] && sed -i "s|^export PORT=.*|export PORT=\"$SED_PORT\"|" /etc/init.d/beszel-agent
+    [ "$KEY_PROVIDED" = "true" ] && sed -i "s|^export KEY=.*|export KEY=\"$SED_KEY\"|" /etc/init.d/beszel-agent
+    [ "$TOKEN_PROVIDED" = "true" ] && sed -i "s|^export TOKEN=.*|export TOKEN=\"$SED_TOKEN\"|" /etc/init.d/beszel-agent
+    [ "$HUB_URL_PROVIDED" = "true" ] && sed -i "s|^export HUB_URL=.*|export HUB_URL=\"$SED_HUB_URL\"|" /etc/init.d/beszel-agent
+  fi
 
   # Create log files with proper permissions
   touch /var/log/beszel-agent.log /var/log/beszel-agent.err
-  chown beszel:beszel /var/log/beszel-agent.log /var/log/beszel-agent.err
+  chown "${AGENT_USER}:${AGENT_USER}" /var/log/beszel-agent.log /var/log/beszel-agent.err
 
   # Start the service
   rc-service beszel-agent restart
@@ -749,8 +908,9 @@ EOF
   fi
 
 elif is_openwrt; then
-  echo "Creating procd init script service for OpenWRT..."
-  cat >/etc/init.d/beszel-agent <<EOF
+  if [ ! -f /etc/init.d/beszel-agent ]; then
+    echo "Creating procd init script service for OpenWRT..."
+    cat >/etc/init.d/beszel-agent <<EOF
 #!/bin/sh /etc/rc.common
 
 USE_PROCD=1
@@ -778,10 +938,29 @@ update() {
 }
 
 EOF
-
-  # Enable the service
-  chmod +x /etc/init.d/beszel-agent
-  /etc/init.d/beszel-agent enable
+    # Enable the service
+    chmod +x /etc/init.d/beszel-agent
+    /etc/init.d/beszel-agent enable
+  else
+    echo "OpenWRT init script already exists. Updating environment variables..."
+    # The env vars live on a single procd_set_param line, so merge any values
+    # that weren't explicitly provided in from the existing line before rewriting it.
+    CUR_ENV_LINE=$(sed -n '/^[[:space:]]*procd_set_param env PORT=/{p;q;}' /etc/init.d/beszel-agent)
+    if [ -z "$CUR_ENV_LINE" ] || ! printf '%s\n' "$CUR_ENV_LINE" | grep -q 'PORT="[^"]*" KEY="[^"]*" TOKEN="[^"]*" HUB_URL="[^"]*"'; then
+      echo "Error: Could not parse the existing environment configuration in /etc/init.d/beszel-agent."
+      echo "Expected a procd_set_param env line containing PORT, KEY, TOKEN, and HUB_URL."
+      exit 1
+    fi
+    [ "$PORT_PROVIDED" = "true" ] || PORT=$(printf '%s\n' "$CUR_ENV_LINE" | sed -n 's/.*PORT="\([^"]*\)".*/\1/p')
+    [ "$KEY_PROVIDED" = "true" ] || KEY=$(printf '%s\n' "$CUR_ENV_LINE" | sed -n 's/.*KEY="\([^"]*\)".*/\1/p')
+    [ "$TOKEN_PROVIDED" = "true" ] || TOKEN=$(printf '%s\n' "$CUR_ENV_LINE" | sed -n 's/.*TOKEN="\([^"]*\)".*/\1/p')
+    [ "$HUB_URL_PROVIDED" = "true" ] || HUB_URL=$(printf '%s\n' "$CUR_ENV_LINE" | sed -n 's/.*HUB_URL="\([^"]*\)".*/\1/p')
+    SED_PORT=$(escape_sed_replacement "$PORT")
+    SED_KEY=$(escape_sed_replacement "$KEY")
+    SED_TOKEN=$(escape_sed_replacement "$TOKEN")
+    SED_HUB_URL=$(escape_sed_replacement "$HUB_URL")
+    sed -i "s|procd_set_param env PORT=.*|procd_set_param env PORT=\"$SED_PORT\" KEY=\"$SED_KEY\" TOKEN=\"$SED_TOKEN\" HUB_URL=\"$SED_HUB_URL\"|" /etc/init.d/beszel-agent
+  fi
 
   # Start the service
   /etc/init.d/beszel-agent restart
@@ -819,28 +998,80 @@ EOF
   fi
 
 elif is_freebsd; then
-  echo "Creating FreeBSD rc service..."
+  echo "Checking for existing FreeBSD service configuration..."
+  # Ensure rc.d directory exists on minimal FreeBSD installs
+  mkdir -p /usr/local/etc/rc.d
   
-  # Create environment configuration file with proper permissions
-  echo "Creating environment configuration file..."
-  cat >"$AGENT_DIR/env" <<EOF
+  # Create or update environment configuration file
+  if [ -f "$AGENT_DIR/env" ]; then
+    echo "Environment configuration file already exists. Updating environment variables..."
+    SED_PORT=$(escape_sed_replacement "$PORT")
+    SED_KEY=$(escape_sed_replacement "$KEY")
+    SED_TOKEN=$(escape_sed_replacement "$TOKEN")
+    SED_HUB_URL=$(escape_sed_replacement "$HUB_URL")
+    [ "$PORT_PROVIDED" = "true" ] && sed -i '' -e "s|^LISTEN=.*|LISTEN=$SED_PORT|" "$AGENT_DIR/env"
+    [ "$KEY_PROVIDED" = "true" ] && sed -i '' -e "s|^KEY=.*|KEY=\"$SED_KEY\"|" "$AGENT_DIR/env"
+    [ "$TOKEN_PROVIDED" = "true" ] && sed -i '' -e "s|^TOKEN=.*|TOKEN=$SED_TOKEN|" "$AGENT_DIR/env"
+    [ "$HUB_URL_PROVIDED" = "true" ] && sed -i '' -e "s|^HUB_URL=.*|HUB_URL=$SED_HUB_URL|" "$AGENT_DIR/env"
+  else
+    echo "Writing environment configuration file..."
+    cat >"$AGENT_DIR/env" <<EOF
 LISTEN=$PORT
 KEY="$KEY"
 TOKEN=$TOKEN
 HUB_URL=$HUB_URL
 EOF
+  fi
   chmod 640 "$AGENT_DIR/env"
-  chown root:beszel "$AGENT_DIR/env"
+  chown "root:${AGENT_USER}" "$AGENT_DIR/env"
   
-  # Create the rc service file
-  generate_freebsd_rc_service > /usr/local/etc/rc.d/beszel-agent
+  # Create the rc service file if it doesn't exist
+  if [ ! -f /usr/local/etc/rc.d/beszel-agent ]; then
+    echo "Creating FreeBSD rc service..."
+    generate_freebsd_rc_service > /usr/local/etc/rc.d/beszel-agent
+    # Set proper permissions for the rc script
+    chmod 755 /usr/local/etc/rc.d/beszel-agent
+  else
+    echo "FreeBSD rc service file already exists. Skipping creation."
+  fi
 
-  # Set proper permissions for the rc script
-  chmod 755 /usr/local/etc/rc.d/beszel-agent
-  
+  if is_pfsense; then
+    echo "Creating pfSense boot script..."
+    generate_appliance_boot_script > /usr/local/etc/rc.d/beszel-agent-start.sh
+    chmod 755 /usr/local/etc/rc.d/beszel-agent-start.sh
+  elif is_opnsense; then
+    # OPNsense does not execute /usr/local/etc/rc.d/*.sh at boot, so the
+    # pfSense hook above would never run. Install the same script as a syshook.
+    echo "Creating OPNsense boot script..."
+    mkdir -p /usr/local/etc/rc.syshook.d/start
+    generate_appliance_boot_script > /usr/local/etc/rc.syshook.d/start/99-beszel-agent
+    chmod 755 /usr/local/etc/rc.syshook.d/start/99-beszel-agent
+  fi
+
   # Enable and start the service
   echo "Enabling and starting the agent service..."
   sysrc beszel_agent_enable="YES"
+  sysrc beszel_agent_user="${AGENT_USER}"
+
+  # sysrc writes to /etc/rc.conf, but rc.subr sources /etc/rc.conf.d/beszel_agent
+  # afterwards, so a stale or third-party file there silently overrides the value
+  # we just set. The service then refuses to start, and rc.subr's own error points
+  # at /etc/rc.conf, which looks correct. Verify the flag actually took effect.
+  # An empty value means this rc.subr does not support "rcvar"; skip the check.
+  rcvar_value=$(service beszel-agent rcvar 2>/dev/null | sed -n 's/^beszel_agent_enable="\(.*\)"$/\1/p')
+  if [ -n "$rcvar_value" ]; then
+    case "$rcvar_value" in
+    [Yy][Ee][Ss] | [Tt][Rr][Uu][Ee] | [Oo][Nn] | 1) ;;
+    *)
+      echo "Error: beszel_agent_enable resolves to \"${rcvar_value}\" even though it was just set to YES in /etc/rc.conf."
+      echo "Another rc configuration file is overriding it. The most likely cause is a leftover:"
+      echo "  /etc/rc.conf.d/beszel_agent"
+      echo "Remove or correct that file, then re-run this installer."
+      exit 1
+      ;;
+    esac
+  fi
+
   service beszel-agent restart
   
   # Check if service started successfully
@@ -883,12 +1114,13 @@ EOF
 
 else
   # Original systemd service installation code
-  echo "Creating the systemd service for the agent..."
+  if [ ! -f /etc/systemd/system/beszel-agent.service ]; then
+    echo "Creating the systemd service for the agent..."
 
-  # Detect NVIDIA devices and grant device permissions
-  NVIDIA_DEVICES=$(detect_nvidia_devices)
+    # Detect NVIDIA devices and grant device permissions
+    NVIDIA_DEVICES=$(detect_nvidia_devices)
 
-  cat >/etc/systemd/system/beszel-agent.service <<EOF
+    cat >/etc/systemd/system/beszel-agent.service <<EOF
 [Unit]
 Description=Beszel Agent Service
 Wants=network-online.target
@@ -922,12 +1154,23 @@ $(if [ -n "$NVIDIA_DEVICES" ]; then printf "%b" "# NVIDIA device permissions\n${
 [Install]
 WantedBy=multi-user.target
 EOF
+  else
+    echo "Systemd service file already exists. Updating environment variables..."
+    SED_PORT=$(escape_sed_replacement "$PORT")
+    SED_KEY=$(escape_sed_replacement "$KEY")
+    SED_TOKEN=$(escape_sed_replacement "$TOKEN")
+    SED_HUB_URL=$(escape_sed_replacement "$HUB_URL")
+    [ "$PORT_PROVIDED" = "true" ] && sed -i "s|^Environment=\"PORT=.*\"|Environment=\"PORT=$SED_PORT\"|" /etc/systemd/system/beszel-agent.service
+    [ "$KEY_PROVIDED" = "true" ] && sed -i "s|^Environment=\"KEY=.*\"|Environment=\"KEY=$SED_KEY\"|" /etc/systemd/system/beszel-agent.service
+    [ "$TOKEN_PROVIDED" = "true" ] && sed -i "s|^Environment=\"TOKEN=.*\"|Environment=\"TOKEN=$SED_TOKEN\"|" /etc/systemd/system/beszel-agent.service
+    [ "$HUB_URL_PROVIDED" = "true" ] && sed -i "s|^Environment=\"HUB_URL=.*\"|Environment=\"HUB_URL=$SED_HUB_URL\"|" /etc/systemd/system/beszel-agent.service
+  fi
 
   # Load and start the service
   printf "\nLoading and starting the agent service...\n"
   systemctl daemon-reload
-  systemctl enable beszel-agent.service
-  systemctl start beszel-agent.service
+  systemctl enable beszel-agent.service >/dev/null 2>&1
+  systemctl restart beszel-agent.service
 
 
 
@@ -972,7 +1215,7 @@ WantedBy=timers.target
 EOF
 
     systemctl daemon-reload
-    systemctl enable --now beszel-agent-update.timer
+    systemctl enable --now beszel-agent-update.timer >/dev/null 2>&1
 
     printf "\nDaily updates have been enabled.\n"
     ;;
@@ -986,4 +1229,7 @@ EOF
   fi
 fi
 
-printf "\n\033[32mBeszel Agent has been installed successfully! It is now running on $PORT.\033[0m\n"
+RUNNING_ADDRESS=$(configured_address)
+[ -n "$RUNNING_ADDRESS" ] || RUNNING_ADDRESS=$PORT
+
+printf "\n\033[32mBeszel Agent has been installed successfully! It is now running on $RUNNING_ADDRESS.\033[0m\n"

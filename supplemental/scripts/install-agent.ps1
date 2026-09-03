@@ -7,13 +7,27 @@ param (
     [int]$Port = 45876,
     [string]$AgentPath = "",
     [string]$NSSMPath = "",
-    [switch]$ConfigureFirewall
+    [switch]$ConfigureFirewall,
+    [ValidateSet("Auto", "Scoop", "WinGet")]
+    [string]$InstallMethod = "Auto",
+    # Set automatically from $PSBoundParameters below, or forwarded through an elevated relaunch.
+    # Used so a reinstall only overwrites Token/Url/Port on an existing service if the caller
+    # actually asked to change them, instead of wiping them with their unset defaults.
+    [switch]$TokenProvided,
+    [switch]$UrlProvided,
+    [switch]$PortProvided
 )
+
+if (-not $Elevated) {
+    $TokenProvided = $PSBoundParameters.ContainsKey('Token')
+    $UrlProvided = $PSBoundParameters.ContainsKey('Url')
+    $PortProvided = $PSBoundParameters.ContainsKey('Port')
+}
 
 # Check if required parameters are provided
 if ([string]::IsNullOrWhiteSpace($Key)) {
     Write-Host "ERROR: SSH Key is required." -ForegroundColor Red
-    Write-Host "Usage: .\install-agent.ps1 -Key 'your-ssh-key-here' [-Token 'your-token-here'] [-Url 'your-hub-url-here'] [-Port port-number] [-ConfigureFirewall]" -ForegroundColor Yellow
+    Write-Host "Usage: .\install-agent.ps1 -Key 'your-ssh-key-here' [-Token 'your-token-here'] [-Url 'your-hub-url-here'] [-Port port-number] [-InstallMethod Auto|Scoop|WinGet] [-ConfigureFirewall]" -ForegroundColor Yellow
     Write-Host "Note: Token and Url are optional for backwards compatibility with older hub versions." -ForegroundColor Yellow
     exit 1
 }
@@ -310,7 +324,10 @@ function Install-NSSMService {
         [string]$HubUrl = "",
         [Parameter(Mandatory=$true)]
         [int]$Port,
-        [string]$NSSMPath = ""
+        [string]$NSSMPath = "",
+        [switch]$TokenProvided,
+        [switch]$UrlProvided,
+        [switch]$PortProvided
     )
     
     Write-Host "Installing beszel-agent service..."
@@ -328,15 +345,26 @@ function Install-NSSMService {
     $existingService = Get-Service -Name "beszel-agent" -ErrorAction SilentlyContinue
     if ($existingService) {
         Write-Host "Service already exists. Checking if path update is needed..."
-        
-        # Get current service path 
+
+        # Get current service path
+        $pathNeedsUpdate = $true
         try {
             $currentPath = & $nssmCommand get beszel-agent Application
             if ($LASTEXITCODE -eq 0 -and $currentPath.Trim() -eq $AgentPath) {
-                Write-Host "Service already configured with correct path. Skipping service recreation." -ForegroundColor Green
+                Write-Host "Service path is already correct. Updating environment variables..."
+                & $nssmCommand set beszel-agent AppEnvironmentExtra "+KEY=$Key"
+                if ($TokenProvided) { & $nssmCommand set beszel-agent AppEnvironmentExtra "+TOKEN=$Token" }
+                if ($UrlProvided) { & $nssmCommand set beszel-agent AppEnvironmentExtra "+HUB_URL=$HubUrl" }
+                if ($PortProvided) { & $nssmCommand set beszel-agent AppEnvironmentExtra "+PORT=$Port" }
+
+                # Restart the service so the running process picks up the new environment variables
+                if ($existingService.Status -eq "Running") {
+                    Write-Host "Restarting service to apply updated environment variables..."
+                    & $nssmCommand restart beszel-agent
+                }
                 return
             }
-            
+
             Write-Host "Service path needs updating. Stopping and removing existing service..."
             Write-Host "  Current path: $($currentPath.Trim())"
             Write-Host "  New path: $AgentPath"
@@ -344,7 +372,7 @@ function Install-NSSMService {
             Write-Host "Could not retrieve current service path, will recreate service: $($_.Exception.Message)" -ForegroundColor Yellow
             Write-Host "Service path needs updating. Stopping and removing existing service..."
         }
-        
+
         try {
             & $nssmCommand stop beszel-agent
             & $nssmCommand remove beszel-agent confirm
@@ -486,18 +514,34 @@ try {
             Write-Host "2. Install WinGet and run this script again" -ForegroundColor Yellow
             exit 1
         }
-        
-        if (Test-CommandExists "scoop") {
+
+        if ($InstallMethod -eq "Scoop") {
+            if (-not (Test-CommandExists "scoop")) {
+                throw "InstallMethod is set to Scoop, but Scoop is not available in PATH."
+            }
             Write-Host "Using Scoop for installation..."
             $AgentPath = Install-WithScoop -Key $Key -Port $Port
         }
-        elseif (Test-CommandExists "winget") {
+        elseif ($InstallMethod -eq "WinGet") {
+            if (-not (Test-CommandExists "winget")) {
+                throw "InstallMethod is set to WinGet, but WinGet is not available in PATH."
+            }
             Write-Host "Using WinGet for installation..."
             $AgentPath = Install-WithWinGet -Key $Key -Port $Port
         }
         else {
-            Write-Host "Neither Scoop nor WinGet is installed. Installing Scoop..."
-            $AgentPath = Install-WithScoop -Key $Key -Port $Port
+            if (Test-CommandExists "scoop") {
+                Write-Host "Using Scoop for installation..."
+                $AgentPath = Install-WithScoop -Key $Key -Port $Port
+            }
+            elseif (Test-CommandExists "winget") {
+                Write-Host "Using WinGet for installation..."
+                $AgentPath = Install-WithWinGet -Key $Key -Port $Port
+            }
+            else {
+                Write-Host "Neither Scoop nor WinGet is installed. Installing Scoop..."
+                $AgentPath = Install-WithScoop -Key $Key -Port $Port
+            }
         }
     }
 
@@ -561,7 +605,8 @@ try {
             "-Token", "`"$Token`"",
             "-Url", "`"$Url`"",
             "-Port", $Port,
-            "-AgentPath", "`"$AgentPath`""
+            "-AgentPath", "`"$AgentPath`"",
+            "-InstallMethod", $InstallMethod
         )
         
         # Add NSSMPath if we found it
@@ -569,6 +614,12 @@ try {
             $argumentList += "-NSSMPath"
             $argumentList += "`"$NSSMPath`""
         }
+
+        # Forward which optional values were explicitly provided, so the elevated
+        # instance knows whether to overwrite them on an existing service
+        if ($TokenProvided) { $argumentList += "-TokenProvided" }
+        if ($UrlProvided) { $argumentList += "-UrlProvided" }
+        if ($PortProvided) { $argumentList += "-PortProvided" }
 
         if ($ConfigureFirewall) {
             $argumentList += "-ConfigureFirewall"
@@ -582,7 +633,7 @@ try {
     # Third: If we have admin rights, install service and configure firewall
     if ($isAdmin -or $Elevated) {
         # Install the service
-        Install-NSSMService -AgentPath $AgentPath -Key $Key -Token $Token -HubUrl $Url -Port $Port -NSSMPath $NSSMPath
+        Install-NSSMService -AgentPath $AgentPath -Key $Key -Token $Token -HubUrl $Url -Port $Port -NSSMPath $NSSMPath -TokenProvided:$TokenProvided -UrlProvided:$UrlProvided -PortProvided:$PortProvided
         
         if ($ConfigureFirewall) {
             Configure-Firewall -Port $Port

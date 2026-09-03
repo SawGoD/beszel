@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package systems
 
@@ -8,7 +7,19 @@ import (
 	"fmt"
 
 	entities "github.com/henrygd/beszel/internal/entities/system"
+	"github.com/henrygd/beszel/internal/entities/systemd"
+	"github.com/pocketbase/pocketbase/core"
 )
+
+// The hub integration tests create/replace systems and cleanup the test apps quickly.
+// Background SMART fetching can outlive teardown and crash in PocketBase internals (nil DB).
+//
+// We keep the explicit SMART refresh endpoint / method available, but disable
+// the automatic background fetch during tests.
+func backgroundSmartFetchEnabled() bool { return false }
+
+// Background ZFS fetching follows the same policy as SMART fetching.
+func backgroundZfsFetchEnabled() bool { return false }
 
 // TESTING ONLY: GetSystemCount returns the number of systems in the store
 func (sm *SystemManager) GetSystemCount() int {
@@ -107,4 +118,24 @@ func (sm *SystemManager) RemoveAllSystems() {
 	for _, system := range sm.systems.GetAll() {
 		sm.RemoveSystem(system.Id)
 	}
+	sm.smartFetchMap.StopCleaner()
+	sm.zfsFetchMap.StopCleaner()
+}
+
+// ResetContextForTesting replaces the manager context for a new synctest bubble.
+func (sm *SystemManager) ResetContextForTesting() {
+	sm.ctx, sm.cancel = context.WithCancel(context.Background())
+}
+
+func (s *System) StopUpdater() {
+	s.cancel()
+}
+
+func (s *System) CreateRecords(data *entities.CombinedData) (*core.Record, error) {
+	s.data = data
+	return s.createRecords(data)
+}
+
+func CreateSystemdStatsRecords(app core.App, data []*systemd.Service, systemId string) error {
+	return createSystemdStatsRecords(app, data, systemId)
 }

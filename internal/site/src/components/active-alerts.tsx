@@ -22,7 +22,7 @@ export const ActiveAlerts = () => {
 			for (const alert of alerts[systemId].values()) {
 				if (alert.triggered && alert.name in alertInfo) {
 					activeAlerts.push(alert)
-					alertsKey.push(`${alert.system}${alert.value}${alert.min}`)
+					alertsKey.push(`${alert.id}${alert.value}${alert.min}`)
 				}
 			}
 		}
@@ -56,11 +56,18 @@ export const ActiveAlerts = () => {
 									>
 										<info.icon className="h-4 w-4" />
 										<AlertTitle>
-											{systems[alert.system]?.name} {info.name().toLowerCase().replace("cpu", "CPU")}
+											{systems[alert.system]?.name} {info.name()}
 										</AlertTitle>
 										<AlertDescription>
-											{alert.name === "Status" ? (
+											{info.triggeredDesc ? (
+												info.triggeredDesc()
+											) : alert.name === "Status" ? (
 												<Trans>Connection is down</Trans>
+											) : info.invert ? (
+												<Trans>
+													Below {alert.value}
+													{info.unit} in last <Plural value={alert.min} one="# minute" other="# minutes" />
+												</Trans>
 											) : (
 												<Trans>
 													Exceeds {alert.value}

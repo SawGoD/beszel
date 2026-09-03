@@ -1,14 +1,13 @@
 //go:build testing
-// +build testing
 
 package agent
 
 import (
 	"crypto/ed25519"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -116,6 +115,12 @@ func TestConnectionManager_EventHandling(t *testing.T) {
 			expectedState: SSHConnected,
 		},
 		{
+			name:          "SSH connect from WebSocket connected (no change)",
+			initialState:  WebSocketConnected,
+			event:         SSHConnect,
+			expectedState: WebSocketConnected,
+		},
+		{
 			name:          "WebSocket disconnect from connected",
 			initialState:  WebSocketConnected,
 			event:         WebSocketDisconnect,
@@ -184,10 +189,6 @@ func TestConnectionManager_TickerManagement(t *testing.T) {
 
 // TestConnectionManager_WebSocketConnectionFlow tests WebSocket connection logic
 func TestConnectionManager_WebSocketConnectionFlow(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping WebSocket connection test in short mode")
-	}
-
 	agent := createTestAgent(t)
 	cm := agent.connectionManager
 
@@ -197,19 +198,18 @@ func TestConnectionManager_WebSocketConnectionFlow(t *testing.T) {
 	assert.Equal(t, Disconnected, cm.State, "State should remain Disconnected after failed connection")
 
 	// Test with invalid URL
-	os.Setenv("BESZEL_AGENT_HUB_URL", "invalid-url")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
-
-	// Test with missing token
-	os.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
-	os.Unsetenv("BESZEL_AGENT_TOKEN")
+	t.Setenv("BESZEL_AGENT_HUB_URL", "1,33%")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	_, err2 := newWebSocketClient(agent)
-	assert.Error(t, err2, "WebSocket client creation should fail without token")
+	assert.Error(t, err2, "WebSocket client creation should fail with invalid URL")
+
+	// Test with missing token
+	t.Setenv("BESZEL_AGENT_HUB_URL", "http://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "")
+
+	_, err3 := newWebSocketClient(agent)
+	assert.Error(t, err3, "WebSocket client creation should fail without token")
 }
 
 // TestConnectionManager_ReconnectionLogic tests reconnection prevention logic
@@ -235,12 +235,8 @@ func TestConnectionManager_ConnectWithRateLimit(t *testing.T) {
 	cm := agent.connectionManager
 
 	// Set up environment for WebSocket client creation
-	os.Setenv("BESZEL_AGENT_HUB_URL", "ws://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "ws://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	// Create WebSocket client
 	wsClient, err := newWebSocketClient(agent)
@@ -275,6 +271,19 @@ func TestConnectionManager_StartWithInvalidConfig(t *testing.T) {
 	assert.Error(t, err, "Should error when starting already started connection manager")
 }
 
+func TestConnectionManager_StartRejectsInvalidCACertFile(t *testing.T) {
+	agent := createTestAgent(t)
+	cm := agent.connectionManager
+	t.Setenv("BESZEL_AGENT_HUB_URL", "https://hub.example.com")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
+	t.Setenv("BESZEL_AGENT_CA_CERT_FILE", t.TempDir())
+
+	err := cm.Start(ServerOptions{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "read CA_CERT_FILE")
+	assert.Nil(t, cm.eventChan)
+}
+
 // TestConnectionManager_CloseWebSocket tests WebSocket closing
 func TestConnectionManager_CloseWebSocket(t *testing.T) {
 	agent := createTestAgent(t)
@@ -286,12 +295,8 @@ func TestConnectionManager_CloseWebSocket(t *testing.T) {
 	}, "Should not panic when closing nil WebSocket client")
 
 	// Set up environment and create WebSocket client
-	os.Setenv("BESZEL_AGENT_HUB_URL", "ws://localhost:8080")
-	os.Setenv("BESZEL_AGENT_TOKEN", "test-token")
-	defer func() {
-		os.Unsetenv("BESZEL_AGENT_HUB_URL")
-		os.Unsetenv("BESZEL_AGENT_TOKEN")
-	}()
+	t.Setenv("BESZEL_AGENT_HUB_URL", "ws://localhost:8080")
+	t.Setenv("BESZEL_AGENT_TOKEN", "test-token")
 
 	wsClient, err := newWebSocketClient(agent)
 	require.NoError(t, err)
@@ -312,4 +317,66 @@ func TestConnectionManager_ConnectFlow(t *testing.T) {
 	assert.NotPanics(t, func() {
 		cm.connect()
 	}, "Connect should not panic without WebSocket client")
+}
+
+func TestShouldExitOnErr(t *testing.T) {
+	createDialErr := func(msg string) error {
+		return &net.OpError{
+			Op:  "dial",
+			Net: "tcp",
+			Err: errors.New(msg),
+		}
+	}
+
+	tests := []struct {
+		name     string
+		err      error
+		envValue string
+		expected bool
+	}{
+		{
+			name:     "no env var",
+			err:      createDialErr("lookup lkahsdfasdf: no such host"),
+			envValue: "",
+			expected: false,
+		},
+		{
+			name:     "env var false",
+			err:      createDialErr("lookup lkahsdfasdf: no such host"),
+			envValue: "false",
+			expected: false,
+		},
+		{
+			name:     "env var true, matching error",
+			err:      createDialErr("lookup lkahsdfasdf: no such host"),
+			envValue: "true",
+			expected: true,
+		},
+		{
+			name:     "env var true, matching error with extra context",
+			err:      createDialErr("lookup beszel.server.lan on [::1]:53: read udp [::1]:44557->[::1]:53: read: connection refused"),
+			envValue: "true",
+			expected: true,
+		},
+		{
+			name:     "env var true, non-matching error",
+			err:      errors.New("connection refused"),
+			envValue: "true",
+			expected: false,
+		},
+		{
+			name:     "env var true, dial but not lookup",
+			err:      createDialErr("connection timeout"),
+			envValue: "true",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("EXIT_ON_DNS_ERROR", tt.envValue)
+			result := shouldExitOnErr(tt.err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

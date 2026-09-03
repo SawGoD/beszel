@@ -5,29 +5,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"maps"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/entities/system"
-
-	"golang.org/x/exp/slog"
 )
 
 const (
 	// Commands
-	nvidiaSmiCmd  string = "nvidia-smi"
-	rocmSmiCmd    string = "rocm-smi"
-	tegraStatsCmd string = "tegrastats"
+	nvidiaSmiCmd    string = "nvidia-smi"
+	rocmSmiCmd      string = "rocm-smi"
+	tegraStatsCmd   string = "tegrastats"
+	nvtopCmd        string = "nvtop"
+	powermetricsCmd string = "powermetrics"
+	macmonCmd       string = "macmon"
+	noGPUFoundMsg   string = "no GPU found - see https://beszel.dev/guide/gpu"
 
-	// Polling intervals
-	nvidiaSmiInterval  string        = "4"    // in seconds
-	tegraStatsInterval string        = "3700" // in milliseconds
-	rocmSmiInterval    time.Duration = 4300 * time.Millisecond
 	// Command retry and timeout constants
 	retryWaitTime     time.Duration = 5 * time.Second
 	maxFailureRetries int           = 5
@@ -40,17 +41,15 @@ const (
 // GPUManager manages data collection for GPUs (either Nvidia or AMD)
 type GPUManager struct {
 	sync.Mutex
-	nvidiaSmi     bool
-	rocmSmi       bool
-	tegrastats    bool
-	intelGpuStats bool
-	GpuDataMap    map[string]*system.GPUData
+	GpuDataMap map[string]*system.GPUData
 	// lastAvgData stores the last calculated averages for each GPU
 	// Used when a collection happens before new data arrives (Count == 0)
 	lastAvgData map[string]system.GPUData
 	// Per-cache-key tracking for delta calculations
 	// cacheKey -> gpuId -> snapshot of last count/usage/power values
 	lastSnapshots map[uint16]map[string]*gpuSnapshot
+	// Per-card energy snapshots for Intel sysfs power calculation.
+	intelSysfsEnergySnapshots map[string]intelSysfsEnergySnapshot
 }
 
 // gpuSnapshot stores the last observed incremental values for delta tracking
@@ -84,6 +83,62 @@ type gpuCollector struct {
 }
 
 var errNoValidData = fmt.Errorf("no valid GPU data found") // Error for missing data
+
+// collectorSource identifies a selectable GPU collector in GPU_COLLECTOR.
+type collectorSource string
+
+const (
+	collectorSourceNVTop        collectorSource = collectorSource(nvtopCmd)
+	collectorSourceNVML         collectorSource = "nvml"
+	collectorSourceNvidiaSMI    collectorSource = collectorSource(nvidiaSmiCmd)
+	collectorSourceIntelGpuTop  collectorSource = collectorSource(intelGpuStatsCmd)
+	collectorSourceIntelSysfs   collectorSource = "intel_sysfs"
+	collectorSourceAmdSysfs     collectorSource = "amd_sysfs"
+	collectorSourceRocmSMI      collectorSource = collectorSource(rocmSmiCmd)
+	collectorSourceMacmon       collectorSource = collectorSource(macmonCmd)
+	collectorSourcePowermetrics collectorSource = collectorSource(powermetricsCmd)
+	collectorGroupNvidia        string          = "nvidia"
+	collectorGroupIntel         string          = "intel"
+	collectorGroupAmd           string          = "amd"
+	collectorGroupApple         string          = "apple"
+)
+
+func isValidCollectorSource(source collectorSource) bool {
+	switch source {
+	case collectorSourceNVTop,
+		collectorSourceNVML,
+		collectorSourceNvidiaSMI,
+		collectorSourceIntelGpuTop,
+		collectorSourceIntelSysfs,
+		collectorSourceAmdSysfs,
+		collectorSourceRocmSMI,
+		collectorSourceMacmon,
+		collectorSourcePowermetrics:
+		return true
+	}
+	return false
+}
+
+// gpuCapabilities describes detected GPU tooling and sysfs support on the host.
+type gpuCapabilities struct {
+	hasNvidiaSmi    bool
+	hasRocmSmi      bool
+	hasAmdSysfs     bool
+	hasTegrastats   bool
+	hasIntelGpuTop  bool
+	hasXe           bool
+	hasIntelSysfs   bool
+	hasNvtop        bool
+	hasMacmon       bool
+	hasPowermetrics bool
+}
+
+type collectorDefinition struct {
+	group              string
+	available          bool
+	start              func(onFailure func()) bool
+	deprecationWarning string
+}
 
 // starts and manages the ongoing collection of GPU data for the specified GPU management utility
 func (c *gpuCollector) start() {
@@ -136,10 +191,10 @@ func (gm *GPUManager) getJetsonParser() func(output []byte) bool {
 	// use closure to avoid recompiling the regex
 	ramPattern := regexp.MustCompile(`RAM (\d+)/(\d+)MB`)
 	gr3dPattern := regexp.MustCompile(`GR3D_FREQ (\d+)%`)
-	tempPattern := regexp.MustCompile(`tj@(\d+\.?\d*)C`)
+	tempPattern := regexp.MustCompile(`(?:tj|GPU)@(\d+\.?\d*)C`)
 	// Orin Nano / NX do not have GPU specific power monitor
 	// TODO: Maybe use VDD_IN for Nano / NX and add a total system power chart
-	powerPattern := regexp.MustCompile(`(GPU_SOC|CPU_GPU_CV) (\d+)mW`)
+	powerPattern := regexp.MustCompile(`(GPU_SOC|CPU_GPU_CV)\s+(\d+)mW|VDD_SYS_GPU\s+(\d+)/\d+`)
 
 	// jetson devices have only one gpu so we'll just initialize here
 	gpuData := &system.GPUData{Name: "GPU"}
@@ -168,7 +223,13 @@ func (gm *GPUManager) getJetsonParser() func(output []byte) bool {
 		// Parse power usage
 		powerMatches := powerPattern.FindSubmatch(output)
 		if powerMatches != nil {
-			power, _ := strconv.ParseFloat(string(powerMatches[2]), 64)
+			// powerMatches[2] is the "(GPU_SOC|CPU_GPU_CV) <N>mW" capture
+			// powerMatches[3] is the "VDD_SYS_GPU <N>/<N>" capture
+			powerStr := string(powerMatches[2])
+			if powerStr == "" {
+				powerStr = string(powerMatches[3])
+			}
+			power, _ := strconv.ParseFloat(powerStr, 64)
 			gpuData.Power += power / milliwattsInAWatt
 		}
 		gpuData.Count++
@@ -231,13 +292,14 @@ func (gm *GPUManager) parseAmdData(output []byte) bool {
 		totalMemory, _ := strconv.ParseFloat(v.MemoryTotal, 64)
 		usage, _ := strconv.ParseFloat(v.Usage, 64)
 
-		if _, ok := gm.GpuDataMap[v.ID]; !ok {
-			gm.GpuDataMap[v.ID] = &system.GPUData{Name: v.Name}
+		id := v.ID
+		if _, ok := gm.GpuDataMap[id]; !ok {
+			gm.GpuDataMap[id] = &system.GPUData{Name: v.Name}
 		}
-		gpu := gm.GpuDataMap[v.ID]
+		gpu := gm.GpuDataMap[id]
 		gpu.Temperature, _ = strconv.ParseFloat(v.Temperature, 64)
-		gpu.MemoryUsed = bytesToMegabytes(memoryUsage)
-		gpu.MemoryTotal = bytesToMegabytes(totalMemory)
+		gpu.MemoryUsed = utils.BytesToMegabytes(memoryUsage)
+		gpu.MemoryTotal = utils.BytesToMegabytes(totalMemory)
 		gpu.Usage += usage
 		gpu.Power += power
 		gpu.Count++
@@ -297,25 +359,35 @@ func (gm *GPUManager) calculateGPUAverage(id string, gpu *system.GPUData, cacheK
 	currentCount := uint32(gpu.Count)
 	deltaCount := gm.calculateDeltaCount(currentCount, lastSnapshot)
 
-	// If no new data arrived, use last known average
+	// If no new data arrived
 	if deltaCount == 0 {
-		return gm.lastAvgData[id] // zero value if not found
+		// Only discrete GPUs report temp/memory, so treat all-zero as suspended (return zeros).
+		// Engine-based (Intel) GPUs don't, so carry the last average forward across sample gaps.
+		if gpu.Engines == nil && gpu.Temperature == 0 && gpu.MemoryUsed == 0 {
+			return system.GPUData{Name: gpu.Name}
+		}
+		lastAvg := gm.lastAvgData[id] // zero value if not found
+		if lastAvg.Name == "" {
+			lastAvg.Name = gpu.Name
+		}
+		return lastAvg
 	}
 
 	// Calculate new average
 	gpuAvg := *gpu
 	deltaUsage, deltaPower, deltaPowerPkg := gm.calculateDeltas(gpu, lastSnapshot)
 
-	gpuAvg.Power = twoDecimals(deltaPower / float64(deltaCount))
+	gpuAvg.Power = utils.TwoDecimals(deltaPower / float64(deltaCount))
+
+	gpuAvg.PowerPkg = utils.TwoDecimals(deltaPowerPkg / float64(deltaCount))
 
 	if gpu.Engines != nil {
 		// make fresh map for averaged engine metrics to avoid mutating
 		// the accumulator map stored in gm.GpuDataMap
 		gpuAvg.Engines = make(map[string]float64, len(gpu.Engines))
 		gpuAvg.Usage = gm.calculateIntelGPUUsage(&gpuAvg, gpu, lastSnapshot, deltaCount)
-		gpuAvg.PowerPkg = twoDecimals(deltaPowerPkg / float64(deltaCount))
 	} else {
-		gpuAvg.Usage = twoDecimals(deltaUsage / float64(deltaCount))
+		gpuAvg.Usage = utils.TwoDecimals(deltaUsage / float64(deltaCount))
 	}
 
 	gm.lastAvgData[id] = gpuAvg
@@ -350,17 +422,17 @@ func (gm *GPUManager) calculateIntelGPUUsage(gpuAvg, gpu *system.GPUData, lastSn
 		} else {
 			deltaEngine = engine
 		}
-		gpuAvg.Engines[name] = twoDecimals(deltaEngine / float64(deltaCount))
+		gpuAvg.Engines[name] = utils.TwoDecimals(deltaEngine / float64(deltaCount))
 		maxEngineUsage = max(maxEngineUsage, deltaEngine/float64(deltaCount))
 	}
-	return twoDecimals(maxEngineUsage)
+	return utils.TwoDecimals(maxEngineUsage)
 }
 
 // updateInstantaneousValues updates values that should reflect current state, not averages
 func (gm *GPUManager) updateInstantaneousValues(gpuAvg *system.GPUData, gpu *system.GPUData) {
-	gpuAvg.Temperature = twoDecimals(gpu.Temperature)
-	gpuAvg.MemoryUsed = twoDecimals(gpu.MemoryUsed)
-	gpuAvg.MemoryTotal = twoDecimals(gpu.MemoryTotal)
+	gpuAvg.Temperature = utils.TwoDecimals(gpu.Temperature)
+	gpuAvg.MemoryUsed = utils.TwoDecimals(gpu.MemoryUsed)
+	gpuAvg.MemoryTotal = utils.TwoDecimals(gpu.MemoryTotal)
 }
 
 // storeSnapshot saves the current GPU state for this cache key
@@ -378,105 +450,337 @@ func (gm *GPUManager) storeSnapshot(id string, gpu *system.GPUData, cacheKey uin
 	gm.lastSnapshots[cacheKey][id] = snapshot
 }
 
-// detectGPUs checks for the presence of GPU management tools (nvidia-smi, rocm-smi, tegrastats)
-// in the system path. It sets the corresponding flags in the GPUManager struct if any of these
-// tools are found. If none of the tools are found, it returns an error indicating that no GPU
-// management tools are available.
-func (gm *GPUManager) detectGPUs() error {
+// discoverGpuCapabilities checks for available GPU tooling and sysfs support.
+// It only reports capability presence and does not apply policy decisions.
+func (gm *GPUManager) discoverGpuCapabilities() gpuCapabilities {
+	caps := gpuCapabilities{
+		hasAmdSysfs: gm.hasAmdSysfs(),
+		hasXe:       gm.hasXe(),
+		hasIntelSysfs: gm.hasIntelSysfs(),
+	}
 	if _, err := exec.LookPath(nvidiaSmiCmd); err == nil {
-		gm.nvidiaSmi = true
+		caps.hasNvidiaSmi = true
 	}
 	if _, err := exec.LookPath(rocmSmiCmd); err == nil {
-		gm.rocmSmi = true
+		caps.hasRocmSmi = true
 	}
 	if _, err := exec.LookPath(tegraStatsCmd); err == nil {
-		gm.tegrastats = true
-		gm.nvidiaSmi = false
+		caps.hasTegrastats = true
 	}
 	if _, err := exec.LookPath(intelGpuStatsCmd); err == nil {
-		gm.intelGpuStats = true
+		caps.hasIntelGpuTop = true
 	}
-	if gm.nvidiaSmi || gm.rocmSmi || gm.tegrastats || gm.intelGpuStats {
-		return nil
+	if _, err := exec.LookPath(nvtopCmd); err == nil {
+		caps.hasNvtop = true
 	}
-	return fmt.Errorf("no GPU found - install nvidia-smi, rocm-smi, tegrastats, or intel_gpu_top")
+	if runtime.GOOS == "darwin" {
+		if _, err := utils.LookPathHomebrew(macmonCmd); err == nil {
+			caps.hasMacmon = true
+		}
+		if _, err := exec.LookPath(powermetricsCmd); err == nil {
+			caps.hasPowermetrics = true
+		}
+	}
+	return caps
 }
 
-// startCollector starts the appropriate GPU data collector based on the command
-func (gm *GPUManager) startCollector(command string) {
-	collector := gpuCollector{
-		name:    command,
-		bufSize: 10 * 1024,
-	}
-	switch command {
-	case intelGpuStatsCmd:
-		go func() {
-			failures := 0
-			for {
-				if err := gm.collectIntelStats(); err != nil {
-					failures++
-					if failures > maxFailureRetries {
-						break
-					}
-					slog.Warn("Error collecting Intel GPU data; see https://beszel.dev/guide/gpu", "err", err)
-					time.Sleep(retryWaitTime)
-					continue
+func hasAnyGpuCollector(caps gpuCapabilities) bool {
+	return caps.hasNvidiaSmi || caps.hasRocmSmi || caps.hasAmdSysfs || caps.hasTegrastats || caps.hasIntelGpuTop || caps.hasIntelSysfs || caps.hasNvtop || caps.hasMacmon || caps.hasPowermetrics
+}
+
+func (gm *GPUManager) startIntelCollector() {
+	go func() {
+		failures := 0
+		for {
+			if err := gm.collectIntelStats(); err != nil {
+				failures++
+				if failures > maxFailureRetries {
+					break
 				}
+				slog.Warn("Error collecting Intel GPU data; see https://beszel.dev/guide/gpu", "err", err)
+				time.Sleep(retryWaitTime)
+				continue
 			}
-		}()
-	case nvidiaSmiCmd:
-		collector.cmdArgs = []string{
-			"-l", nvidiaSmiInterval,
+		}
+	}()
+}
+
+func (gm *GPUManager) startNvidiaSmiCollector(intervalSeconds string) {
+	collector := gpuCollector{
+		name:    nvidiaSmiCmd,
+		bufSize: 10 * 1024,
+		cmdArgs: []string{
+			"-l", intervalSeconds,
 			"--query-gpu=index,name,temperature.gpu,memory.used,memory.total,utilization.gpu,power.draw",
 			"--format=csv,noheader,nounits",
-		}
-		collector.parse = gm.parseNvidiaData
-		go collector.start()
-	case tegraStatsCmd:
-		collector.cmdArgs = []string{"--interval", tegraStatsInterval}
-		collector.parse = gm.getJetsonParser()
-		go collector.start()
-	case rocmSmiCmd:
-		collector.cmdArgs = []string{"--showid", "--showtemp", "--showuse", "--showpower", "--showproductname", "--showmeminfo", "vram", "--json"}
-		collector.parse = gm.parseAmdData
-		go func() {
-			failures := 0
-			for {
-				if err := collector.collect(); err != nil {
-					failures++
-					if failures > maxFailureRetries {
-						break
-					}
-					slog.Warn("Error collecting AMD GPU data", "err", err)
-				}
-				time.Sleep(rocmSmiInterval)
-			}
-		}()
+		},
+		parse: gm.parseNvidiaData,
 	}
+	go collector.start()
+}
+
+func (gm *GPUManager) startTegraStatsCollector(intervalMilliseconds string) {
+	collector := gpuCollector{
+		name:    tegraStatsCmd,
+		bufSize: 10 * 1024,
+		cmdArgs: []string{"--interval", intervalMilliseconds},
+		parse:   gm.getJetsonParser(),
+	}
+	go collector.start()
+}
+
+func (gm *GPUManager) startRocmSmiCollector(pollInterval time.Duration) {
+	collector := gpuCollector{
+		name:    rocmSmiCmd,
+		bufSize: 10 * 1024,
+		cmdArgs: []string{"--showid", "--showtemp", "--showuse", "--showpower", "--showproductname", "--showmeminfo", "vram", "--json"},
+		parse:   gm.parseAmdData,
+	}
+	go func() {
+		failures := 0
+		for {
+			if err := collector.collect(); err != nil {
+				failures++
+				if failures > maxFailureRetries {
+					break
+				}
+				slog.Warn("Error collecting AMD GPU data via rocm-smi", "err", err)
+			}
+			time.Sleep(pollInterval)
+		}
+	}()
+}
+
+func (gm *GPUManager) collectorDefinitions(caps gpuCapabilities) map[collectorSource]collectorDefinition {
+	return map[collectorSource]collectorDefinition{
+		collectorSourceNVML: {
+			group:     collectorGroupNvidia,
+			available: true,
+			start: func(_ func()) bool {
+				return gm.startNvmlCollector()
+			},
+		},
+		collectorSourceNvidiaSMI: {
+			group:     collectorGroupNvidia,
+			available: caps.hasNvidiaSmi,
+			start: func(_ func()) bool {
+				gm.startNvidiaSmiCollector("4") // seconds
+				return true
+			},
+		},
+		collectorSourceIntelGpuTop: {
+			group:     collectorGroupIntel,
+			available: caps.hasIntelGpuTop,
+			start: func(_ func()) bool {
+				gm.startIntelCollector()
+				return true
+			},
+		},
+		collectorSourceIntelSysfs: {
+			group:     collectorGroupIntel,
+			available: caps.hasIntelSysfs,
+			start: func(_ func()) bool {
+				return gm.startIntelSysfsCollector()
+			},
+		},
+		collectorSourceAmdSysfs: {
+			group:     collectorGroupAmd,
+			available: caps.hasAmdSysfs,
+			start: func(_ func()) bool {
+				return gm.startAmdSysfsCollector()
+			},
+		},
+		collectorSourceRocmSMI: {
+			group:              collectorGroupAmd,
+			available:          caps.hasRocmSmi,
+			deprecationWarning: "rocm-smi is deprecated and may be removed in a future release",
+			start: func(_ func()) bool {
+				gm.startRocmSmiCollector(4300 * time.Millisecond)
+				return true
+			},
+		},
+		collectorSourceNVTop: {
+			available: caps.hasNvtop,
+			start: func(onFailure func()) bool {
+				gm.startNvtopCollector("30", onFailure) // tens of milliseconds
+				return true
+			},
+		},
+		collectorSourceMacmon: {
+			group:     collectorGroupApple,
+			available: caps.hasMacmon,
+			start: func(_ func()) bool {
+				gm.startMacmonCollector()
+				return true
+			},
+		},
+		collectorSourcePowermetrics: {
+			group:     collectorGroupApple,
+			available: caps.hasPowermetrics,
+			start: func(_ func()) bool {
+				gm.startPowermetricsCollector()
+				return true
+			},
+		},
+	}
+}
+
+// parseCollectorPriority parses GPU_COLLECTOR and returns valid ordered entries.
+func parseCollectorPriority(value string) []collectorSource {
+	parts := strings.Split(value, ",")
+	priorities := make([]collectorSource, 0, len(parts))
+	for _, raw := range parts {
+		name := collectorSource(strings.TrimSpace(strings.ToLower(raw)))
+		if !isValidCollectorSource(name) {
+			if name != "" {
+				slog.Warn("Ignoring unknown GPU collector", "collector", name)
+			}
+			continue
+		}
+		priorities = append(priorities, name)
+	}
+	return priorities
+}
+
+// startNvmlCollector initializes NVML and starts its polling loop.
+func (gm *GPUManager) startNvmlCollector() bool {
+	collector := &nvmlCollector{gm: gm}
+	if err := collector.init(); err != nil {
+		slog.Warn("Failed to initialize NVML", "err", err)
+		return false
+	}
+	go collector.start()
+	return true
+}
+
+// startAmdSysfsCollector starts AMD GPU collection via sysfs.
+func (gm *GPUManager) startAmdSysfsCollector() bool {
+	go func() {
+		if err := gm.collectAmdStats(); err != nil {
+			slog.Warn("Error collecting AMD GPU data via sysfs", "err", err)
+		}
+	}()
+	return true
+}
+
+// startCollectorsByPriority starts collectors in order with one source per vendor group.
+func (gm *GPUManager) startCollectorsByPriority(priorities []collectorSource, caps gpuCapabilities) int {
+	definitions := gm.collectorDefinitions(caps)
+	selectedGroups := make(map[string]bool, 3)
+	started := 0
+	for i, source := range priorities {
+		definition, ok := definitions[source]
+		if !ok || !definition.available {
+			continue
+		}
+		// nvtop is not a vendor-specific collector, so should only be used if no other collectors are selected or it is first in GPU_COLLECTOR.
+		if source == collectorSourceNVTop {
+			if len(selectedGroups) > 0 {
+				slog.Warn("Skipping nvtop because other collectors are selected")
+				continue
+			}
+			// if nvtop fails, fall back to remaining collectors.
+			remaining := append([]collectorSource(nil), priorities[i+1:]...)
+			if definition.start(func() {
+				gm.startCollectorsByPriority(remaining, caps)
+			}) {
+				started++
+				return started
+			}
+		}
+		group := definition.group
+		if group == "" || selectedGroups[group] {
+			continue
+		}
+		if definition.deprecationWarning != "" {
+			slog.Warn(definition.deprecationWarning)
+		}
+		if definition.start(nil) {
+			selectedGroups[group] = true
+			started++
+		}
+	}
+	return started
+}
+
+// resolveLegacyCollectorPriority builds the default collector order when GPU_COLLECTOR is unset.
+func (gm *GPUManager) resolveLegacyCollectorPriority(caps gpuCapabilities) []collectorSource {
+	priorities := make([]collectorSource, 0, 4)
+
+	if caps.hasNvidiaSmi && !caps.hasTegrastats {
+		if nvml, _ := utils.GetEnv("NVML"); nvml == "true" {
+			priorities = append(priorities, collectorSourceNVML, collectorSourceNvidiaSMI)
+		} else {
+			priorities = append(priorities, collectorSourceNvidiaSMI)
+		}
+	}
+
+	if caps.hasRocmSmi {
+		if val, _ := utils.GetEnv("AMD_SYSFS"); val == "true" {
+			priorities = append(priorities, collectorSourceAmdSysfs)
+		} else {
+			priorities = append(priorities, collectorSourceRocmSMI)
+		}
+	} else if caps.hasAmdSysfs {
+		priorities = append(priorities, collectorSourceAmdSysfs)
+	}
+
+	if caps.hasIntelGpuTop && !caps.hasXe {
+		priorities = append(priorities, collectorSourceIntelGpuTop)
+	}
+	if caps.hasIntelSysfs {
+		priorities = append(priorities, collectorSourceIntelSysfs)
+	}
+
+	// Apple collectors are currently opt-in only for testing.
+	// Enable them with GPU_COLLECTOR=macmon or GPU_COLLECTOR=powermetrics.
+	// TODO: uncomment below when Apple collectors are confirmed to be working.
+	//
+	// Prefer macmon on macOS (no sudo). Fall back to powermetrics if present.
+	// if caps.hasMacmon {
+	// 	priorities = append(priorities, collectorSourceMacmon)
+	// } else if caps.hasPowermetrics {
+	// 	priorities = append(priorities, collectorSourcePowermetrics)
+	// }
+
+	// Keep nvtop as a last resort only when no vendor collector exists.
+	if len(priorities) == 0 && caps.hasNvtop {
+		priorities = append(priorities, collectorSourceNVTop)
+	}
+	return priorities
 }
 
 // NewGPUManager creates and initializes a new GPUManager
 func NewGPUManager() (*GPUManager, error) {
-	if skipGPU, _ := GetEnv("SKIP_GPU"); skipGPU == "true" {
+	if skipGPU, _ := utils.GetEnv("SKIP_GPU"); skipGPU == "true" {
 		return nil, nil
 	}
 	var gm GPUManager
-	if err := gm.detectGPUs(); err != nil {
-		return nil, err
-	}
+	caps := gm.discoverGpuCapabilities()
 	gm.GpuDataMap = make(map[string]*system.GPUData)
 
-	if gm.nvidiaSmi {
-		gm.startCollector(nvidiaSmiCmd)
+	// Jetson devices should always use tegrastats (ignore GPU_COLLECTOR).
+	if caps.hasTegrastats {
+		gm.startTegraStatsCollector("3700")
+		return &gm, nil
 	}
-	if gm.rocmSmi {
-		gm.startCollector(rocmSmiCmd)
+
+	// Respect explicit collector selection before capability auto-detection.
+	if collectorConfig, ok := utils.GetEnv("GPU_COLLECTOR"); ok && strings.TrimSpace(collectorConfig) != "" {
+		priorities := parseCollectorPriority(collectorConfig)
+		if gm.startCollectorsByPriority(priorities, caps) == 0 {
+			return nil, fmt.Errorf("no configured GPU collectors are available")
+		}
+		return &gm, nil
 	}
-	if gm.tegrastats {
-		gm.startCollector(tegraStatsCmd)
+
+	if !hasAnyGpuCollector(caps) {
+		return nil, fmt.Errorf(noGPUFoundMsg)
 	}
-	if gm.intelGpuStats {
-		gm.startCollector(intelGpuStatsCmd)
+
+	// auto-detect and start collectors when GPU_COLLECTOR is unset.
+	if gm.startCollectorsByPriority(gm.resolveLegacyCollectorPriority(caps), caps) == 0 {
+		return nil, fmt.Errorf(noGPUFoundMsg)
 	}
 
 	return &gm, nil

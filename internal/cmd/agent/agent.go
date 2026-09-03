@@ -9,6 +9,7 @@ import (
 	"github.com/henrygd/beszel"
 	"github.com/henrygd/beszel/agent"
 	"github.com/henrygd/beszel/agent/health"
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/ssh"
 )
@@ -17,9 +18,8 @@ import (
 type cmdOptions struct {
 	key    string // key is the public key(s) for SSH authentication.
 	listen string // listen is the address or port to listen on.
-	// TODO: add hubURL and token
-	// hubURL string // hubURL is the URL of the hub to use.
-	// token  string // token is the token to use for authentication.
+	hubURL string // hubURL is the URL of the Beszel hub.
+	token  string // token is the token to use for authentication.
 }
 
 // parse parses the command line flags and populates the config struct.
@@ -32,9 +32,6 @@ func (opts *cmdOptions) parse() bool {
 
 	// Subcommands that don't require any pflag parsing
 	switch subcommand {
-	case "-v", "version":
-		fmt.Println(beszel.AppName+"-agent", beszel.Version)
-		return true
 	case "health":
 		err := health.Check()
 		if err != nil {
@@ -42,18 +39,22 @@ func (opts *cmdOptions) parse() bool {
 		}
 		fmt.Print("ok")
 		return true
+	case "fingerprint":
+		handleFingerprint()
+		return true
 	}
 
 	// pflag.CommandLine.ParseErrorsWhitelist.UnknownFlags = true
 	pflag.StringVarP(&opts.key, "key", "k", "", "Public key(s) for SSH authentication")
 	pflag.StringVarP(&opts.listen, "listen", "l", "", "Address or port to listen on")
-	// pflag.StringVarP(&opts.hubURL, "hub-url", "u", "", "URL of the hub to use")
-	// pflag.StringVarP(&opts.token, "token", "t", "", "Token to use for authentication")
+	pflag.StringVarP(&opts.hubURL, "url", "u", "", "URL of the Beszel hub")
+	pflag.StringVarP(&opts.token, "token", "t", "", "Token to use for authentication")
 	chinaMirrors := pflag.BoolP("china-mirrors", "c", false, "Use mirror for update (gh.beszel.dev) instead of GitHub")
+	version := pflag.BoolP("version", "v", false, "Show version information")
 	help := pflag.BoolP("help", "h", false, "Show this help message")
 
 	// Convert old single-dash long flags to double-dash for backward compatibility
-	flagsToConvert := []string{"key", "listen"}
+	flagsToConvert := []string{"key", "listen", "url", "token"}
 	for i, arg := range os.Args {
 		for _, flag := range flagsToConvert {
 			singleDash := "-" + flag
@@ -74,9 +75,9 @@ func (opts *cmdOptions) parse() bool {
 		builder.WriteString(os.Args[0])
 		builder.WriteString(" [command] [flags]\n")
 		builder.WriteString("\nCommands:\n")
-		builder.WriteString("  health    Check if the agent is running\n")
-		// builder.WriteString("  help      Display this help message\n")
-		builder.WriteString("  update    Update to the latest version\n")
+		builder.WriteString("  fingerprint  View or reset the agent fingerprint\n")
+		builder.WriteString("  health       Check if the agent is running\n")
+		builder.WriteString("  update       Update to the latest version\n")
 		builder.WriteString("\nFlags:\n")
 		fmt.Print(builder.String())
 		pflag.PrintDefaults()
@@ -87,6 +88,9 @@ func (opts *cmdOptions) parse() bool {
 
 	// Must run after pflag.Parse()
 	switch {
+	case *version:
+		fmt.Println(beszel.AppName+"-agent", beszel.Version)
+		return true
 	case *help || subcommand == "help":
 		pflag.Usage()
 		return true
@@ -95,6 +99,13 @@ func (opts *cmdOptions) parse() bool {
 		return true
 	}
 
+	// Set environment variables from CLI flags (if provided)
+	if opts.hubURL != "" {
+		os.Setenv("HUB_URL", opts.hubURL)
+	}
+	if opts.token != "" {
+		os.Setenv("TOKEN", opts.token)
+	}
 	return false
 }
 
@@ -106,12 +117,12 @@ func (opts *cmdOptions) loadPublicKeys() ([]ssh.PublicKey, error) {
 	}
 
 	// Try environment variable
-	if key, ok := agent.GetEnv("KEY"); ok && key != "" {
+	if key, ok := utils.GetEnv("KEY"); ok && key != "" {
 		return agent.ParseKeys(key)
 	}
 
 	// Try key file
-	keyFile, ok := agent.GetEnv("KEY_FILE")
+	keyFile, ok := utils.GetEnv("KEY_FILE")
 	if !ok {
 		return nil, fmt.Errorf("no key provided: must set -key flag, KEY env var, or KEY_FILE env var. Use 'beszel-agent help' for usage")
 	}
@@ -125,6 +136,38 @@ func (opts *cmdOptions) loadPublicKeys() ([]ssh.PublicKey, error) {
 
 func (opts *cmdOptions) getAddress() string {
 	return agent.GetAddress(opts.listen)
+}
+
+// handleFingerprint handles the "fingerprint" command with subcommands "view" and "reset".
+func handleFingerprint() {
+	subCmd := ""
+	if len(os.Args) > 2 {
+		subCmd = os.Args[2]
+	}
+
+	switch subCmd {
+	case "", "view":
+		dataDir, _ := agent.GetDataDir()
+		fp := agent.GetFingerprint(dataDir, "", "")
+		fmt.Println(fp)
+	case "help", "-h", "--help":
+		fmt.Print(fingerprintUsage())
+	case "reset":
+		dataDir, err := agent.GetDataDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := agent.DeleteFingerprint(dataDir); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Fingerprint reset. A new one will be generated on next start.")
+	default:
+		log.Fatalf("Unknown command: %q\n\n%s", subCmd, fingerprintUsage())
+	}
+}
+
+func fingerprintUsage() string {
+	return fmt.Sprintf("Usage: %s fingerprint [view|reset]\n\nCommands:\n  view   Print fingerprint (default)\n  reset  Reset saved fingerprint\n", os.Args[0])
 }
 
 func main() {
@@ -152,6 +195,6 @@ func main() {
 	}
 
 	if err := a.Start(serverConfig); err != nil {
-		log.Fatal("Failed to start server: ", err)
+		log.Fatal("Failed to start: ", err)
 	}
 }

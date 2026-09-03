@@ -1,3 +1,5 @@
+//go:build testing
+
 package agent
 
 import (
@@ -178,6 +180,44 @@ func TestStartServer(t *testing.T) {
 			client.Close()
 		})
 	}
+}
+
+func TestStartServerDisableSSH(t *testing.T) {
+	t.Setenv("BESZEL_AGENT_DISABLE_SSH", "true")
+
+	agent, err := NewAgent("")
+	require.NoError(t, err)
+
+	opts := ServerOptions{
+		Network: "tcp",
+		Addr:    ":45990",
+	}
+
+	err = agent.StartServer(opts)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "SSH disabled")
+}
+
+func TestStopServerDoesNotBlockWhenEventQueueFull(t *testing.T) {
+	agent := createTestAgent(t)
+	agent.server = &ssh.Server{}
+	agent.connectionManager.eventChan = make(chan ConnectionEvent, 1)
+	agent.connectionManager.eventChan <- WebSocketConnect
+
+	done := make(chan error, 1)
+	go func() {
+		done <- agent.StopServer()
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("StopServer blocked on the connection event queue")
+	}
+
+	assert.Nil(t, agent.server)
+	assert.Equal(t, WebSocketConnect, <-agent.connectionManager.eventChan)
 }
 
 /////////////////////////////////////////////////////////////////
@@ -386,27 +426,23 @@ func TestGetHubVersion(t *testing.T) {
 		clientVersion: "SSH-2.0-beszel_0.12.0",
 	}
 
-	// Test first call - should extract and cache version
-	version := agent.getHubVersion("test-session-123", mockCtx)
+	// Test first call - should extract version
+	version := agent.getHubVersion(mockCtx)
 	assert.Equal(t, "0.12.0", version.String())
 
-	// Test second call - should return cached version
-	mockCtx.clientVersion = "SSH-2.0-beszel_0.11.0" // Change version but should still return cached
-	version = agent.getHubVersion("test-session-123", mockCtx)
-	assert.Equal(t, "0.12.0", version.String()) // Should still be cached version
-
-	// Test different session - should extract new version
-	version = agent.getHubVersion("different-session", mockCtx)
+	// Test that version reflects the current client version (no stale caching)
+	mockCtx.clientVersion = "SSH-2.0-beszel_0.11.0"
+	version = agent.getHubVersion(mockCtx)
 	assert.Equal(t, "0.11.0", version.String())
 
 	// Test with invalid version string (non-beszel client)
 	mockCtx.clientVersion = "SSH-2.0-OpenSSH_8.0"
-	version = agent.getHubVersion("invalid-session", mockCtx)
+	version = agent.getHubVersion(mockCtx)
 	assert.Equal(t, "0.0.0", version.String()) // Should be empty version for non-beszel clients
 
 	// Test with no client version
 	mockCtx.clientVersion = ""
-	version = agent.getHubVersion("no-version-session", mockCtx)
+	version = agent.getHubVersion(mockCtx)
 	assert.True(t, version.EQ(semver.Version{})) // Should be empty version
 }
 
@@ -483,9 +519,6 @@ func TestWriteToSessionEncoding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset the global hubVersions map to ensure clean state for each test
-			hubVersions = nil
-
 			agent, err := NewAgent("")
 			require.NoError(t, err)
 
@@ -513,7 +546,7 @@ func TestWriteToSessionEncoding(t *testing.T) {
 				err = json.Unmarshal([]byte(encodedData), &decodedJson)
 				assert.Error(t, err, "Should not be valid JSON data")
 
-				assert.Equal(t, testData.Info.Hostname, decodedCbor.Info.Hostname)
+				assert.Equal(t, testData.Details.Hostname, decodedCbor.Details.Hostname)
 				assert.Equal(t, testData.Stats.Cpu, decodedCbor.Stats.Cpu)
 			} else {
 				// Should be JSON - try to decode as JSON
@@ -526,7 +559,7 @@ func TestWriteToSessionEncoding(t *testing.T) {
 				assert.Error(t, err, "Should not be valid CBOR data")
 
 				// Verify the decoded JSON data matches our test data
-				assert.Equal(t, testData.Info.Hostname, decodedJson.Info.Hostname)
+				assert.Equal(t, testData.Details.Hostname, decodedJson.Details.Hostname)
 				assert.Equal(t, testData.Stats.Cpu, decodedJson.Stats.Cpu)
 
 				// Verify it looks like JSON (starts with '{' and contains readable field names)
@@ -550,13 +583,12 @@ func createTestCombinedData() *system.CombinedData {
 			DiskUsed:  549755813888,  // 512GB
 			DiskPct:   50.0,
 		},
+		Details: &system.Details{
+			Hostname: "test-host",
+		},
 		Info: system.Info{
-			Hostname:     "test-host",
-			Cores:        8,
-			CpuModel:     "Test CPU Model",
 			Uptime:       3600,
 			AgentVersion: "0.12.0",
-			Os:           system.Linux,
 		},
 		Containers: []*container.Stats{
 			{
@@ -568,39 +600,28 @@ func createTestCombinedData() *system.CombinedData {
 	}
 }
 
-func TestHubVersionCaching(t *testing.T) {
-	// Reset the global hubVersions map to ensure clean state
-	hubVersions = nil
-
+// TestGetHubVersionConcurrent guards against a regression of the
+// "concurrent map writes" panic previously caused by a shared, unsynchronized
+// hubVersions cache (see https://github.com/henrygd/beszel/issues/2128).
+// getHubVersion no longer shares mutable state between sessions, so calling
+// it concurrently from many goroutines must be safe under `go test -race`.
+func TestGetHubVersionConcurrent(t *testing.T) {
 	agent, err := NewAgent("")
 	require.NoError(t, err)
 
-	ctx1 := &mockSSHContext{
-		sessionID:     "session1",
-		clientVersion: "SSH-2.0-beszel_0.12.0",
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			ctx := &mockSSHContext{
+				sessionID:     fmt.Sprintf("session-%d", i),
+				clientVersion: "SSH-2.0-beszel_0.12.0",
+			}
+			version := agent.getHubVersion(ctx)
+			assert.Equal(t, "0.12.0", version.String())
+		}(i)
 	}
-	ctx2 := &mockSSHContext{
-		sessionID:     "session2",
-		clientVersion: "SSH-2.0-beszel_0.11.0",
-	}
-
-	// First calls should cache the versions
-	v1 := agent.getHubVersion("session1", ctx1)
-	v2 := agent.getHubVersion("session2", ctx2)
-
-	assert.Equal(t, "0.12.0", v1.String())
-	assert.Equal(t, "0.11.0", v2.String())
-
-	// Verify caching by changing context but keeping same session ID
-	ctx1.clientVersion = "SSH-2.0-beszel_0.10.0"
-	v1Cached := agent.getHubVersion("session1", ctx1)
-	assert.Equal(t, "0.12.0", v1Cached.String()) // Should still be cached version
-
-	// New session should get new version
-	ctx3 := &mockSSHContext{
-		sessionID:     "session3",
-		clientVersion: "SSH-2.0-beszel_0.13.0",
-	}
-	v3 := agent.getHubVersion("session3", ctx3)
-	assert.Equal(t, "0.13.0", v3.String())
+	wg.Wait()
 }

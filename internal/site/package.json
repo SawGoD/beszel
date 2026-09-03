@@ -1,18 +1,15 @@
 {
 	"name": "beszel",
 	"private": true,
-	"version": "0.17.0",
+	"version": "0.19.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite --host",
 		"build": "lingui extract --overwrite && lingui compile && vite build",
 		"preview": "vite preview",
 		"sync": "lingui extract --overwrite && lingui compile",
-		"sync_and_purge": "lingui extract --overwrite --clean && lingui compile",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"check": "biome check .",
-		"check:fix": "biome check --fix ."
+		"sync_no_compile": "lingui extract --overwrite --clean",
+		"sync_and_purge": "lingui extract --overwrite --clean && lingui compile"
 	},
 	"dependencies": {
 		"@henrygd/queue": "^1.0.7",
@@ -46,12 +43,12 @@
 		"lucide-react": "^0.452.0",
 		"nanostores": "^0.11.4",
 		"pocketbase": "^0.26.2",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
+		"react": "^19.1.2",
+		"react-dom": "^19.1.2",
 		"recharts": "^2.15.4",
 		"shiki": "^3.13.0",
 		"tailwind-merge": "^3.3.1",
-		"valibot": "^0.42.1"
+		"valibot": "^1.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",

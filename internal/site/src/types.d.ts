@@ -7,6 +7,7 @@ declare global {
 		BASE_PATH: string
 		HUB_VERSION: string
 		HUB_URL: string
+		OAUTH_DISABLE_POPUP: boolean
 	}
 }
 
@@ -45,12 +46,6 @@ export interface SystemInfo {
 	c: number
 	/** cpu model */
 	m: string
-	/** load average 1 minute */
-	l1?: number
-	/** load average 5 minutes */
-	l5?: number
-	/** load average 15 minutes */
-	l15?: number
 	/** load average */
 	la?: [number, number, number]
 	/** operating system */
@@ -61,6 +56,8 @@ export interface SystemInfo {
 	mp: number
 	/** disk percent */
 	dp: number
+	/** battery percent and state */
+	bat?: [number, BatteryState]
 	/** bandwidth (mb) */
 	b: number
 	/** bandwidth bytes */
@@ -81,6 +78,8 @@ export interface SystemInfo {
 	efs?: Record<string, number>
 	/** services [totalServices, numFailedServices] */
 	sv?: [number, number]
+	/** custom root disk name */
+	rdn?: string
 }
 
 export interface SystemStats {
@@ -92,13 +91,6 @@ export interface SystemStats {
 	cpub?: number[]
 	/** per-core cpu usage [CPU0..] (0-100 integers) */
 	cpus?: number[]
-	// TODO: remove these in future release in favor of la
-	/** load average 1 minute */
-	l1?: number
-	/** load average 5 minutes */
-	l5?: number
-	/** load average 15 minutes */
-	l15?: number
 	/** load average */
 	la?: [number, number, number]
 	/** total memory (gb) */
@@ -135,6 +127,12 @@ export interface SystemStats {
 	dio?: [number, number]
 	/** max disk I/O bytes [read, write] */
 	diom?: [number, number]
+	/** disk io stats [read time factor, write time factor, io utilization %, r_await ms, w_await ms, weighted io %] */
+	dios?: [number, number, number, number, number, number]
+	/** max disk io stats */
+	diosm?: [number, number, number, number, number, number]
+	/** cumulative device I/O bytes [total read, total write] */
+	diot?: [number, number]
 	/** network sent (mb) */
 	ns: number
 	/** network received (mb) */
@@ -149,12 +147,18 @@ export interface SystemStats {
 	bm?: [number, number]
 	/** temperatures */
 	t?: Record<string, number>
+	/** fan speeds (RPM) — keyed by `<chip>_<label-or-fan-idx>` */
+	f?: Record<string, number>
 	/** extra filesystems */
 	efs?: Record<string, ExtraFsStats>
+	/** ZFS pool metrics */
+	z?: Record<string, ZfsPool>
 	/** GPU data */
 	g?: Record<string, GPUData>
 	/** battery percent and state */
 	bat?: [number, BatteryState]
+	/** battery percentages by device name */
+	bats?: Record<string, number>
 	/** network interfaces [upload bytes, download bytes, total upload bytes, total download bytes] */
 	ni?: Record<string, [number, number, number, number]>
 }
@@ -174,6 +178,56 @@ export interface GPUData {
 	pp?: number
 	/** engines */
 	e?: Record<string, number>
+}
+
+export interface ZfsPool {
+	/** total capacity (GiB) */
+	d: number
+	/** allocated (GiB) */
+	du: number
+	/** read throughput (bytes/s) */
+	rb?: number
+	/** write throughput (bytes/s) */
+	wb?: number
+	/** health: ONLINE, DEGRADED, FAULTED, ... */
+	h?: string
+}
+
+export interface ZfsScrub {
+	/** NONE, SCANNING, FINISHED, CANCELED */
+	state?: string
+	/** progress while scanning, e.g. "10.00%" */
+	progress?: string
+	errors?: number
+}
+
+export interface ZfsVdev {
+	name: string
+	state?: string
+	readErrs?: number
+	writeErrs?: number
+	checksumErrs?: number
+}
+
+export interface ZfsDataset {
+	name: string
+	used?: number
+	avail?: number
+	mount?: string
+}
+
+export interface ZfsPoolRecord extends RecordModel {
+	system: string
+	name: string
+	health: string
+	size: number
+	alloc: number
+	free: number
+	scrub: ZfsScrub | null
+	vdevs: ZfsVdev[] | null
+	datasets: ZfsDataset[] | null
+	details_updated: string
+	updated: string
 }
 
 export interface ExtraFsStats {
@@ -197,6 +251,14 @@ export interface ExtraFsStats {
 	rbm: number
 	/** max write per second (mb) */
 	wbm: number
+	/** disk io stats [read time factor, write time factor, io utilization %, r_await ms, w_await ms, weighted io %] */
+	dios?: [number, number, number, number, number, number]
+	/** max disk io stats */
+	diosm?: [number, number, number, number, number, number]
+	/** cumulative device read bytes */
+	tr?: number
+	/** cumulative device write bytes */
+	tw?: number
 }
 
 export interface ContainerStatsRecord extends RecordModel {
@@ -210,12 +272,14 @@ interface ContainerStats {
 	n: string
 	/** cpu percent */
 	c: number
-	/** memory used (gb) */
+	/** memory used (mb) */
 	m: number
 	// network sent (mb)
-	ns: number
+	ns?: number
 	// network received (mb)
-	nr: number
+	nr?: number
+	/** bandwidth bytes [sent, recv] */
+	b?: [number, number]
 }
 
 export interface SystemStatsRecord extends RecordModel {
@@ -263,6 +327,7 @@ export interface ContainerRecord extends RecordModel {
 	system: string
 	name: string
 	image: string
+	ports: string
 	cpu: number
 	memory: number
 	net: number
@@ -331,6 +396,13 @@ export interface AlertInfo {
 	start?: number
 	/** Single value description (when there's only one value, like status) */
 	singleDesc?: () => string
+	/** Hides the duration slider for alerts that fire on first observation */
+	noDuration?: boolean
+	/** Description shown instead of numeric threshold and duration values */
+	triggeredDesc?: () => string
+	/** Additional information that remains visible while the alert is enabled */
+	note?: () => string
+	invert?: boolean
 }
 
 export type AlertMap = Record<string, Map<string, AlertRecord>>
@@ -377,6 +449,19 @@ export interface SmartAttribute {
 	wf?: string
 }
 
+export interface SystemDetailsRecord extends RecordModel {
+	system: string
+	hostname: string
+	kernel: string
+	cores: number
+	threads: number
+	cpu: string
+	os: Os
+	os_name: string
+	memory: number
+	podman: boolean
+}
+
 export interface SmartDeviceRecord extends RecordModel {
 	id: string
 	system: string
@@ -407,116 +492,127 @@ export interface SystemdRecord extends RecordModel {
 }
 
 export interface SystemdServiceDetails {
-	AccessSELinuxContext: string;
-	ActivationDetails: any[];
-	ActiveEnterTimestamp: number;
-	ActiveEnterTimestampMonotonic: number;
-	ActiveExitTimestamp: number;
-	ActiveExitTimestampMonotonic: number;
-	ActiveState: string;
-	After: string[];
-	AllowIsolate: boolean;
-	AssertResult: boolean;
-	AssertTimestamp: number;
-	AssertTimestampMonotonic: number;
-	Asserts: any[];
-	Before: string[];
-	BindsTo: any[];
-	BoundBy: any[];
-	CPUUsageNSec: number;
-	CanClean: any[];
-	CanFreeze: boolean;
-	CanIsolate: boolean;
-	CanLiveMount: boolean;
-	CanReload: boolean;
-	CanStart: boolean;
-	CanStop: boolean;
-	CollectMode: string;
-	ConditionResult: boolean;
-	ConditionTimestamp: number;
-	ConditionTimestampMonotonic: number;
-	Conditions: any[];
-	ConflictedBy: any[];
-	Conflicts: string[];
-	ConsistsOf: any[];
-	DebugInvocation: boolean;
-	DefaultDependencies: boolean;
-	Description: string;
-	Documentation: string[];
-	DropInPaths: any[];
-	ExecMainPID: number;
-	FailureAction: string;
-	FailureActionExitStatus: number;
-	Following: string;
-	FragmentPath: string;
-	FreezerState: string;
-	Id: string;
-	IgnoreOnIsolate: boolean;
-	InactiveEnterTimestamp: number;
-	InactiveEnterTimestampMonotonic: number;
-	InactiveExitTimestamp: number;
-	InactiveExitTimestampMonotonic: number;
-	InvocationID: string;
-	Job: Array<number | string>;
-	JobRunningTimeoutUSec: number;
-	JobTimeoutAction: string;
-	JobTimeoutRebootArgument: string;
-	JobTimeoutUSec: number;
-	JoinsNamespaceOf: any[];
-	LoadError: string[];
-	LoadState: string;
-	MainPID: number;
-	Markers: any[];
-	MemoryCurrent: number;
-	MemoryLimit: number;
-	MemoryPeak: number;
-	NRestarts: number;
-	Names: string[];
-	NeedDaemonReload: boolean;
-	OnFailure: any[];
-	OnFailureJobMode: string;
-	OnFailureOf: any[];
-	OnSuccess: any[];
-	OnSuccessJobMode: string;
-	OnSuccessOf: any[];
-	PartOf: any[];
-	Perpetual: boolean;
-	PropagatesReloadTo: any[];
-	PropagatesStopTo: any[];
-	RebootArgument: string;
-	Refs: any[];
-	RefuseManualStart: boolean;
-	RefuseManualStop: boolean;
-	ReloadPropagatedFrom: any[];
-	RequiredBy: any[];
-	Requires: string[];
-	RequiresMountsFor: any[];
-	Requisite: any[];
-	RequisiteOf: any[];
-	Result: string;
-	SliceOf: any[];
-	SourcePath: string;
-	StartLimitAction: string;
-	StartLimitBurst: number;
-	StartLimitIntervalUSec: number;
-	StateChangeTimestamp: number;
-	StateChangeTimestampMonotonic: number;
-	StopPropagatedFrom: any[];
-	StopWhenUnneeded: boolean;
-	SubState: string;
-	SuccessAction: string;
-	SuccessActionExitStatus: number;
-	SurviveFinalKillSignal: boolean;
-	TasksCurrent: number;
-	TasksMax: number;
-	Transient: boolean;
-	TriggeredBy: string[];
-	Triggers: any[];
-	UnitFilePreset: string;
-	UnitFileState: string;
-	UpheldBy: any[];
-	Upholds: any[];
-	WantedBy: any[];
-	Wants: string[];
-	WantsMountsFor: any[];
+	AccessSELinuxContext: string
+	ActivationDetails: any[]
+	ActiveEnterTimestamp: number
+	ActiveEnterTimestampMonotonic: number
+	ActiveExitTimestamp: number
+	ActiveExitTimestampMonotonic: number
+	ActiveState: string
+	After: string[]
+	AllowIsolate: boolean
+	AssertResult: boolean
+	AssertTimestamp: number
+	AssertTimestampMonotonic: number
+	Asserts: any[]
+	Before: string[]
+	BindsTo: any[]
+	BoundBy: any[]
+	CPUUsageNSec: number
+	CanClean: any[]
+	CanFreeze: boolean
+	CanIsolate: boolean
+	CanLiveMount: boolean
+	CanReload: boolean
+	CanStart: boolean
+	CanStop: boolean
+	CollectMode: string
+	ConditionResult: boolean
+	ConditionTimestamp: number
+	ConditionTimestampMonotonic: number
+	Conditions: any[]
+	ConflictedBy: any[]
+	Conflicts: string[]
+	ConsistsOf: any[]
+	DebugInvocation: boolean
+	DefaultDependencies: boolean
+	Description: string
+	Documentation: string[]
+	DropInPaths: any[]
+	ExecMainPID: number
+	FailureAction: string
+	FailureActionExitStatus: number
+	Following: string
+	FragmentPath: string
+	FreezerState: string
+	Id: string
+	IgnoreOnIsolate: boolean
+	InactiveEnterTimestamp: number
+	InactiveEnterTimestampMonotonic: number
+	InactiveExitTimestamp: number
+	InactiveExitTimestampMonotonic: number
+	InvocationID: string
+	Job: Array<number | string>
+	JobRunningTimeoutUSec: number
+	JobTimeoutAction: string
+	JobTimeoutRebootArgument: string
+	JobTimeoutUSec: number
+	JoinsNamespaceOf: any[]
+	LoadError: string[]
+	LoadState: string
+	MainPID: number
+	Markers: any[]
+	MemoryCurrent: number
+	MemoryLimit: number
+	MemoryPeak: number
+	NRestarts: number
+	Names: string[]
+	NeedDaemonReload: boolean
+	OnFailure: any[]
+	OnFailureJobMode: string
+	OnFailureOf: any[]
+	OnSuccess: any[]
+	OnSuccessJobMode: string
+	OnSuccessOf: any[]
+	PartOf: any[]
+	Perpetual: boolean
+	PropagatesReloadTo: any[]
+	PropagatesStopTo: any[]
+	RebootArgument: string
+	Refs: any[]
+	RefuseManualStart: boolean
+	RefuseManualStop: boolean
+	ReloadPropagatedFrom: any[]
+	RequiredBy: any[]
+	Requires: string[]
+	RequiresMountsFor: any[]
+	Requisite: any[]
+	RequisiteOf: any[]
+	Result: string
+	SliceOf: any[]
+	SourcePath: string
+	StartLimitAction: string
+	StartLimitBurst: number
+	StartLimitIntervalUSec: number
+	StateChangeTimestamp: number
+	StateChangeTimestampMonotonic: number
+	StopPropagatedFrom: any[]
+	StopWhenUnneeded: boolean
+	SubState: string
+	SuccessAction: string
+	SuccessActionExitStatus: number
+	SurviveFinalKillSignal: boolean
+	TasksCurrent: number
+	TasksMax: number
+	Transient: boolean
+	TriggeredBy: string[]
+	Triggers: any[]
+	UnitFilePreset: string
+	UnitFileState: string
+	UpheldBy: any[]
+	Upholds: any[]
+	WantedBy: any[]
+	Wants: string[]
+	WantsMountsFor: any[]
+}
+
+export interface BeszelInfo {
+	key: string // public key
+	v: string // version
+	cu: boolean // check updates
+}
+
+export interface UpdateInfo {
+	v: string // new version
+	url: string // url to new version
 }

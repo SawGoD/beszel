@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -29,11 +30,15 @@ const (
 	colorGray   = "\033[90m"
 )
 
+// buildGOARM is set by GoReleaser for agent builds. An empty value identifies
+// legacy builds, which used GoReleaser's default GOARM value (ARMv6).
+var buildGOARM string
+
 func ColorPrint(color, text string) {
 	fmt.Println(color + text + colorReset)
 }
 
-func ColorPrintf(color, format string, args ...interface{}) {
+func ColorPrintf(color, format string, args ...any) {
 	fmt.Printf(color+format+colorReset+"\n", args...)
 }
 
@@ -109,21 +114,13 @@ func (p *updater) update() (updated bool, err error) {
 	}
 
 	var latest *release
-	var useMirror bool
 
-	// Determine the API endpoint based on UseMirror flag
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", p.config.Owner, p.config.Repo)
+	apiURL := getApiURL(p.config.UseMirror, p.config.Owner, p.config.Repo)
 	if p.config.UseMirror {
-		useMirror = true
-		apiURL = fmt.Sprintf("https://gh.beszel.dev/repos/%s/%s/releases/latest?api=true", p.config.Owner, p.config.Repo)
 		ColorPrint(ColorYellow, "Using mirror for update.")
 	}
 
-	latest, err = fetchLatestRelease(
-		p.config.Context,
-		p.config.HttpClient,
-		apiURL,
-	)
+	latest, err = FetchLatestRelease(p.config.Context, p.config.HttpClient, apiURL)
 	if err != nil {
 		return false, err
 	}
@@ -136,27 +133,39 @@ func (p *updater) update() (updated bool, err error) {
 		return false, nil
 	}
 
-	suffix := archiveSuffix(p.config.ArchiveExecutable, runtime.GOOS, runtime.GOARCH)
+	suffix := archiveSuffix(p.config.ArchiveExecutable, runtime.GOOS, runtime.GOARCH, buildGOARM)
 	asset, err := latest.findAssetBySuffix(suffix)
 	if err != nil {
 		return false, err
 	}
 
-	releaseDir := filepath.Join(p.config.DataDir, ".beszel_update")
+	if err := os.MkdirAll(p.config.DataDir, 0755); err != nil {
+		return false, fmt.Errorf("failed to create update data directory: %w", err)
+	}
+	releaseDir, err := os.MkdirTemp(p.config.DataDir, ".beszel_update-")
+	if err != nil {
+		return false, fmt.Errorf("failed to create update directory: %w", err)
+	}
 	defer os.RemoveAll(releaseDir)
 
 	ColorPrintf(ColorYellow, "Downloading %s...", asset.Name)
 
 	// download the release asset
-	assetPath := filepath.Join(releaseDir, asset.Name)
-	if err := downloadFile(p.config.Context, p.config.HttpClient, asset.DownloadUrl, assetPath, useMirror); err != nil {
+	assetPath, err := archivePath(releaseDir, asset.Name)
+	if err != nil {
+		return false, err
+	}
+	if err := downloadFile(p.config.Context, p.config.HttpClient, asset.DownloadUrl, assetPath, p.config.UseMirror); err != nil {
+		return false, err
+	}
+	ColorPrint(ColorYellow, "Verifying checksum...")
+	if err := verifyAssetChecksum(assetPath, asset.Digest); err != nil {
 		return false, err
 	}
 
 	ColorPrintf(ColorYellow, "Extracting %s...", asset.Name)
 
-	extractDir := filepath.Join(releaseDir, "extracted_"+asset.Name)
-	defer os.RemoveAll(extractDir)
+	extractDir := filepath.Join(releaseDir, "extracted")
 
 	// Extract the archive (automatically detects format)
 	if err := extract(assetPath, extractDir); err != nil {
@@ -225,11 +234,11 @@ func (p *updater) update() (updated bool, err error) {
 	return true, nil
 }
 
-func fetchLatestRelease(
-	ctx context.Context,
-	client HttpClient,
-	url string,
-) (*release, error) {
+func FetchLatestRelease(ctx context.Context, client HttpClient, url string) (*release, error) {
+	if url == "" {
+		url = getApiURL(false, "henrygd", "beszel")
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -341,9 +350,47 @@ func copyFile(src, dst string) error {
 	return destFile.Chmod(sourceInfo.Mode())
 }
 
-func archiveSuffix(binaryName, goos, goarch string) string {
+func archiveSuffix(binaryName, goos, goarch, goarm string) string {
 	if goos == "windows" {
 		return fmt.Sprintf("%s_%s_%s.zip", binaryName, goos, goarch)
 	}
-	return fmt.Sprintf("%s_%s_%s.tar.gz", binaryName, goos, goarch)
+	// Use glibc build for agent on glibc systems (includes NVML support via purego)
+	if binaryName == "beszel-agent" && goos == "linux" && goarch == "amd64" && isGlibc() {
+		return fmt.Sprintf("%s_%s_%s_glibc.tar.gz", binaryName, goos, goarch)
+	}
+	armSuffix := ""
+	if binaryName == "beszel-agent" && goarch == "arm" && (goarm == "5" || goarm == "7") {
+		armSuffix = "v" + goarm
+	}
+	return fmt.Sprintf("%s_%s_%s%s.tar.gz", binaryName, goos, goarch, armSuffix)
+}
+
+func isGlibc() bool {
+	for _, path := range []string{
+		"/lib64/ld-linux-x86-64.so.2",                // common on many distros
+		"/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2", // Debian/Ubuntu
+		"/lib/ld-linux-x86-64.so.2",                  // alternate
+	} {
+		if _, err := os.Stat(path); err == nil {
+			return true
+		}
+	}
+	// Fallback to ldd output when present (musl ldd reports musl, glibc reports GNU libc/glibc).
+	if lddPath, err := exec.LookPath("ldd"); err == nil {
+		out, err := exec.Command(lddPath, "--version").CombinedOutput()
+		if err == nil {
+			s := strings.ToLower(string(out))
+			if strings.Contains(s, "gnu libc") || strings.Contains(s, "glibc") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func getApiURL(useMirror bool, owner, repo string) string {
+	if useMirror {
+		return fmt.Sprintf("https://gh.beszel.dev/repos/%s/%s/releases/latest?api=true", owner, repo)
+	}
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 }

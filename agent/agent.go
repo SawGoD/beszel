@@ -5,11 +5,7 @@
 package agent
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -17,10 +13,13 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/henrygd/beszel"
 	"github.com/henrygd/beszel/agent/deltatracker"
+	"github.com/henrygd/beszel/agent/utils"
+	"github.com/henrygd/beszel/internal/common"
 	"github.com/henrygd/beszel/internal/entities/system"
-	"github.com/shirou/gopsutil/v4/host"
 	gossh "golang.org/x/crypto/ssh"
 )
+
+const defaultDataCacheTimeMs uint16 = 60_000
 
 type Agent struct {
 	sync.Mutex                                                                      // Used to lock agent while collecting data
@@ -37,7 +36,9 @@ type Agent struct {
 	netInterfaceDeltaTrackers map[uint16]*deltatracker.DeltaTracker[string, uint64] // Per-cache-time NIC delta trackers
 	dockerManager             *dockerManager                                        // Manages Docker API requests
 	sensorConfig              *SensorConfig                                         // Sensors config
-	systemInfo                system.Info                                           // Host system info
+	systemInfo                system.Info                                           // Host system info (dynamic)
+	systemDetails             system.Details                                        // Host system details (static, once-per-connection)
+	detailsDirty              bool                                                  // Whether system details have changed and need to be resent
 	gpuManager                *GPUManager                                           // Manages GPU data
 	cache                     *systemDataCache                                      // Cache for system stats based on cache time
 	connectionManager         *ConnectionManager                                    // Channel to signal connection events
@@ -47,6 +48,7 @@ type Agent struct {
 	keys                      []gossh.PublicKey                                     // SSH public keys
 	smartManager              *SmartManager                                         // Manages SMART data
 	systemdManager            *systemdManager                                       // Manages systemd services
+	zfsManager                *ZfsManager                                           // Manages ZFS pool and dataset data
 }
 
 // NewAgent creates a new agent with the given data directory for persisting data.
@@ -63,18 +65,18 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 	agent.netIoStats = make(map[uint16]system.NetIoStats)
 	agent.netInterfaceDeltaTrackers = make(map[uint16]*deltatracker.DeltaTracker[string, uint64])
 
-	agent.dataDir, err = getDataDir(dataDir...)
+	agent.dataDir, err = GetDataDir(dataDir...)
 	if err != nil {
 		slog.Warn("Data directory not found")
 	} else {
 		slog.Info("Data directory", "path", agent.dataDir)
 	}
 
-	agent.memCalc, _ = GetEnv("MEM_CALC")
+	agent.memCalc, _ = utils.GetEnv("MEM_CALC")
 	agent.sensorConfig = agent.newSensorConfig()
 
 	// Parse disk usage cache duration (e.g., "15m", "1h") to avoid waking sleeping disks
-	if diskUsageCache, exists := GetEnv("DISK_USAGE_CACHE"); exists {
+	if diskUsageCache, exists := utils.GetEnv("DISK_USAGE_CACHE"); exists {
 		if duration, err := time.ParseDuration(diskUsageCache); err == nil {
 			agent.diskUsageCacheDuration = duration
 			slog.Info("DISK_USAGE_CACHE", "duration", duration)
@@ -82,8 +84,9 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 			slog.Warn("Invalid DISK_USAGE_CACHE", "err", err)
 		}
 	}
+
 	// Set up slog with a log level determined by the LOG_LEVEL env var
-	if logLevelStr, exists := GetEnv("LOG_LEVEL"); exists {
+	if logLevelStr, exists := utils.GetEnv("LOG_LEVEL"); exists {
 		switch strings.ToLower(logLevelStr) {
 		case "debug":
 			agent.debug = true
@@ -97,8 +100,21 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 
 	slog.Debug(beszel.Version)
 
+	// initialize docker manager
+	agent.dockerManager = newDockerManager(agent)
+
 	// initialize system info
-	agent.initializeSystemInfo()
+	agent.refreshSystemDetails()
+
+	// SMART_INTERVAL env var to update smart data at this interval
+	if smartIntervalEnv, exists := utils.GetEnv("SMART_INTERVAL"); exists {
+		if duration, err := time.ParseDuration(smartIntervalEnv); err == nil && duration > 0 {
+			agent.systemDetails.SmartInterval = duration
+			slog.Info("SMART_INTERVAL", "duration", duration)
+		} else {
+			slog.Warn("Invalid SMART_INTERVAL", "err", err)
+		}
+	}
 
 	// initialize connection manager
 	agent.connectionManager = newConnectionManager(agent)
@@ -106,14 +122,24 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 	// initialize handler registry
 	agent.handlerRegistry = NewHandlerRegistry()
 
+	agent.zfsManager = newZfsManager()
+
+	// ZFS_INTERVAL env var to update ZFS detail data at this interval
+	if zfsIntervalEnv, exists := utils.GetEnv("ZFS_INTERVAL"); exists {
+		if duration, err := time.ParseDuration(zfsIntervalEnv); err == nil && duration > 0 {
+			agent.zfsManager.detailInterval = duration
+			agent.systemDetails.ZfsInterval = duration
+			slog.Info("ZFS_INTERVAL", "duration", duration)
+		} else {
+			slog.Warn("Invalid ZFS_INTERVAL", "err", err)
+		}
+	}
+
 	// initialize disk info
 	agent.initializeDiskInfo()
 
 	// initialize net io stats
 	agent.initializeNetIoStats()
-
-	// initialize docker manager
-	agent.dockerManager = newDockerManager(agent)
 
 	agent.systemdManager, err = newSystemdManager()
 	if err != nil {
@@ -133,25 +159,17 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 
 	// if debugging, print stats
 	if agent.debug {
-		slog.Debug("Stats", "data", agent.gatherStats(0))
+		slog.Debug("Stats", "data", agent.gatherStats(common.DataRequestOptions{CacheTimeMs: defaultDataCacheTimeMs, IncludeDetails: true}))
 	}
 
 	return agent, nil
 }
 
-// GetEnv retrieves an environment variable with a "BESZEL_AGENT_" prefix, or falls back to the unprefixed key.
-func GetEnv(key string) (value string, exists bool) {
-	if value, exists = os.LookupEnv("BESZEL_AGENT_" + key); exists {
-		return value, exists
-	}
-	// Fallback to the old unprefixed key
-	return os.LookupEnv(key)
-}
-
-func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
+func (a *Agent) gatherStats(options common.DataRequestOptions) *system.CombinedData {
 	a.Lock()
 	defer a.Unlock()
 
+	cacheTimeMs := options.CacheTimeMs
 	data, isCached := a.cache.Get(cacheTimeMs)
 	if isCached {
 		slog.Debug("Cached data", "cacheTimeMs", cacheTimeMs)
@@ -162,6 +180,7 @@ func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
 		Stats: a.getSystemStats(cacheTimeMs),
 		Info:  a.systemInfo,
 	}
+
 	// slog.Info("System data", "data", data, "cacheTimeMs", cacheTimeMs)
 
 	if a.dockerManager != nil {
@@ -174,7 +193,7 @@ func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
 	}
 
 	// skip updating systemd services if cache time is not the default 60sec interval
-	if a.systemdManager != nil && cacheTimeMs == 60_000 {
+	if a.systemdManager != nil && cacheTimeMs == defaultDataCacheTimeMs {
 		totalCount := uint16(a.systemdManager.getServiceStatsCount())
 		if totalCount > 0 {
 			numFailed := a.systemdManager.getFailedServiceCount()
@@ -182,13 +201,25 @@ func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
 		}
 		if a.systemdManager.hasFreshStats {
 			data.SystemdServices = a.systemdManager.getServiceStats(nil, false)
+			data.SystemdServicesUpdated = true
+			// Preserve an explicit zero count so the hub can distinguish a fresh
+			// empty snapshot from a response that omitted systemd data.
+			if totalCount == 0 {
+				data.Info.Services = []uint16{0, 0}
+			}
 		}
 	}
 
 	data.Stats.ExtraFs = make(map[string]*system.FsStats)
 	data.Info.ExtraFsPct = make(map[string]float64)
 	for name, stats := range a.fsStats {
-		if !stats.Root && stats.DiskTotal > 0 {
+		if stats.Root {
+			if stats.Name != "" {
+				data.Info.RootDiskName = stats.Name
+			}
+			continue
+		}
+		if stats.DiskTotal > 0 {
 			// Use custom name if available, otherwise use device name
 			key := name
 			if stats.Name != "" {
@@ -197,7 +228,7 @@ func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
 			data.Stats.ExtraFs[key] = stats
 			// Add percentages to Info struct for dashboard
 			if stats.DiskTotal > 0 {
-				pct := twoDecimals((stats.DiskUsed / stats.DiskTotal) * 100)
+				pct := utils.TwoDecimals((stats.DiskUsed / stats.DiskTotal) * 100)
 				data.Info.ExtraFsPct[key] = pct
 			}
 		}
@@ -205,40 +236,16 @@ func (a *Agent) gatherStats(cacheTimeMs uint16) *system.CombinedData {
 	slog.Debug("Extra FS", "data", data.Stats.ExtraFs)
 
 	a.cache.Set(data, cacheTimeMs)
-	return data
+
+	return a.attachSystemDetails(data, cacheTimeMs, options.IncludeDetails)
 }
 
-// StartAgent initializes and starts the agent with optional WebSocket connection
+// Start initializes and starts the agent with optional WebSocket connection
 func (a *Agent) Start(serverOptions ServerOptions) error {
 	a.keys = serverOptions.Keys
 	return a.connectionManager.Start(serverOptions)
 }
 
 func (a *Agent) getFingerprint() string {
-	// first look for a fingerprint in the data directory
-	if a.dataDir != "" {
-		if fp, err := os.ReadFile(filepath.Join(a.dataDir, "fingerprint")); err == nil {
-			return string(fp)
-		}
-	}
-
-	// if no fingerprint is found, generate one
-	fingerprint, err := host.HostID()
-	if err != nil || fingerprint == "" {
-		fingerprint = a.systemInfo.Hostname + a.systemInfo.CpuModel
-	}
-
-	// hash fingerprint
-	sum := sha256.Sum256([]byte(fingerprint))
-	fingerprint = hex.EncodeToString(sum[:24])
-
-	// save fingerprint to data directory
-	if a.dataDir != "" {
-		err = os.WriteFile(filepath.Join(a.dataDir, "fingerprint"), []byte(fingerprint), 0644)
-		if err != nil {
-			slog.Warn("Failed to save fingerprint", "err", err)
-		}
-	}
-
-	return fingerprint
+	return GetFingerprint(a.dataDir, a.systemDetails.Hostname, a.systemDetails.CpuModel)
 }

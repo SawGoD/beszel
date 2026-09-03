@@ -1,23 +1,67 @@
 //go:build testing
-// +build testing
 
 package agent
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/henrygd/beszel/agent/deltatracker"
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/entities/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var defaultCacheTimeMs = uint16(60_000)
+
+type recordingRoundTripper struct {
+	statusCode  int
+	body        string
+	contentType string
+	called      bool
+	lastPath    string
+	lastQuery   map[string]string
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}
+
+func (rt *recordingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	rt.called = true
+	rt.lastPath = req.URL.EscapedPath()
+	rt.lastQuery = map[string]string{}
+	for key, values := range req.URL.Query() {
+		if len(values) > 0 {
+			rt.lastQuery[key] = values[0]
+		}
+	}
+	resp := &http.Response{
+		StatusCode: rt.statusCode,
+		Status:     "200 OK",
+		Header:     make(http.Header),
+		Body:       io.NopCloser(strings.NewReader(rt.body)),
+		Request:    req,
+	}
+	if rt.contentType != "" {
+		resp.Header.Set("Content-Type", rt.contentType)
+	}
+	return resp, nil
+}
 
 // cycleCpuDeltas cycles the CPU tracking data for a specific cache time interval
 func (dm *dockerManager) cycleCpuDeltas(cacheTimeMs uint16) {
@@ -110,6 +154,94 @@ func TestCalculateMemoryUsage(t *testing.T) {
 	}
 }
 
+func TestBuildDockerContainerEndpoint(t *testing.T) {
+	t.Run("valid container ID builds escaped endpoint", func(t *testing.T) {
+		endpoint, err := buildDockerContainerEndpoint("0123456789ab", "json", nil)
+		require.NoError(t, err)
+		assert.Equal(t, "http://localhost/containers/0123456789ab/json", endpoint)
+	})
+
+	t.Run("invalid container ID is rejected", func(t *testing.T) {
+		_, err := buildDockerContainerEndpoint("../../version", "json", nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid container id")
+	})
+}
+
+func TestContainerDetailsRequestsValidateContainerID(t *testing.T) {
+	rt := &recordingRoundTripper{
+		statusCode: 200,
+		body:       `{"Config":{"Env":["SECRET=1"]}}`,
+	}
+	dm := &dockerManager{
+		client: &http.Client{Transport: rt},
+	}
+
+	_, err := dm.getContainerInfo(context.Background(), "../version")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid container id")
+	assert.False(t, rt.called, "request should be rejected before dispatching to Docker API")
+}
+
+func TestContainerDetailsRequestsUseExpectedDockerPaths(t *testing.T) {
+	t.Run("container info uses container json endpoint", func(t *testing.T) {
+		rt := &recordingRoundTripper{
+			statusCode: 200,
+			body:       `{"Config":{"Env":["SECRET=1"]},"Name":"demo"}`,
+		}
+		dm := &dockerManager{
+			client: &http.Client{Transport: rt},
+		}
+
+		body, err := dm.getContainerInfo(context.Background(), "0123456789ab")
+		require.NoError(t, err)
+		assert.True(t, rt.called)
+		assert.Equal(t, "/containers/0123456789ab/json", rt.lastPath)
+		assert.NotContains(t, string(body), "SECRET=1", "sensitive env vars should be removed")
+	})
+
+	t.Run("container logs uses expected endpoint and query params", func(t *testing.T) {
+		rt := &recordingRoundTripper{
+			statusCode: 200,
+			body:       "line1\nline2\n",
+		}
+		dm := &dockerManager{
+			client: &http.Client{Transport: rt},
+		}
+
+		logs, err := dm.getLogs(context.Background(), "abcdef123456")
+		require.NoError(t, err)
+		assert.True(t, rt.called)
+		assert.Equal(t, "/containers/abcdef123456/logs", rt.lastPath)
+		assert.Equal(t, "1", rt.lastQuery["stdout"])
+		assert.Equal(t, "1", rt.lastQuery["stderr"])
+		assert.Equal(t, "200", rt.lastQuery["tail"])
+		assert.Equal(t, "line1\nline2\n", logs)
+	})
+}
+
+func TestGetPodmanContainerHealth(t *testing.T) {
+	called := false
+	dm := &dockerManager{
+		client: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			called = true
+			assert.Equal(t, "/containers/0123456789ab/json", req.URL.EscapedPath())
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Status:     "200 OK",
+				Header:     make(http.Header),
+				Body:       io.NopCloser(strings.NewReader(`{"State":{"Health":{"Status":"healthy"}}}`)),
+				Request:    req,
+			}, nil
+		})},
+	}
+
+	health, err := dm.getPodmanContainerHealth("0123456789ab")
+	require.NoError(t, err)
+	assert.True(t, called)
+	assert.Equal(t, container.DockerHealthHealthy, health)
+}
+
 func TestValidateCpuPercentage(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -184,56 +316,15 @@ func TestUpdateContainerStatsValues(t *testing.T) {
 	// Check memory (should be converted to MB: 1048576 bytes = 1 MB)
 	assert.Equal(t, 1.0, stats.Mem)
 
-	// Check network sent (should be converted to MB: 524288 bytes = 0.5 MB)
-	assert.Equal(t, 0.5, stats.NetworkSent)
+	// Check bandwidth (raw bytes)
+	assert.Equal(t, [2]uint64{524288, 262144}, stats.Bandwidth)
 
-	// Check network recv (should be converted to MB: 262144 bytes = 0.25 MB)
-	assert.Equal(t, 0.25, stats.NetworkRecv)
+	// Deprecated fields still populated for backward compatibility with older hubs
+	assert.Equal(t, 0.5, stats.NetworkSent)  // 524288 bytes = 0.5 MB
+	assert.Equal(t, 0.25, stats.NetworkRecv) // 262144 bytes = 0.25 MB
 
 	// Check read time
 	assert.Equal(t, testTime, stats.PrevReadTime)
-}
-
-func TestTwoDecimals(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    float64
-		expected float64
-	}{
-		{"round down", 1.234, 1.23},
-		{"round half up", 1.235, 1.24}, // math.Round rounds half up
-		{"no rounding needed", 1.23, 1.23},
-		{"negative number", -1.235, -1.24}, // math.Round rounds half up (more negative)
-		{"zero", 0.0, 0.0},
-		{"large number", 123.456, 123.46}, // rounds 5 up
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := twoDecimals(tt.input)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestBytesToMegabytes(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    float64
-		expected float64
-	}{
-		{"1 MB", 1048576, 1.0},
-		{"512 KB", 524288, 0.5},
-		{"zero", 0, 0},
-		{"large value", 1073741824, 1024}, // 1 GB = 1024 MB
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := bytesToMegabytes(tt.input)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
 }
 
 func TestInitializeCpuTracking(t *testing.T) {
@@ -317,6 +408,7 @@ func TestCalculateNetworkStats(t *testing.T) {
 	dm := &dockerManager{
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 	}
 
 	cacheTimeMs := uint16(30000)
@@ -332,6 +424,11 @@ func TestCalculateNetworkStats(t *testing.T) {
 	dm.networkSentTrackers[cacheTimeMs] = sentTracker
 	dm.networkRecvTrackers[cacheTimeMs] = recvTracker
 
+	// Set per-cache-time network read time (1 second ago)
+	dm.lastNetworkReadTime[cacheTimeMs] = map[string]time.Time{
+		"container1": time.Now().Add(-time.Second),
+	}
+
 	ctr := &container.ApiInfo{
 		IdShort: "container1",
 	}
@@ -342,12 +439,8 @@ func TestCalculateNetworkStats(t *testing.T) {
 		},
 	}
 
-	stats := &container.Stats{
-		PrevReadTime: time.Now().Add(-time.Second), // 1 second ago
-	}
-
 	// Test with initialized container
-	sent, recv := dm.calculateNetworkStats(ctr, apiStats, stats, true, "test-container", cacheTimeMs)
+	sent, recv := dm.calculateNetworkStats(ctr, apiStats, "test-container", cacheTimeMs)
 
 	// Should return calculated byte rates per second
 	assert.GreaterOrEqual(t, sent, uint64(0))
@@ -355,10 +448,74 @@ func TestCalculateNetworkStats(t *testing.T) {
 
 	// Cycle and test one-direction change (Tx only) is reflected independently
 	dm.cycleNetworkDeltasForCacheTime(cacheTimeMs)
+	dm.lastNetworkReadTime[cacheTimeMs]["container1"] = time.Now().Add(-time.Second)
 	apiStats.Networks["eth0"] = container.NetworkStats{TxBytes: 2500, RxBytes: 1800} // +500 Tx only
-	sent, recv = dm.calculateNetworkStats(ctr, apiStats, stats, true, "test-container", cacheTimeMs)
+	sent, recv = dm.calculateNetworkStats(ctr, apiStats, "test-container", cacheTimeMs)
 	assert.Greater(t, sent, uint64(0))
 	assert.Equal(t, uint64(0), recv)
+}
+
+// TestNetworkStatsCacheTimeIsolation verifies that frequent collections at one cache time
+// (e.g. 1000ms) don't cause inflated rates at another cache time (e.g. 60000ms).
+// This was a bug where PrevReadTime was shared, so the 60000ms tracker would see a
+// large byte delta divided by a tiny elapsed time (set by the 1000ms path).
+func TestNetworkStatsCacheTimeIsolation(t *testing.T) {
+	dm := &dockerManager{
+		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
+	}
+
+	ctr := &container.ApiInfo{IdShort: "container1"}
+	fastCache := uint16(1000)
+	slowCache := uint16(60000)
+
+	// Baseline for both cache times at T=0 with 100 bytes total
+	baseline := &container.ApiStats{
+		Networks: map[string]container.NetworkStats{
+			"eth0": {TxBytes: 100, RxBytes: 100},
+		},
+	}
+	dm.calculateNetworkStats(ctr, baseline, "test", fastCache)
+	dm.calculateNetworkStats(ctr, baseline, "test", slowCache)
+
+	// Record read times and cycle both
+	now := time.Now()
+	dm.lastNetworkReadTime[fastCache] = map[string]time.Time{"container1": now}
+	dm.lastNetworkReadTime[slowCache] = map[string]time.Time{"container1": now}
+	dm.cycleNetworkDeltasForCacheTime(fastCache)
+	dm.cycleNetworkDeltasForCacheTime(slowCache)
+
+	// Simulate many fast (1000ms) collections over ~5 seconds, each adding 10 bytes
+	totalBytes := uint64(100)
+	for i := 0; i < 5; i++ {
+		totalBytes += 10
+		stats := &container.ApiStats{
+			Networks: map[string]container.NetworkStats{
+				"eth0": {TxBytes: totalBytes, RxBytes: totalBytes},
+			},
+		}
+		// Set fast cache read time to 1 second ago
+		dm.lastNetworkReadTime[fastCache]["container1"] = time.Now().Add(-time.Second)
+		sent, _ := dm.calculateNetworkStats(ctr, stats, "test", fastCache)
+		// Fast cache should see ~10 bytes/sec per interval
+		assert.LessOrEqual(t, sent, uint64(100), "fast cache rate should be reasonable")
+		dm.cycleNetworkDeltasForCacheTime(fastCache)
+	}
+
+	// Now do slow cache collection — total delta is 50 bytes over ~5 seconds
+	// Set slow cache read time to 5 seconds ago (the actual elapsed time)
+	dm.lastNetworkReadTime[slowCache]["container1"] = time.Now().Add(-5 * time.Second)
+	finalStats := &container.ApiStats{
+		Networks: map[string]container.NetworkStats{
+			"eth0": {TxBytes: totalBytes, RxBytes: totalBytes},
+		},
+	}
+	sent, _ := dm.calculateNetworkStats(ctr, finalStats, "test", slowCache)
+
+	// Slow cache rate should be ~10 bytes/sec (50 bytes / 5 seconds), NOT 100x inflated
+	assert.LessOrEqual(t, sent, uint64(100), "slow cache rate should NOT be inflated by fast cache collections")
+	assert.GreaterOrEqual(t, sent, uint64(1), "slow cache should still report some traffic")
 }
 
 func TestDockerManagerCreation(t *testing.T) {
@@ -369,6 +526,7 @@ func TestDockerManagerCreation(t *testing.T) {
 		lastCpuReadTime:     make(map[uint16]map[string]time.Time),
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 	}
 
 	assert.NotNil(t, dm)
@@ -376,6 +534,294 @@ func TestDockerManagerCreation(t *testing.T) {
 	assert.NotNil(t, dm.lastCpuSystem)
 	assert.NotNil(t, dm.networkSentTrackers)
 	assert.NotNil(t, dm.networkRecvTrackers)
+	assert.NotNil(t, dm.lastNetworkReadTime)
+}
+
+func TestCheckDockerVersion(t *testing.T) {
+	tests := []struct {
+		name            string
+		statusCode      int
+		body            string
+		server          string
+		expectSuccess   bool
+		expectedGood    bool
+		expectedPodman  bool
+		expectError     bool
+		expectedRequest string
+	}{
+		{
+			name:            "good docker version",
+			statusCode:      http.StatusOK,
+			body:            `{"Version":"25.0.1"}`,
+			expectSuccess:   true,
+			expectedGood:    true,
+			expectedPodman:  false,
+			expectedRequest: "/version",
+		},
+		{
+			name:            "old docker version",
+			statusCode:      http.StatusOK,
+			body:            `{"Version":"24.0.7"}`,
+			expectSuccess:   true,
+			expectedGood:    false,
+			expectedPodman:  false,
+			expectedRequest: "/version",
+		},
+		{
+			name:            "podman from server header",
+			statusCode:      http.StatusOK,
+			body:            `{"Version":"5.5.0"}`,
+			server:          "Libpod/5.5.0",
+			expectSuccess:   true,
+			expectedGood:    true,
+			expectedPodman:  true,
+			expectedRequest: "/version",
+		},
+		{
+			name:            "non-200 response",
+			statusCode:      http.StatusServiceUnavailable,
+			body:            `"not ready"`,
+			expectSuccess:   false,
+			expectedGood:    false,
+			expectedPodman:  false,
+			expectError:     true,
+			expectedRequest: "/version",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestCount := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestCount++
+				assert.Equal(t, tt.expectedRequest, r.URL.EscapedPath())
+				if tt.server != "" {
+					w.Header().Set("Server", tt.server)
+				}
+				w.WriteHeader(tt.statusCode)
+				fmt.Fprint(w, tt.body)
+			}))
+			defer server.Close()
+
+			dm := &dockerManager{
+				client: &http.Client{
+					Transport: &http.Transport{
+						DialContext: func(_ context.Context, network, _ string) (net.Conn, error) {
+							return net.Dial(network, server.Listener.Addr().String())
+						},
+					},
+				},
+			}
+
+			success, err := dm.checkDockerVersion()
+
+			assert.Equal(t, tt.expectSuccess, success)
+			assert.Equal(t, tt.expectSuccess, dm.dockerVersionChecked)
+			assert.Equal(t, tt.expectedGood, dm.goodDockerVersion)
+			assert.Equal(t, tt.expectedPodman, dm.usingPodman)
+			assert.Equal(t, 1, requestCount)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+
+	t.Run("request error", func(t *testing.T) {
+		requestCount := 0
+		dm := &dockerManager{
+			client: &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+						requestCount++
+						return nil, errors.New("connection refused")
+					},
+				},
+			},
+		}
+
+		success, err := dm.checkDockerVersion()
+
+		assert.False(t, success)
+		require.Error(t, err)
+		assert.False(t, dm.dockerVersionChecked)
+		assert.False(t, dm.goodDockerVersion)
+		assert.False(t, dm.usingPodman)
+		assert.Equal(t, 1, requestCount)
+	})
+}
+
+// newDockerManagerForVersionTest creates a dockerManager wired to a test server.
+func newDockerManagerForVersionTest(server *httptest.Server) *dockerManager {
+	return &dockerManager{
+		client: &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, network, _ string) (net.Conn, error) {
+					return net.Dial(network, server.Listener.Addr().String())
+				},
+			},
+		},
+		containerStatsMap:   make(map[string]*container.Stats),
+		lastCpuContainer:    make(map[uint16]map[string]uint64),
+		lastCpuSystem:       make(map[uint16]map[string]uint64),
+		lastCpuReadTime:     make(map[uint16]map[string]time.Time),
+		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
+	}
+}
+
+func TestGetDockerStatsChecksDockerVersionAfterContainerList(t *testing.T) {
+	tests := []struct {
+		name            string
+		containerServer string
+		versionServer   string
+		versionBody     string
+		expectedGood    bool
+		expectedPodman  bool
+	}{
+		{
+			name:           "200 with good version on first try",
+			versionBody:    `{"Version":"25.0.1"}`,
+			expectedGood:   true,
+			expectedPodman: false,
+		},
+		{
+			name:           "200 with old version on first try",
+			versionBody:    `{"Version":"24.0.7"}`,
+			expectedGood:   false,
+			expectedPodman: false,
+		},
+		{
+			name:            "podman detected from server header",
+			containerServer: "Libpod/5.5.0",
+			expectedGood:    true,
+			expectedPodman:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestCounts := map[string]int{}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestCounts[r.URL.EscapedPath()]++
+				switch r.URL.EscapedPath() {
+				case "/containers/json":
+					if tt.containerServer != "" {
+						w.Header().Set("Server", tt.containerServer)
+					}
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprint(w, `[]`)
+				case "/version":
+					if tt.versionServer != "" {
+						w.Header().Set("Server", tt.versionServer)
+					}
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprint(w, tt.versionBody)
+				default:
+					t.Fatalf("unexpected path: %s", r.URL.EscapedPath())
+				}
+			}))
+			defer server.Close()
+
+			dm := newDockerManagerForVersionTest(server)
+
+			stats, err := dm.getDockerStats(defaultCacheTimeMs)
+			require.NoError(t, err)
+			require.NotNil(t, stats, "A successful empty snapshot must remain distinguishable from a collection failure")
+			assert.Empty(t, stats)
+			assert.True(t, dm.dockerVersionChecked)
+			assert.Equal(t, tt.expectedGood, dm.goodDockerVersion)
+			assert.Equal(t, tt.expectedPodman, dm.usingPodman)
+			assert.Equal(t, 1, requestCounts["/containers/json"])
+			if tt.expectedPodman {
+				assert.Equal(t, 0, requestCounts["/version"])
+			} else {
+				assert.Equal(t, 1, requestCounts["/version"])
+			}
+
+			stats, err = dm.getDockerStats(defaultCacheTimeMs)
+			require.NoError(t, err)
+			require.NotNil(t, stats, "A successful empty snapshot must remain distinguishable from a collection failure")
+			assert.Empty(t, stats)
+			assert.Equal(t, tt.expectedGood, dm.goodDockerVersion)
+			assert.Equal(t, tt.expectedPodman, dm.usingPodman)
+			assert.Equal(t, 2, requestCounts["/containers/json"])
+			if tt.expectedPodman {
+				assert.Equal(t, 0, requestCounts["/version"])
+			} else {
+				assert.Equal(t, 1, requestCounts["/version"])
+			}
+		})
+	}
+
+}
+
+func TestGetDockerStatsRetriesVersionCheckUntilSuccess(t *testing.T) {
+	requestCounts := map[string]int{}
+	versionStatuses := []int{http.StatusServiceUnavailable, http.StatusOK}
+	versionBodies := []string{`"not ready"`, `{"Version":"25.1.0"}`}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCounts[r.URL.EscapedPath()]++
+		switch r.URL.EscapedPath() {
+		case "/containers/json":
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, `[]`)
+		case "/version":
+			idx := requestCounts["/version"] - 1
+			if idx >= len(versionStatuses) {
+				idx = len(versionStatuses) - 1
+			}
+			w.WriteHeader(versionStatuses[idx])
+			fmt.Fprint(w, versionBodies[idx])
+		default:
+			t.Fatalf("unexpected path: %s", r.URL.EscapedPath())
+		}
+	}))
+	defer server.Close()
+
+	dm := newDockerManagerForVersionTest(server)
+
+	stats, err := dm.getDockerStats(defaultCacheTimeMs)
+	require.NoError(t, err)
+	assert.Empty(t, stats)
+	assert.False(t, dm.dockerVersionChecked)
+	assert.False(t, dm.goodDockerVersion)
+	assert.Equal(t, 1, requestCounts["/version"])
+
+	stats, err = dm.getDockerStats(defaultCacheTimeMs)
+	require.NoError(t, err)
+	assert.Empty(t, stats)
+	assert.True(t, dm.dockerVersionChecked)
+	assert.True(t, dm.goodDockerVersion)
+	assert.Equal(t, 2, requestCounts["/containers/json"])
+	assert.Equal(t, 2, requestCounts["/version"])
+
+	stats, err = dm.getDockerStats(defaultCacheTimeMs)
+	require.NoError(t, err)
+	assert.Empty(t, stats)
+	assert.Equal(t, 3, requestCounts["/containers/json"])
+	assert.Equal(t, 2, requestCounts["/version"])
+}
+
+// A failed decode must not break later decodes. Previously the reused json.Decoder
+// stayed desynced after one truncated response, breaking decode until restart.
+func TestDecodeRecoversFromError(t *testing.T) {
+	dm := &dockerManager{}
+
+	// truncated JSON: body reads fine, decode fails
+	var bad []container.ApiInfo
+	err := dm.decode(&http.Response{Body: io.NopCloser(strings.NewReader(`[{"Id":"abc`))}, &bad)
+	require.Error(t, err)
+
+	// the next decode must still succeed
+	var good []container.ApiInfo
+	err = dm.decode(&http.Response{Body: io.NopCloser(strings.NewReader(`[{"Id":"abcdef012345","Names":["/ok"]}]`))}, &good)
+	require.NoError(t, err)
+	require.Len(t, good, 1)
+	assert.Equal(t, "abcdef012345", good[0].Id)
 }
 
 func TestCycleCpuDeltas(t *testing.T) {
@@ -449,6 +895,7 @@ func TestDockerStatsWithMockData(t *testing.T) {
 		lastCpuReadTime:     make(map[uint16]map[string]time.Time),
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 		containerStatsMap:   make(map[string]*container.Stats),
 	}
 
@@ -527,8 +974,10 @@ func TestContainerStatsInitialization(t *testing.T) {
 
 	assert.Equal(t, 45.67, stats.Cpu)
 	assert.Equal(t, 2.0, stats.Mem)
-	assert.Equal(t, 1.0, stats.NetworkSent)
-	assert.Equal(t, 0.5, stats.NetworkRecv)
+	assert.Equal(t, [2]uint64{1048576, 524288}, stats.Bandwidth)
+	// Deprecated fields still populated for backward compatibility with older hubs
+	assert.Equal(t, 1.0, stats.NetworkSent) // 1048576 bytes = 1 MB
+	assert.Equal(t, 0.5, stats.NetworkRecv) // 524288 bytes = 0.5 MB
 	assert.Equal(t, testTime, stats.PrevReadTime)
 }
 
@@ -574,6 +1023,200 @@ func TestCpuPercentageCalculationWithRealData(t *testing.T) {
 	assert.InDelta(t, expectedPct, actualPct, 0.01)
 }
 
+func TestCpuPercentageHandlesCounterRollback(t *testing.T) {
+	// If a stats response is processed after a newer one for the same container,
+	// or an accounting counter resets, the current total can be lower than the
+	// stored previous value. Unsigned subtraction wraps to ~2^64 instead of
+	// going negative, so the percentage explodes, validateCpuPercentage rejects
+	// the sample, and the whole collection is discarded - network stats too.
+	stats := &container.ApiStats{
+		CPUStats: container.CPUStats{
+			CPUUsage:    container.CPUUsage{TotalUsage: 1_000_000},
+			SystemUsage: 20_000_000,
+		},
+	}
+
+	// Container counter went backwards.
+	assert.Equal(t, 0.0, stats.CalculateCpuPercentLinux(2_000_000, 10_000_000))
+	// System counter went backwards.
+	assert.Equal(t, 0.0, stats.CalculateCpuPercentLinux(500_000, 30_000_000))
+	// A normal forward sample is unaffected: 500000 / 10000000 * 100 = 5%.
+	assert.InDelta(t, 5.0, stats.CalculateCpuPercentLinux(500_000, 10_000_000), 0.001)
+}
+
+func TestCpuPercentageWindowsHandlesCounterRollback(t *testing.T) {
+	now := time.Now()
+	stats := &container.ApiStats{
+		Read:     now,
+		NumProcs: 4,
+		CPUStats: container.CPUStats{
+			CPUUsage: container.CPUUsage{TotalUsage: 1_000_000},
+		},
+	}
+	prevRead := now.Add(-time.Second)
+
+	// Container counter went backwards.
+	assert.Equal(t, 0.0, stats.CalculateCpuPercentWindows(2_000_000, prevRead))
+	// A normal forward sample is unaffected.
+	assert.Greater(t, stats.CalculateCpuPercentWindows(500_000, prevRead), 0.0)
+}
+
+func TestCalculateCpuPercentPodman(t *testing.T) {
+	baseTime := time.Date(2026, 3, 15, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name             string
+		prevCpuContainer uint64
+		prevRead         time.Time
+		currentUsage     uint64
+		currentRead      time.Time
+		onlineCPUs       uint32
+		expectedPct      float64
+	}{
+		{
+			name: "normal calculation",
+			// container used 2ms of CPU over 1s with 2 CPUs → 0.1%
+			prevCpuContainer: 1_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     1_002_000_000, // +2ms CPU time
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       2,
+			expectedPct:      0.1, // 2e6 / (1e9 * 2) * 100
+		},
+		{
+			name:             "first run returns zero",
+			prevCpuContainer: 0,
+			prevRead:         baseTime,
+			currentUsage:     5_000_000,
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       4,
+			expectedPct:      0.0,
+		},
+		{
+			name:             "zero online cpus returns zero",
+			prevCpuContainer: 1_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     1_010_000_000,
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       0,
+			expectedPct:      0.0,
+		},
+		{
+			name:             "same read time returns zero",
+			prevCpuContainer: 1_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     1_010_000_000,
+			currentRead:      baseTime, // no elapsed time
+			onlineCPUs:       2,
+			expectedPct:      0.0,
+		},
+		{
+			name:             "counter rollback returns zero",
+			prevCpuContainer: 2_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     1_000_000_000,
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       2,
+			expectedPct:      0.0,
+		},
+		{
+			name: "100% single cpu",
+			// container consumed a full CPU-second over 1s on a 1-CPU host → 100%
+			prevCpuContainer: 1_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     2_000_000_000, // +1s CPU time
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       1,
+			expectedPct:      100.0, // 1e9 / (1e9 * 1) * 100
+		},
+		{
+			name: "high utilization on multi-cpu host",
+			// container used 800ms on a 4-CPU host over 1s → 20%
+			prevCpuContainer: 10_000_000_000,
+			prevRead:         baseTime,
+			currentUsage:     10_800_000_000,
+			currentRead:      baseTime.Add(time.Second),
+			onlineCPUs:       4,
+			expectedPct:      20.0, // 800e6 / (1e9 * 4) * 100
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &container.ApiStats{
+				Read: tt.currentRead,
+				CPUStats: container.CPUStats{
+					CPUUsage:   container.CPUUsage{TotalUsage: tt.currentUsage},
+					OnlineCPUs: tt.onlineCPUs,
+				},
+			}
+			got := s.CalculateCpuPercentPodman(tt.prevCpuContainer, tt.prevRead)
+			assert.InDelta(t, tt.expectedPct, got, 0.001, "test %q", tt.name)
+		})
+	}
+}
+
+func TestUpdateContainerStatsPodmanCpuCalculation(t *testing.T) {
+	// Verify that Podman containers use the time-based CPU calculation
+	// when online_cpus is provided in the stats response.
+	// container used 20ms CPU over 1s with 2 CPUs → 1%
+	prevReadTime := time.Date(2026, 3, 15, 21, 26, 58, 0, time.UTC) // 1 second before stats read
+	const prevCpuUsage = uint64(5_000_000_000)
+
+	dm := &dockerManager{
+		client: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			switch req.URL.EscapedPath() {
+			case "/containers/0123456789ab/stats":
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Header:     make(http.Header),
+					Body: io.NopCloser(strings.NewReader(`{
+						"read":"2026-03-15T21:26:59Z",
+						"cpu_stats":{"cpu_usage":{"total_usage":5020000000},"system_cpu_usage":9999999,"online_cpus":2},
+						"memory_stats":{"usage":1048576,"stats":{"inactive_file":262144}},
+						"networks":{"eth0":{"rx_bytes":0,"tx_bytes":0}}
+					}`)),
+					Request: req,
+				}, nil
+			default:
+				return nil, fmt.Errorf("unexpected path: %s", req.URL.EscapedPath())
+			}
+		})},
+		containerStatsMap: make(map[string]*container.Stats),
+		apiStats:          &container.ApiStats{},
+		usingPodman:       true,
+		lastCpuContainer: map[uint16]map[string]uint64{
+			defaultCacheTimeMs: {"0123456789ab": prevCpuUsage},
+		},
+		lastCpuSystem: map[uint16]map[string]uint64{
+			defaultCacheTimeMs: {"0123456789ab": 1}, // intentionally tiny — should NOT be used
+		},
+		lastCpuReadTime: map[uint16]map[string]time.Time{
+			defaultCacheTimeMs: {"0123456789ab": prevReadTime},
+		},
+		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
+	}
+
+	ctr := &container.ApiInfo{
+		IdShort: "0123456789ab",
+		Names:   []string{"/myapp"},
+		Status:  "Up 5 minutes",
+		Image:   "myapp:latest",
+	}
+
+	err := dm.updateContainerStats(ctr, defaultCacheTimeMs)
+	require.NoError(t, err)
+
+	// cpu delta = 5020000000 - 5000000000 = 20000000 ns (20ms)
+	// elapsed = 1s = 1000000000 ns, online_cpus = 2
+	// expected = 20000000 / (1000000000 * 2) * 100 = 1.0%
+	expectedCpu := 1.0
+	assert.InDelta(t, expectedCpu, dm.containerStatsMap[ctr.IdShort].Cpu, 0.01)
+}
+
 func TestNetworkStatsCalculationWithRealData(t *testing.T) {
 	// Create synthetic test data to avoid timing issues
 	apiStats1 := &container.ApiStats{
@@ -592,23 +1235,22 @@ func TestNetworkStatsCalculationWithRealData(t *testing.T) {
 	dm := &dockerManager{
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 	}
 
 	ctr := &container.ApiInfo{IdShort: "test-container"}
 	cacheTimeMs := uint16(30000) // Test with 30 second cache
 
-	// Use exact timing for deterministic results
-	exactly1000msAgo := time.Now().Add(-1000 * time.Millisecond)
-	stats := &container.Stats{
-		PrevReadTime: exactly1000msAgo,
-	}
-
-	// First call sets baseline
-	sent1, recv1 := dm.calculateNetworkStats(ctr, apiStats1, stats, true, "test", cacheTimeMs)
+	// First call sets baseline (no previous read time, so rates should be 0)
+	sent1, recv1 := dm.calculateNetworkStats(ctr, apiStats1, "test", cacheTimeMs)
 	assert.Equal(t, uint64(0), sent1)
 	assert.Equal(t, uint64(0), recv1)
 
-	// Cycle to establish baseline for this cache time
+	// Record read time and cycle to establish baseline for this cache time
+	exactly1000msAgo := time.Now().Add(-1000 * time.Millisecond)
+	dm.lastNetworkReadTime[cacheTimeMs] = map[string]time.Time{
+		"test-container": exactly1000msAgo,
+	}
 	dm.cycleNetworkDeltasForCacheTime(cacheTimeMs)
 
 	// Calculate expected results precisely
@@ -619,7 +1261,7 @@ func TestNetworkStatsCalculationWithRealData(t *testing.T) {
 	expectedRecvRate := deltaRecv * 1000 / expectedElapsedMs // Should be exactly 1000000
 
 	// Second call with changed data
-	sent2, recv2 := dm.calculateNetworkStats(ctr, apiStats2, stats, true, "test", cacheTimeMs)
+	sent2, recv2 := dm.calculateNetworkStats(ctr, apiStats2, "test", cacheTimeMs)
 
 	// Should be exactly the expected rates (no tolerance needed)
 	assert.Equal(t, expectedSentRate, sent2)
@@ -627,12 +1269,13 @@ func TestNetworkStatsCalculationWithRealData(t *testing.T) {
 
 	// Bad speed cap: set absurd delta over 1ms and expect 0 due to cap
 	dm.cycleNetworkDeltasForCacheTime(cacheTimeMs)
-	stats.PrevReadTime = time.Now().Add(-1 * time.Millisecond)
+	dm.lastNetworkReadTime[cacheTimeMs]["test-container"] = time.Now().Add(-1 * time.Millisecond)
 	apiStats1.Networks["eth0"] = container.NetworkStats{TxBytes: 0, RxBytes: 0}
 	apiStats2.Networks["eth0"] = container.NetworkStats{TxBytes: 10 * 1024 * 1024 * 1024, RxBytes: 0} // 10GB delta
-	_, _ = dm.calculateNetworkStats(ctr, apiStats1, stats, true, "test", cacheTimeMs)                 // baseline
+	_, _ = dm.calculateNetworkStats(ctr, apiStats1, "test", cacheTimeMs)                              // baseline
 	dm.cycleNetworkDeltasForCacheTime(cacheTimeMs)
-	sent3, recv3 := dm.calculateNetworkStats(ctr, apiStats2, stats, true, "test", cacheTimeMs)
+	dm.lastNetworkReadTime[cacheTimeMs]["test-container"] = time.Now().Add(-1 * time.Millisecond)
+	sent3, recv3 := dm.calculateNetworkStats(ctr, apiStats2, "test", cacheTimeMs)
 	assert.Equal(t, uint64(0), sent3)
 	assert.Equal(t, uint64(0), recv3)
 }
@@ -653,6 +1296,7 @@ func TestContainerStatsEndToEndWithRealData(t *testing.T) {
 		lastCpuReadTime:     make(map[uint16]map[string]time.Time),
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 		containerStatsMap:   make(map[string]*container.Stats),
 	}
 
@@ -688,10 +1332,48 @@ func TestContainerStatsEndToEndWithRealData(t *testing.T) {
 	updateContainerStatsValues(testStats, cpuPct, usedMemory, 1000000, 500000, testTime)
 
 	assert.Equal(t, cpuPct, testStats.Cpu)
-	assert.Equal(t, bytesToMegabytes(float64(usedMemory)), testStats.Mem)
-	assert.Equal(t, bytesToMegabytes(1000000), testStats.NetworkSent)
-	assert.Equal(t, bytesToMegabytes(500000), testStats.NetworkRecv)
+	assert.Equal(t, utils.BytesToMegabytes(float64(usedMemory)), testStats.Mem)
+	assert.Equal(t, [2]uint64{1000000, 500000}, testStats.Bandwidth)
+	// Deprecated fields still populated for backward compatibility with older hubs
+	assert.Equal(t, utils.BytesToMegabytes(1000000), testStats.NetworkSent)
+	assert.Equal(t, utils.BytesToMegabytes(500000), testStats.NetworkRecv)
 	assert.Equal(t, testTime, testStats.PrevReadTime)
+}
+
+func TestGetLogsDetectsMultiplexedWithoutContentType(t *testing.T) {
+	// Docker multiplexed frame: [stream][0,0,0][len(4 bytes BE)][payload]
+	frame := []byte{
+		0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+		'H', 'e', 'l', 'l', 'o',
+	}
+	rt := &recordingRoundTripper{
+		statusCode: 200,
+		body:       string(frame),
+		// Intentionally omit content type to simulate Podman behavior.
+	}
+	dm := &dockerManager{
+		client: &http.Client{Transport: rt},
+	}
+
+	logs, err := dm.getLogs(context.Background(), "abcdef123456")
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", logs)
+}
+
+func TestGetLogsDoesNotMisclassifyRawStreamAsMultiplexed(t *testing.T) {
+	// Starts with 0x01, but doesn't match Docker frame signature (reserved bytes aren't all zero).
+	raw := []byte{0x01, 0x02, 0x03, 0x04, 'r', 'a', 'w'}
+	rt := &recordingRoundTripper{
+		statusCode: 200,
+		body:       string(raw),
+	}
+	dm := &dockerManager{
+		client: &http.Client{Transport: rt},
+	}
+
+	logs, err := dm.getLogs(context.Background(), "abcdef123456")
+	require.NoError(t, err)
+	assert.Equal(t, raw, []byte(logs))
 }
 
 func TestEdgeCasesWithRealData(t *testing.T) {
@@ -736,6 +1418,7 @@ func TestDockerStatsWorkflow(t *testing.T) {
 		lastCpuSystem:       make(map[uint16]map[string]uint64),
 		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
 		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
 		containerStatsMap:   make(map[string]*container.Stats),
 	}
 
@@ -800,6 +1483,24 @@ func TestNetworkRateCalculationFormula(t *testing.T) {
 				tc.deltaBytes, tc.elapsedMs, tc.expectedRate)
 		})
 	}
+}
+
+func TestGetHostInfo(t *testing.T) {
+	data, err := os.ReadFile("test-data/system_info.json")
+	require.NoError(t, err)
+
+	var info container.HostInfo
+	err = json.Unmarshal(data, &info)
+	require.NoError(t, err)
+
+	assert.Equal(t, "6.8.0-31-generic", info.KernelVersion)
+	assert.Equal(t, "Ubuntu 24.04 LTS", info.OperatingSystem)
+	// assert.Equal(t, "24.04", info.OSVersion)
+	// assert.Equal(t, "linux", info.OSType)
+	// assert.Equal(t, "x86_64", info.Architecture)
+	assert.EqualValues(t, 4, info.NCPU)
+	assert.EqualValues(t, 2095882240, info.MemTotal)
+	// assert.Equal(t, "27.0.1", info.ServerVersion)
 }
 
 func TestDeltaTrackerCacheTimeIsolation(t *testing.T) {
@@ -897,6 +1598,18 @@ func TestParseDockerStatus(t *testing.T) {
 			expectedStatus: "",
 			expectedHealth: container.DockerHealthNone,
 		},
+		{
+			name:           "status health with health: prefix",
+			input:          "Up 5 minutes (health: starting)",
+			expectedStatus: "Up 5 minutes",
+			expectedHealth: container.DockerHealthStarting,
+		},
+		{
+			name:           "status health with health status: prefix",
+			input:          "Up 10 minutes (health status: unhealthy)",
+			expectedStatus: "Up 10 minutes",
+			expectedHealth: container.DockerHealthUnhealthy,
+		},
 	}
 
 	for _, tt := range tests {
@@ -908,6 +1621,85 @@ func TestParseDockerStatus(t *testing.T) {
 	}
 }
 
+func TestParseDockerHealthStatus(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedHealth container.DockerHealth
+		expectedOk     bool
+	}{
+		{"healthy", container.DockerHealthHealthy, true},
+		{"unhealthy", container.DockerHealthUnhealthy, true},
+		{"starting", container.DockerHealthStarting, true},
+		{"none", container.DockerHealthNone, true},
+		{" Healthy ", container.DockerHealthHealthy, true},
+		{"unknown", container.DockerHealthNone, false},
+		{"", container.DockerHealthNone, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			health, ok := parseDockerHealthStatus(tt.input)
+			assert.Equal(t, tt.expectedHealth, health)
+			assert.Equal(t, tt.expectedOk, ok)
+		})
+	}
+}
+
+func TestUpdateContainerStatsUsesPodmanInspectHealthFallback(t *testing.T) {
+	var requestedPaths []string
+	dm := &dockerManager{
+		client: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			requestedPaths = append(requestedPaths, req.URL.EscapedPath())
+			switch req.URL.EscapedPath() {
+			case "/containers/0123456789ab/stats":
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Header:     make(http.Header),
+					Body: io.NopCloser(strings.NewReader(`{
+						"read":"2026-03-15T21:26:59Z",
+						"cpu_stats":{"cpu_usage":{"total_usage":1000},"system_cpu_usage":2000},
+						"memory_stats":{"usage":1048576,"stats":{"inactive_file":262144}},
+						"networks":{"eth0":{"rx_bytes":0,"tx_bytes":0}}
+					}`)),
+					Request: req,
+				}, nil
+			case "/containers/0123456789ab/json":
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Header:     make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{"State":{"Health":{"Status":"healthy"}}}`)),
+					Request:    req,
+				}, nil
+			default:
+				return nil, fmt.Errorf("unexpected path: %s", req.URL.EscapedPath())
+			}
+		})},
+		containerStatsMap:   make(map[string]*container.Stats),
+		apiStats:            &container.ApiStats{},
+		usingPodman:         true,
+		lastCpuContainer:    make(map[uint16]map[string]uint64),
+		lastCpuSystem:       make(map[uint16]map[string]uint64),
+		lastCpuReadTime:     make(map[uint16]map[string]time.Time),
+		networkSentTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		networkRecvTrackers: make(map[uint16]*deltatracker.DeltaTracker[string, uint64]),
+		lastNetworkReadTime: make(map[uint16]map[string]time.Time),
+	}
+
+	ctr := &container.ApiInfo{
+		IdShort: "0123456789ab",
+		Names:   []string{"/beszel"},
+		Status:  "Up 2 minutes",
+		Image:   "beszel:latest",
+	}
+
+	err := dm.updateContainerStats(ctr, defaultCacheTimeMs)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"/containers/0123456789ab/stats", "/containers/0123456789ab/json"}, requestedPaths)
+	assert.Equal(t, container.DockerHealthHealthy, dm.containerStatsMap[ctr.IdShort].Health)
+	assert.Equal(t, "Up 2 minutes", dm.containerStatsMap[ctr.IdShort].Status)
+}
+
 func TestConstantsAndUtilityFunctions(t *testing.T) {
 	// Test constants are properly defined
 	assert.Equal(t, uint16(60000), defaultCacheTimeMs)
@@ -917,13 +1709,13 @@ func TestConstantsAndUtilityFunctions(t *testing.T) {
 	assert.Equal(t, 5*1024*1024, maxTotalLogSize)               // 5MB
 
 	// Test utility functions
-	assert.Equal(t, 1.5, twoDecimals(1.499))
-	assert.Equal(t, 1.5, twoDecimals(1.5))
-	assert.Equal(t, 1.5, twoDecimals(1.501))
+	assert.Equal(t, 1.5, utils.TwoDecimals(1.499))
+	assert.Equal(t, 1.5, utils.TwoDecimals(1.5))
+	assert.Equal(t, 1.5, utils.TwoDecimals(1.501))
 
-	assert.Equal(t, 1.0, bytesToMegabytes(1048576)) // 1 MB
-	assert.Equal(t, 0.5, bytesToMegabytes(524288))  // 512 KB
-	assert.Equal(t, 0.0, bytesToMegabytes(0))
+	assert.Equal(t, 1.0, utils.BytesToMegabytes(1048576)) // 1 MB
+	assert.Equal(t, 0.5, utils.BytesToMegabytes(524288))  // 512 KB
+	assert.Equal(t, 0.0, utils.BytesToMegabytes(0))
 }
 
 func TestDecodeDockerLogStream(t *testing.T) {
@@ -932,6 +1724,7 @@ func TestDecodeDockerLogStream(t *testing.T) {
 		input       []byte
 		expected    string
 		expectError bool
+		multiplexed bool
 	}{
 		{
 			name: "simple log entry",
@@ -942,6 +1735,7 @@ func TestDecodeDockerLogStream(t *testing.T) {
 			},
 			expected:    "Hello World",
 			expectError: false,
+			multiplexed: true,
 		},
 		{
 			name: "multiple frames",
@@ -955,6 +1749,7 @@ func TestDecodeDockerLogStream(t *testing.T) {
 			},
 			expected:    "HelloWorld",
 			expectError: false,
+			multiplexed: true,
 		},
 		{
 			name: "zero length frame",
@@ -967,12 +1762,20 @@ func TestDecodeDockerLogStream(t *testing.T) {
 			},
 			expected:    "Hello",
 			expectError: false,
+			multiplexed: true,
 		},
 		{
 			name:        "empty input",
 			input:       []byte{},
 			expected:    "",
 			expectError: false,
+			multiplexed: true,
+		},
+		{
+			name:        "raw stream (not multiplexed)",
+			input:       []byte("raw log content"),
+			expected:    "raw log content",
+			multiplexed: false,
 		},
 	}
 
@@ -980,7 +1783,7 @@ func TestDecodeDockerLogStream(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := bytes.NewReader(tt.input)
 			var builder strings.Builder
-			err := decodeDockerLogStream(reader, &builder)
+			err := decodeDockerLogStream(reader, &builder, tt.multiplexed)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1004,7 +1807,7 @@ func TestDecodeDockerLogStreamMemoryProtection(t *testing.T) {
 
 		reader := bytes.NewReader(input)
 		var builder strings.Builder
-		err := decodeDockerLogStream(reader, &builder)
+		err := decodeDockerLogStream(reader, &builder, true)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "log frame size")
@@ -1038,7 +1841,7 @@ func TestDecodeDockerLogStreamMemoryProtection(t *testing.T) {
 
 		reader := bytes.NewReader(input)
 		var builder strings.Builder
-		err := decodeDockerLogStream(reader, &builder)
+		err := decodeDockerLogStream(reader, &builder, true)
 
 		// Should complete without error (graceful truncation)
 		assert.NoError(t, err)
@@ -1209,6 +2012,126 @@ func TestAnsiEscapePattern(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := ansiEscapePattern.ReplaceAllString(tt.input, "")
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestConvertContainerPortsToString(t *testing.T) {
+	type port = struct {
+		PublicPort uint16
+		IP         string
+	}
+	tests := []struct {
+		name     string
+		ports    []port
+		expected string
+	}{
+		{
+			name:     "empty ports",
+			ports:    nil,
+			expected: "",
+		},
+		{
+			name: "single port",
+			ports: []port{
+				{PublicPort: 80, IP: "0.0.0.0"},
+			},
+			expected: "80",
+		},
+		{
+			name: "single port with non-default IP",
+			ports: []port{
+				{PublicPort: 80, IP: "1.2.3.4"},
+			},
+			expected: "1.2.3.4:80",
+		},
+		{
+			name: "ipv6 default ip",
+			ports: []port{
+				{PublicPort: 80, IP: "::"},
+			},
+			expected: "80",
+		},
+		{
+			name: "zero PublicPort is skipped",
+			ports: []port{
+				{PublicPort: 0, IP: "0.0.0.0"},
+				{PublicPort: 80, IP: "0.0.0.0"},
+			},
+			expected: "80",
+		},
+		{
+			name: "ports sorted ascending by PublicPort",
+			ports: []port{
+				{PublicPort: 443, IP: "0.0.0.0"},
+				{PublicPort: 80, IP: "0.0.0.0"},
+				{PublicPort: 8080, IP: "0.0.0.0"},
+			},
+			expected: "80, 443, 8080",
+		},
+		{
+			name: "duplicates are deduplicated",
+			ports: []port{
+				{PublicPort: 80, IP: "0.0.0.0"},
+				{PublicPort: 80, IP: "0.0.0.0"},
+				{PublicPort: 443, IP: "0.0.0.0"},
+			},
+			expected: "80, 443",
+		},
+		{
+			name: "ipv4 and ipv6 wildcard bindings are deduplicated",
+			ports: []port{
+				{PublicPort: 80, IP: "0.0.0.0"},
+				{PublicPort: 80, IP: "::"},
+			},
+			expected: "80",
+		},
+		{
+			name: "multiple ports with different IPs",
+			ports: []port{
+				{PublicPort: 80, IP: "0.0.0.0"},
+				{PublicPort: 443, IP: "1.2.3.4"},
+			},
+			expected: "80, 1.2.3.4:443",
+		},
+		{
+			name: "same port bound to multiple IPs shows all entries",
+			ports: []port{
+				{PublicPort: 65533, IP: "172.16.151.72"},
+				{PublicPort: 65533, IP: "172.16.156.25"},
+			},
+			expected: "172.16.151.72:65533, 172.16.156.25:65533",
+		},
+		{
+			name: "same port bound to IPv4 and IPv6",
+			ports: []port{
+				{PublicPort: 65534, IP: "172.16.151.72"},
+				{PublicPort: 65534, IP: "fd04:38e2:98c6:3fd::72"},
+			},
+			expected: "172.16.151.72:65534, fd04:38e2:98c6:3fd::72:65534",
+		},
+		{
+			name: "ports slice is nilled after call",
+			ports: []port{
+				{PublicPort: 8080, IP: "0.0.0.0"},
+			},
+			expected: "8080",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctr := &container.ApiInfo{}
+			for _, p := range tt.ports {
+				ctr.Ports = append(ctr.Ports, struct {
+					PublicPort uint16
+					IP         string
+				}{PublicPort: p.PublicPort, IP: p.IP})
+			}
+			result := convertContainerPortsToString(ctr)
+			assert.Equal(t, tt.expected, result)
+			// Ports slice must be cleared to prevent bleed-over into the next response
+			assert.Nil(t, ctr.Ports, "ctr.Ports should be nil after formatContainerPorts")
 		})
 	}
 }

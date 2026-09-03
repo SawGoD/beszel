@@ -1,10 +1,10 @@
 //go:build testing
-// +build testing
 
 package expirymap
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -175,6 +175,33 @@ func TestExpiryMap_GenericTypes(t *testing.T) {
 		assert.True(t, ok)
 		require.NotNil(t, value)
 		assert.Equal(t, "hello", *value)
+	})
+}
+
+func TestExpiryMap_UpdateExpiration(t *testing.T) {
+	em := New[string](time.Hour)
+
+	// Set a value with short TTL
+	em.Set("key1", "value1", time.Millisecond*50)
+
+	// Verify it exists
+	assert.True(t, em.Has("key1"))
+
+	// Update expiration to a longer TTL
+	em.UpdateExpiration("key1", time.Hour)
+
+	// Wait for the original TTL to pass
+	time.Sleep(time.Millisecond * 100)
+
+	// Should still exist because expiration was updated
+	assert.True(t, em.Has("key1"))
+	value, ok := em.GetOk("key1")
+	assert.True(t, ok)
+	assert.Equal(t, "value1", value)
+
+	// Try updating non-existent key (should not panic)
+	assert.NotPanics(t, func() {
+		em.UpdateExpiration("nonexistent", time.Hour)
 	})
 }
 
@@ -415,7 +442,11 @@ func TestExpiryMap_RemoveValue_WithExpiration(t *testing.T) {
 	// Wait for first value to expire
 	time.Sleep(time.Millisecond * 20)
 
-	// Try to remove the expired value - should remove one of the "value1" entries
+	// Trigger lazy cleanup of the expired key
+	_, ok := em.GetOk("key1")
+	assert.False(t, ok)
+
+	// Try to remove the remaining "value1" entry (key3)
 	removedValue, ok := em.RemovebyValue("value1")
 	assert.True(t, ok)
 	assert.Equal(t, "value1", removedValue)
@@ -423,14 +454,9 @@ func TestExpiryMap_RemoveValue_WithExpiration(t *testing.T) {
 	// Should still have key2 (different value)
 	assert.True(t, em.Has("key2"))
 
-	// Should have removed one of the "value1" entries (either key1 or key3)
-	// But we can't predict which one due to map iteration order
-	key1Exists := em.Has("key1")
-	key3Exists := em.Has("key3")
-
-	// Exactly one of key1 or key3 should be gone
-	assert.False(t, key1Exists && key3Exists) // Both shouldn't exist
-	assert.True(t, key1Exists || key3Exists)  // At least one should still exist
+	// key1 should be gone due to expiration and key3 should be removed by value.
+	assert.False(t, em.Has("key1"))
+	assert.False(t, em.Has("key3"))
 }
 
 func TestExpiryMap_ValueOperations_Integration(t *testing.T) {
@@ -474,4 +500,53 @@ func TestExpiryMap_ValueOperations_Integration(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "unique", value)
 	assert.Equal(t, "key2", key)
+}
+
+func TestExpiryMap_Cleaner(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		em := New[string](time.Second)
+		defer em.StopCleaner()
+
+		em.Set("test", "value", 500*time.Millisecond)
+
+		// Wait 600ms, value is expired but cleaner hasn't run yet (interval is 1s)
+		time.Sleep(600 * time.Millisecond)
+		synctest.Wait()
+
+		// Map should still hold the value in its internal store before lazy access or cleaner
+		assert.Equal(t, 1, len(em.store.GetAll()), "store should still have 1 item before cleaner runs")
+
+		// Wait another 500ms so cleaner (1s interval) runs
+		time.Sleep(500 * time.Millisecond)
+		synctest.Wait() // Wait for background goroutine to process the tick
+
+		assert.Equal(t, 0, len(em.store.GetAll()), "store should be empty after cleaner runs")
+	})
+}
+
+func TestExpiryMap_StopCleaner(t *testing.T) {
+	em := New[string](time.Hour)
+
+	// Initially, stopChan is open, reading would block
+	select {
+	case <-em.stopChan:
+		t.Fatal("stopChan should be open initially")
+	default:
+		// success
+	}
+
+	em.StopCleaner()
+
+	// After StopCleaner, stopChan is closed, reading returns immediately
+	select {
+	case <-em.stopChan:
+		// success
+	default:
+		t.Fatal("stopChan was not closed by StopCleaner")
+	}
+
+	// Calling StopCleaner again should NOT panic thanks to sync.Once
+	assert.NotPanics(t, func() {
+		em.StopCleaner()
+	})
 }

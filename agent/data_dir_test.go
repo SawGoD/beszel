@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package agent
 
@@ -13,11 +12,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func invalidDataDir(t *testing.T) string {
+	t.Helper()
+
+	filePath := filepath.Join(t.TempDir(), "file")
+	require.NoError(t, os.WriteFile(filePath, nil, 0644))
+	return filepath.Join(filePath, "data")
+}
+
 func TestGetDataDir(t *testing.T) {
 	// Test with explicit dataDir parameter
 	t.Run("explicit data dir", func(t *testing.T) {
 		tempDir := t.TempDir()
-		result, err := getDataDir(tempDir)
+		result, err := GetDataDir(tempDir)
 		require.NoError(t, err)
 		assert.Equal(t, tempDir, result)
 	})
@@ -26,7 +33,7 @@ func TestGetDataDir(t *testing.T) {
 	t.Run("explicit data dir - create new", func(t *testing.T) {
 		tempDir := t.TempDir()
 		newDir := filepath.Join(tempDir, "new-data-dir")
-		result, err := getDataDir(newDir)
+		result, err := GetDataDir(newDir)
 		require.NoError(t, err)
 		assert.Equal(t, newDir, result)
 
@@ -40,46 +47,25 @@ func TestGetDataDir(t *testing.T) {
 	t.Run("DATA_DIR environment variable", func(t *testing.T) {
 		tempDir := t.TempDir()
 
-		// Set environment variable
-		oldValue := os.Getenv("DATA_DIR")
-		defer func() {
-			if oldValue == "" {
-				os.Unsetenv("BESZEL_AGENT_DATA_DIR")
-			} else {
-				os.Setenv("BESZEL_AGENT_DATA_DIR", oldValue)
-			}
-		}()
+		t.Setenv("BESZEL_AGENT_DATA_DIR", tempDir)
 
-		os.Setenv("BESZEL_AGENT_DATA_DIR", tempDir)
-
-		result, err := getDataDir()
+		result, err := GetDataDir()
 		require.NoError(t, err)
 		assert.Equal(t, tempDir, result)
 	})
 
 	// Test with invalid explicit dataDir
 	t.Run("invalid explicit data dir", func(t *testing.T) {
-		invalidPath := "/invalid/path/that/cannot/be/created"
-		_, err := getDataDir(invalidPath)
+		invalidPath := invalidDataDir(t)
+		_, err := GetDataDir(invalidPath)
 		assert.Error(t, err)
 	})
 
 	// Test fallback behavior (empty dataDir, no env var)
 	t.Run("fallback to default directories", func(t *testing.T) {
-		// Clear DATA_DIR environment variable
-		oldValue := os.Getenv("DATA_DIR")
-		defer func() {
-			if oldValue == "" {
-				os.Unsetenv("DATA_DIR")
-			} else {
-				os.Setenv("DATA_DIR", oldValue)
-			}
-		}()
-		os.Unsetenv("DATA_DIR")
-
 		// This will try platform-specific defaults, which may or may not work
 		// We're mainly testing that it doesn't panic and returns some result
-		result, err := getDataDir()
+		result, err := GetDataDir()
 		// We don't assert success/failure here since it depends on system permissions
 		// Just verify we get a string result if no error
 		if err == nil {
@@ -100,7 +86,7 @@ func TestTestDataDirs(t *testing.T) {
 	// Test with multiple directories, first one valid
 	t.Run("multiple dirs - first valid", func(t *testing.T) {
 		tempDir := t.TempDir()
-		invalidDir := "/invalid/path"
+		invalidDir := invalidDataDir(t)
 		result, err := testDataDirs([]string{tempDir, invalidDir})
 		require.NoError(t, err)
 		assert.Equal(t, tempDir, result)
@@ -109,7 +95,7 @@ func TestTestDataDirs(t *testing.T) {
 	// Test with multiple directories, second one valid
 	t.Run("multiple dirs - second valid", func(t *testing.T) {
 		tempDir := t.TempDir()
-		invalidDir := "/invalid/path"
+		invalidDir := invalidDataDir(t)
 		result, err := testDataDirs([]string{invalidDir, tempDir})
 		require.NoError(t, err)
 		assert.Equal(t, tempDir, result)
@@ -131,7 +117,7 @@ func TestTestDataDirs(t *testing.T) {
 
 	// Test with no valid directories
 	t.Run("no valid directories", func(t *testing.T) {
-		invalidPaths := []string{"/invalid/path1", "/invalid/path2"}
+		invalidPaths := []string{invalidDataDir(t), invalidDataDir(t)}
 		_, err := testDataDirs(invalidPaths)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "data directory not found")

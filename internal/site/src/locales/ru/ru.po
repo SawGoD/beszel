@@ -8,7 +8,7 @@ msgstr ""
 "Language: ru\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-12-01 23:32\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Russian\n"
 "Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} доступно"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "Выбрано {0} из {1} строк."
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# ядро} few {# ядра} many {# ядер} other {# ядер}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} час} other {{countString} часо
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} минута} few {{countString} минут} many {{countString} минут} other {{countString} минуты}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "Ввод-вывод {diskName}"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# поток} few {# потока} many {# потоков} other {# потоков}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "1 час"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "1 мин"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "12 часов"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "15 мин"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "30 дней"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "5 мин"
 
@@ -79,12 +97,14 @@ msgstr "5 мин"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "Действия"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "Активно"
@@ -97,39 +117,14 @@ msgstr "Активные оповещения"
 msgid "Active state"
 msgstr "Активное состояние"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
 msgstr "Добавить {foo}"
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "Добавить <0>Систему</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr "Добавьте хостинг-провайдера или сервис для ваших серверов."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr "Добавить платёж"
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr "Добавить провайдера"
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "Добавить систему"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -145,12 +140,17 @@ msgstr "Настроить ширину основного макета"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "Администратор"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "После"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "После установки переменных окружения перезапустите хаб Beszel, чтобы изменения вступили в силу."
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "Оповещения"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
 msgstr "Все контейнеры"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr "Все запланированные платежи, отсортированные по дате"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,87 +184,84 @@ msgstr "Все запланированные платежи, отсортиро
 msgid "All Systems"
 msgstr "Все системы"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr "уже добавлен"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr "Сумма"
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "Вы уверены, что хотите удалить {name}?"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr "Вы уверены, что хотите удалить этот платёж?"
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr "Вы уверены, что хотите удалить этого провайдера?"
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Вы уверены?"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr "Автоматически выбирать эту валюту при добавлении платежей для этого провайдера."
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "Автоматическое копирование требует безопасного контекста."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "Доступно"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "Среднее"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "Среднее использование CPU контейнерами"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "Среднее опускается ниже <0>{value}{0}</0>"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
 msgstr "Среднее превышает <0>{value}{0}</0>"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "Среднее количество операций ввода/вывода, ожидающих обслуживания"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "Среднее потребление мощности всеми GPU"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "Среднее время от очереди до завершения на одну операцию"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "Среднее использование CPU по всей системе"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "Среднее использование {0}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
-msgstr "Средняя загрузка GPU движков"
+msgstr "Средняя загрузка ядер GPU"
 
 #: src/components/command-palette.tsx
 #: src/components/navbar.tsx
 msgid "Backups"
 msgstr "Резервные копии"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "Пропускная способность"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr "Бтр"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "Батарея"
@@ -283,6 +278,13 @@ msgstr "Стал неактивным"
 msgid "Before"
 msgstr "До"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "Менее {0}{1} за {2, plural, one {# минуту} other {# минут}}"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "Beszel поддерживает OpenID Connect и множество поставщиков аутентификации OAuth2."
@@ -290,10 +292,6 @@ msgstr "Beszel поддерживает OpenID Connect и множество п�
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "Beszel использует <0>Shoutrrr</0> для интеграции с популярными сервисами уведомлений."
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr "URL для оплаты"
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "Состояние загрузки"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "Байты (Кбайт/с, Мбайт/с, Гбайт/с)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "Кэш / Буферы"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr "Календарь"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "Может запустить"
 msgid "Can stop"
 msgstr "Может остановить"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "Возможности"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "Емкость"
 
@@ -359,13 +352,13 @@ msgstr "Цельсий (°C)"
 
 #: src/components/routes/settings/general.tsx
 msgid "Change display units for metrics."
-msgstr "Изменить единицы измерения для метрик."
+msgstr "Изменить единицы измерения метрик."
 
 #: src/components/routes/settings/general.tsx
 msgid "Change general application options."
 msgstr "Изменить общие параметры приложения."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "Заряд"
 
@@ -378,31 +371,49 @@ msgstr "Заряжается"
 msgid "Chart options"
 msgstr "Параметры графиков"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "Ширина графика"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
-msgstr "Проверьте {email} для получения ссылки на сброс."
+msgstr "Проверьте {email} для получения ссылки сброса."
 
 #: src/components/routes/settings/layout.tsx
 msgid "Check logs for more details."
-msgstr "Проверьте журналы для получения более подробной информации."
+msgstr "Проверьте журналы для получения подробной информации."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "Проверьте ваш сервис мониторинга"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "Проверьте ваш сервис уведомлений"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "Ошибки контрольной суммы"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
 msgstr "Очистить"
 
 #: src/components/containers-table/containers-table.tsx
 msgid "Click on a container to view more information."
-msgstr "Нажмите на контейнер, чтобы просмотреть дополнительную информацию."
+msgstr "Нажмите на контейнер для просмотра дополнительной информации."
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "Нажмите на устройство для просмотра дополнительной информации."
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "Нажмите на пул, чтобы просмотреть сведения о vdev и dataset."
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -419,7 +430,7 @@ msgstr "Инструкции командной строки"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Configure how you receive alert notifications."
-msgstr "Настройте, как вы получаете уведомления об оповещениях."
+msgstr "Настройте способ получения уведомления об оповещениях."
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/auth-form.tsx
@@ -434,6 +445,18 @@ msgstr "Конфликты"
 msgid "Connection is down"
 msgstr "Нет соединения"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "Контейнер"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "Здоровье контейнера"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "Контейнеры"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
@@ -447,18 +470,23 @@ msgstr "Скопировано в буфер обмена"
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy docker compose file content"
 msgid "Copy docker compose"
-msgstr "Скопировать docker compose"
+msgstr "Копировать docker compose"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy docker run command"
 msgid "Copy docker run"
-msgstr "Скопировать docker run"
+msgstr "Копировать docker run"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Environment variables"
 msgid "Copy env"
-msgstr "Скопировать env"
+msgstr "Копировать env"
+
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "Копировать из"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
@@ -471,7 +499,11 @@ msgstr "Копировать команду Linux"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
-msgstr "Скопировать имя"
+msgstr "Копировать имя"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr "Копировать открытый ключ"
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -487,11 +519,12 @@ msgstr "Скопируйте содержимое <0>docker-compose.yml</0> дл
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Copy YAML"
-msgstr "Скопировать YAML"
+msgstr "Копировать YAML"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr "Страна"
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "Ядро"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -501,11 +534,19 @@ msgstr "ЦП"
 
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "CPU Cores"
-msgstr "Ядра ЦП"
+msgstr "Ядра CPU"
+
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "Ожидание ввода-вывода CPU (IOWait)"
 
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "Пик CPU"
+
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "Недоступное время CPU (Steal)"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
@@ -513,10 +554,10 @@ msgstr "Время CPU"
 
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "CPU Time Breakdown"
-msgstr "Распределение времени ЦП"
+msgstr "Распределение времени CPU"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "Создано"
 msgid "Critical (%)"
 msgstr "Критический (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr "Критично (сегодня/просрочено)"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "Суммарно прочитано данных с момента загрузки"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "Суммарно записано данных с момента загрузки"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "Совокупная загрузка"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "Суммарное чтение"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "Совокупная отдача"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr "Валюта"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "Суммарная запись"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "Текущее состояние"
 
@@ -570,30 +621,15 @@ msgstr "Циклы"
 msgid "Daily"
 msgstr "Ежедневно"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr "Дата"
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr "дней"
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr "Осталось дней"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr "Валюта по умолчанию"
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "По умолчанию"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "Период по умолчанию"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "Устройство"
 msgid "Discharging"
 msgstr "Разряжается"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Диск"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "Дисковый ввод/вывод"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "Единицы измерения дисковой активности"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "Использование диска"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "Использование диска {extraFsName}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "Отображение"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "Использование CPU Docker"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "Использование памяти Docker"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "Сетевой ввод/вывод Docker"
 
@@ -663,7 +700,7 @@ msgstr "Документация"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "Не в сети ({downSystemsLength})"
 msgid "Download"
 msgstr "Загрузка"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr "Дата оплаты"
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr "Скоро оплата"
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "Длительность"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr "напр., Hetzner, DigitalOcean, AWS"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -707,14 +727,6 @@ msgstr "Редактировать"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
 msgstr "Редактировать {foo}"
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr "Редактировать платёж"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr "Редактировать провайдера"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -736,6 +748,14 @@ msgstr "Пустая"
 msgid "End Time"
 msgstr "Время окончания"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "URL-адрес конечной точки"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "URL-адрес конечной точки для пинга (обязательно)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
 msgstr "Введите адрес электронной почты для сброса пароля"
@@ -748,9 +768,15 @@ msgstr "Введите адрес электронной почты..."
 msgid "Enter your one-time password."
 msgstr "Введите ваш одноразовый пароль."
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "Эфемерный"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "Введите ваш одноразовый пароль."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "Ошибка"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "Пример:"
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -778,7 +808,10 @@ msgstr "Существующие системы, не определенные �
 msgid "Exited active"
 msgstr "Завершился активным"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "Истекает через час или при перезапуске хаба."
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "Экспорт"
@@ -803,33 +836,23 @@ msgstr "Неудачно"
 msgid "Failed Attributes:"
 msgstr "Неудачные атрибуты:"
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "Службы со сбоем"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "Не удалось аутентифицировать"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "Не удалось сохранить настройки"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "Не удалось отправить heartbeat"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "Не удалось отправить тестовое уведомле
 msgid "Failed to update alert"
 msgstr "Не удалось обновить оповещение"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "Неудачно: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
-msgstr "Резервные курсы"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
+msgstr "Вентиляторы"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -879,6 +898,12 @@ msgstr "На <0>{min}</0> {min, plural, one {минуту} other {минут}}"
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
 
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "Свободно"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy install command"
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "Команда FreeBSD"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "Полная"
@@ -900,17 +926,15 @@ msgstr "Общие"
 msgid "Global"
 msgstr "Глобально"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
-msgstr "Перейти к оплате"
-
 #: src/components/routes/system.tsx
+msgid "GPU"
+msgstr "GPU"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "GPU движки"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
 msgstr "Потребляемая мощность GPU"
 
@@ -918,13 +942,27 @@ msgstr "Потребляемая мощность GPU"
 msgid "GPU Usage"
 msgstr "Использование GPU"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "Сетка"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "Здоровье"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr "Heartbeat"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "Мониторинг Heartbeat"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "Heartbeat успешно отправлен"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -936,6 +974,29 @@ msgstr "Команда Homebrew"
 msgid "Host / IP"
 msgstr "Хост / IP"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "HTTP-метод"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "HTTP-метод: POST, GET или HEAD (по умолчанию: POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "Ожидание ввода/вывода"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "Время ввода/вывода"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "Использование ввода/вывода"
+
 #. Context: Battery state
 #: src/lib/i18n.ts
 msgid "Idle"
@@ -943,45 +1004,24 @@ msgstr "Неактивная"
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "If you've lost the password to your admin account, you may reset it using the following command."
-msgstr "Если вы потеряли пароль от своей учетной записи администратора, вы можете сбросить его, используя следующую команду."
+msgstr "Если вы потеряли пароль от учетной записи администратора, вы можете сбросить его, используя следующую команду."
 
 #: src/components/containers-table/containers-table-columns.tsx
 msgctxt "Docker image"
 msgid "Image"
 msgstr "Образ"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr "Импорт"
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr "Ошибка импорта. Проверьте формат файла."
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr "Импорт выполнен успешно!"
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "Неактивно"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr "Интервал"
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "Неверный адрес электронной почты."
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "Ядро"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1004,11 +1044,7 @@ msgstr "Жизненный цикл"
 msgid "limit"
 msgstr "лимит"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr "Привяжите платёж к серверу и провайдеру."
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "Средняя загрузка"
 
@@ -1033,18 +1069,11 @@ msgstr "Ср. загрузка"
 msgid "Load state"
 msgstr "Состояние загрузки"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr "Загрузка курсов..."
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "Загрузка..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "Выйти"
@@ -1076,27 +1105,18 @@ msgstr "Основной PID"
 msgid "Manage display and notification preferences."
 msgstr "Управляйте предпочтениями отображения и уведомлений."
 
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr "Управление хостинг-провайдерами"
-
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
-msgstr "Инструкции по ручной настройке"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr "Отметить оплаченным"
+msgstr "Инструкции по ручной установке"
 
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "Макс 1 мин"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1112,27 +1132,23 @@ msgstr "Лимит памяти"
 msgid "Memory Peak"
 msgstr "Пик памяти"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "Использование памяти"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "Использование памяти контейнерами Docker"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "Использование памяти контейнерами"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "Модель"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr "Итого в месяц"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr "ещё"
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "Точка монтирования"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1147,11 +1163,11 @@ msgstr "Имя"
 msgid "Net"
 msgstr "Сеть"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "Сетевой трафик контейнеров Docker"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "Сетевой трафик контейнеров"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "Сетевой трафик публичных интерфейсов"
 msgid "Network unit"
 msgstr "Единицы измерения скорости сети"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr "Дата следующего платежа"
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "Нет"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr "Платежи ещё не добавлены. Сначала добавьте провайдера, затем платежи."
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr "Провайдеры ещё не добавлены. Добавьте первого хостинг-провайдера."
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "Подробные данные для этого пула отсутствуют."
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "Для этого устройства нет доступных атр�
 msgid "No systems found."
 msgstr "Системы не найдены."
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
 msgstr "Нет"
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr "Не указано"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr "Заметки"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr "Заметки"
 msgid "Notifications"
 msgstr "Уведомления"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "Уведомления могут содержать недавние фрагменты журналов контейнеров."
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "Поддержка OAuth 2 / OIDC"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr "OK (6+ дней)"
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "При каждом перезапуске системы в базе данных будут обновлены в соответствии с системами, определенными в файле."
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "Один или несколько контейнеров находятся в нездоровом состоянии"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "Одна или несколько служб находятся в состоянии сбоя"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "Одноразово"
 msgid "One-time password"
 msgstr "Одноразовый пароль"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr "Открыть биллинг"
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Открыть меню"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr "Необязательные заметки"
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr "Необязательно. Переопределить URL провайдера для этого платежа."
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1305,7 +1299,7 @@ msgstr "Пароль должен содержать не менее 8 симв�
 
 #: src/components/login/auth-form.tsx
 msgid "Password must be less than 72 bytes."
-msgstr "Пароль должен быть меньше 72 символов."
+msgstr "Пароль должен быть короче 72 символов."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Password reset request received"
@@ -1327,60 +1321,30 @@ msgstr "Пауза"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "Пауза ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr "Календарь платежей"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr "График платежей"
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr "Переопределение URL платежа"
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr "платежей"
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr "Платежи"
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "Формат полезной нагрузки"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "Среднее использование на ядро"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "Процент времени, в течение которого диск занят вводом/выводом"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "Процент времени, проведенного в каждом состоянии"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
-msgstr "Период"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
+msgstr "Постоянный"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "Устойчивость"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,17 +1379,30 @@ msgstr "Пожалуйста, смотрите <0>документацию</0> �
 msgid "Please sign in to your account"
 msgstr "Пожалуйста, войдите в свою учетную запись"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "Состояние пула"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "Использование пула"
+
 #: src/components/add-system.tsx
 msgid "Port"
 msgstr "Порт"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
+msgstr "Порты"
 
 #. Power On Time
 #: src/components/routes/system/smart-table.tsx
 msgid "Power On"
 msgstr "Включение питания"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "Точное использование в записанное время"
 
@@ -1433,62 +1410,51 @@ msgstr "Точное использование в записанное врем
 msgid "Preferred Language"
 msgstr "Предпочтительный язык"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr "Цена"
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Процесс запущен"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr "Провайдер"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr "Название провайдера"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
-msgstr "Провайдеры"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
+msgstr "Открытый ключ"
 
 #. Use 'Key' if your language requires many more characters
 #: src/components/add-system.tsx
 msgid "Public Key"
-msgstr "Ключ"
+msgstr "Публичный ключ"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "Глубина очереди"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "Тихие часы"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "Чтение"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "Ошибки чтения"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "Получено"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "Обновить"
 
@@ -1530,6 +1496,8 @@ msgstr "Перезапуски"
 msgid "Resume"
 msgstr "Возобновить"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
@@ -1537,7 +1505,7 @@ msgstr "Корневой"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
-msgstr "Обновить токен"
+msgstr "Сменить токен"
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Rows per page"
@@ -1553,25 +1521,24 @@ msgstr "Детали S.M.A.R.T."
 
 #: src/components/routes/system/smart-table.tsx
 msgid "S.M.A.R.T. Self-Test"
-msgstr "Самотестирование S.M.A.R.T."
+msgstr "Запуск теста S.M.A.R.T."
+
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "Сохранить {foo}"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Сохраните адрес, используя клавишу ввода или запятую. Оставьте пустым, чтобы отключить уведомления по электронной почте."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr "Сохранить изменения"
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "Сохранить настройки"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "Сохранить систему"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "Сохранено в базе данных и не истекает, пока вы его не отключите."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1593,10 +1560,9 @@ msgstr "Поиск"
 msgid "Search for systems or settings..."
 msgstr "Поиск систем или настроек..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "Секунды между пингами (по умолчанию: 60)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1606,23 +1572,19 @@ msgstr "Смотрите <0>настройки уведомлений</0>, чт�
 msgid "Select {foo}"
 msgstr "Выбрать {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr "Выберите страну"
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "Отправьте одиночный пинг heartbeat, чтобы проверить работоспособность конечной точки."
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr "Выберите валюту"
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "Отправляйте периодические исходящие пинги на внешний сервис мониторинга, чтобы вы могли мониторить Beszel без его публикации в интернете."
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr "Выберите провайдера"
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "Отправить тестовый heartbeat"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr "Выберите сервер"
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "Отправлено"
 
@@ -1630,15 +1592,11 @@ msgstr "Отправлено"
 msgid "Serial Number"
 msgstr "Серийный номер"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr "Сервер"
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "Детали сервиса"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Службы"
@@ -1647,10 +1605,17 @@ msgstr "Службы"
 msgid "Set percentage thresholds for meter colors."
 msgstr "Установите процентные пороги для цветов счетчиков."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "Установите следующие переменные окружения в хабе Beszel для включения мониторинга heartbeat:"
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "Настройки"
 
@@ -1666,10 +1631,6 @@ msgstr "Войти"
 msgid "SMTP settings"
 msgstr "Настройки SMTP"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr "Сортировать по"
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "Сортировать по"
@@ -1682,6 +1643,7 @@ msgstr "Время начала"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "Состояние"
@@ -1698,17 +1660,23 @@ msgstr "Статус"
 msgid "Sub State"
 msgstr "Подсостояние"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Используемое системой пространство подкачки"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "Использование подкачки"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr "Переключить тему"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,7 +1688,11 @@ msgstr "Использование подкачки"
 msgid "System"
 msgstr "Система"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr "Скорость вращения системных вентиляторов (об/мин)"
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Средняя загрузка системы за время"
 
@@ -1740,6 +1712,11 @@ msgstr "Системы могут управляться в файле <0>config
 msgid "Table"
 msgstr "Таблица"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "Вкладки"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "Задачи"
@@ -1750,7 +1727,7 @@ msgstr "Задачи"
 msgid "Temp"
 msgstr "Темп"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "Температура"
@@ -1759,7 +1736,7 @@ msgstr "Температура"
 msgid "Temperature unit"
 msgstr "Единицы измерения температуры"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "Температуры датчиков системы"
 
@@ -1767,9 +1744,17 @@ msgstr "Температуры датчиков системы"
 msgid "Test <0>URL</0>"
 msgstr "Тест <0>URL</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "Тестовый heartbeat"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "Тестовое уведомление отправлено"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "Общий статус: <0>ok</0>, когда все системы работают, <1>предупреждение</1>, когда сработали оповещения, и <2>ошибка</2>, когда какая-либо система отключена."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1777,23 +1762,19 @@ msgstr "Затем войдите в бэкенд и сбросьте парол
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
-msgstr "Это действие не может быть отменено. Это навсегда удалит все текущие записи для {name} из базы данных."
-
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr "Это также удалит {count} платёж(ей), связанных с этим провайдером. Вы уверены?"
+msgstr "Это действие не может быть отменено. Оно навсегда удалит все текущие записи для {name} из базы данных."
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "Это навсегда удалит все выбранные записи из базы данных."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "Пропускная способность {extraFsName}"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "Пропускная способность корневой файловой системы"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "Пропускная способность ZFS-пула {poolName}"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "Формат времени"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "На электронную почту"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr "Сегодня"
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "Переключить сетку"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "Переключить тему"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "Общий объем полученных данных для кажд�
 msgid "Total data sent for each interface"
 msgstr "Общий объем отправленных данных для каждого интерфейса"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
-msgstr "Всего серверов"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
+msgstr "Общее время, потраченное на чтение/запись (может превышать 100%)"
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "Всего: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr "Отслеживание платежей и графиков оплаты серверов"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,24 +1847,40 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "Срабатывает, когда средняя загрузка за 5 минут превышает порог"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "Срабатывает, когда проверка состояния контейнера сообщает о нездоровом состоянии"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
 msgstr "Срабатывает, когда любой датчик превышает порог"
 
 #: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "Срабатывает, когда любая служба systemd переходит в состояние сбоя"
+
+#: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "Срабатывает, когда заряд батареи опускается ниже порога"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
 msgstr "Срабатывает, когда комбинированный вход/выход превышает порог"
 
 #: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "Срабатывает, когда доля времени ожидания CPU операций ввода-вывода превышает порог"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "Срабатывает, когда доля времени CPU, недоступного виртуальной машине из-за гипервизора, превышает порог"
+
+#: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
-msgstr "Срабатывает, когда использование CPU превышает порог"
+msgstr "Срабатывает, когда нагрузка на CPU превышает порог"
 
 #: src/lib/alerts.ts
 msgid "Triggers when GPU usage exceeds a threshold"
-msgstr "Срабатывает, когда использование GPU превышает порог"
+msgstr "Срабатывает, когда нагрузка на GPU превышает порог"
 
 #: src/lib/alerts.ts
 msgid "Triggers when memory usage exceeds a threshold"
@@ -1912,7 +1892,7 @@ msgstr "Срабатывает, когда статус переключаетс
 
 #: src/lib/alerts.ts
 msgid "Triggers when usage of any disk exceeds a threshold"
-msgstr "Срабатывает, когда использование любого диска превышает порог"
+msgstr "Срабатывает, когда нагрузка на любой из дисков превышает порог"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1920,9 +1900,13 @@ msgstr "Срабатывает, когда использование любог
 msgid "Type"
 msgstr "Тип"
 
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "Нездоровый"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
-msgstr "Unit файл"
+msgstr "Файл единиц измерения"
 
 #. Temperature / network units
 #: src/components/routes/settings/general.tsx
@@ -1935,9 +1919,10 @@ msgid "Universal token"
 msgstr "Универсальный токен"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
-msgstr "Неизвестная"
+msgstr "Неизвестно"
 
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1945,7 +1930,7 @@ msgid "Unlimited"
 msgstr "Неограниченно"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "В сети"
@@ -1960,6 +1945,7 @@ msgstr "Обновить"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "Обновлено"
@@ -1972,28 +1958,30 @@ msgstr "Обновляется каждые 10 минут."
 msgid "Upload"
 msgstr "Отдача"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
 msgstr "Время работы"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr "URL для доступа к странице биллинга/оплаты этого провайдера."
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "Использование"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "Использование корневого раздела"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "Использование ZFS-пула {poolName}"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "Использовано"
 
@@ -2001,6 +1989,11 @@ msgstr "Использовано"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "Пользователи"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "Использование"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "Значение"
 msgid "View"
 msgstr "Вид"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr "Просмотр всех запланированных платежей в календаре"
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "Показать больше"
@@ -2027,7 +2017,7 @@ msgstr "Просмотреть 200 последних оповещений."
 msgid "Visible Fields"
 msgstr "Видимые столбцы"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "Ожидание достаточного количества записей для отображения"
 
@@ -2041,23 +2031,23 @@ msgstr "Требует"
 
 #: src/components/routes/settings/general.tsx
 msgid "Warning (%)"
-msgstr "Предупреждение (%)"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr "Внимание (2-5 дней)"
+msgstr "Предупреждений (%)"
 
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
-msgstr "Пороги предупреждения"
+msgstr "Пороги предупреждений"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Webhook / Push notifications"
 msgstr "Webhook / Push уведомления"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "Если включено, этот токен позволяет агентам регистрироваться самостоятельно без предварительного создания системы. Истекает через час или при перезапуске хаба."
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "При включении этот токен позволяет агентам самостоятельно регистрироваться без предварительного создания системы."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "При использовании POST каждый heartbeat содержит подробный JSON с кратким отчетом о состоянии системы, списком отключенных систем и сработавшими оповещениями."
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,14 +2056,23 @@ msgid "Windows command"
 msgstr "Команда Windows"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "Запись"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "Ошибки записи"
+
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
-msgstr "YAML конфигурация"
+msgstr "YAML конфиг"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "YAML Configuration"
@@ -2088,3 +2087,4 @@ msgstr "Да"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "Ваши настройки пользователя были обновлены."
+

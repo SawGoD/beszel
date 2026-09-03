@@ -8,7 +8,7 @@ msgstr ""
 "Language: fa\n"
 "Project-Id-Version: beszel\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-11-14 22:51\n"
+"PO-Revision-Date: 2026-09-02 21:43\n"
 "Last-Translator: \n"
 "Language-Team: Persian\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -18,11 +18,21 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#. placeholder {0}: newVersion.v
+#: src/components/footer-repo-link.tsx
+msgctxt "New version available"
+msgid "{0} available"
+msgstr "{0} در دسترس است"
+
 #. placeholder {0}: table.getFilteredSelectedRowModel().rows.length
 #. placeholder {1}: table.getFilteredRowModel().rows.length
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "{0} of {1} row(s) selected."
 msgstr "{0} از {1} ردیف انتخاب شده است."
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{cores, plural, one {# core} other {# cores}}"
+msgstr "{cores, plural, one {# هسته} other {# هسته}}"
 
 #: src/lib/utils.ts
 msgid "{count, plural, one {{countString} day} other {{countString} days}}"
@@ -36,12 +46,20 @@ msgstr "{count, plural, one {{countString} ساعت} other {{countString} ساع
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} دقیقه} few {{countString} دقیقه} many {{countString} دقیقه} other {{countString} دقیقه}}"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "{diskName} I/O"
+msgstr "ورودی/خروجی {diskName}"
+
+#: src/components/routes/system/info-bar.tsx
+msgid "{threads, plural, one {# thread} other {# threads}}"
+msgstr "{threads, plural, one {# رشته} other {# رشته}}"
+
 #: src/lib/utils.ts
 msgid "1 hour"
 msgstr "۱ ساعت"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "1 min"
 msgstr "۱ دقیقه"
 
@@ -58,7 +76,7 @@ msgid "12 hours"
 msgstr "۱۲ ساعت"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "15 min"
 msgstr "۱۵ دقیقه"
 
@@ -71,7 +89,7 @@ msgid "30 days"
 msgstr "۳۰ روز"
 
 #. Load average
-#: src/components/charts/load-average-chart.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "5 min"
 msgstr "۵ دقیقه"
 
@@ -79,12 +97,14 @@ msgstr "۵ دقیقه"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Actions"
 msgstr "عملیات"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Active"
 msgstr "فعال"
@@ -97,39 +117,14 @@ msgstr " هشدارهای فعال"
 msgid "Active state"
 msgstr "وضعیت فعال"
 
-#: src/components/routes/payments.tsx
-#~ msgid "Add"
-#~ msgstr ""
-
 #: src/components/add-system.tsx
+#: src/components/add-system.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Add {foo}"
 msgstr "افزودن {foo}"
-
-#: src/components/add-system.tsx
-msgid "Add <0>System</0>"
-msgstr "افزودن <0>سیستم</0>"
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Add a hosting provider or service for your servers."
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-#: src/components/payments/ProviderForm.tsx
-#: src/components/routes/payments.tsx
-msgid "Add Provider"
-msgstr ""
-
-#: src/components/add-system.tsx
-msgid "Add system"
-msgstr "افزودن سیستم"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
@@ -145,12 +140,17 @@ msgstr "تنظیم عرض چیدمان اصلی"
 
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
 msgid "Admin"
 msgstr "مدیر"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "After"
 msgstr "بعد از"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "After setting the environment variables, restart your Beszel hub for changes to take effect."
+msgstr "پس از تنظیم متغیرهای محیطی، هاب Beszel خود را مجدداً راه اندازی کنید تا تغییرات اعمال شوند."
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
@@ -169,13 +169,11 @@ msgstr "هشدارها"
 
 #: src/components/command-palette.tsx
 #: src/components/containers-table/containers-table.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/containers.tsx
 msgid "All Containers"
 msgstr "همه کانتینرها"
-
-#: src/components/routes/payments.tsx
-msgid "All scheduled payments sorted by due date"
-msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
@@ -186,73 +184,64 @@ msgstr ""
 msgid "All Systems"
 msgstr "همه سیستم‌ها"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "already added"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Amount"
-msgstr ""
-
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "آیا مطمئن هستید که می‌خواهید {name} را حذف کنید؟"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Are you sure you want to delete this payment?"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Are you sure you want to delete this provider?"
-msgstr ""
 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "آیا مطمئن هستید؟"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Auto-select this currency when adding payments for this provider."
-msgstr ""
-
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
 msgstr "کپی خودکار نیاز به یک زمینه امن دارد."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Disk space available"
+msgid "Available"
+msgstr "در دسترس"
+
+#: src/components/routes/system/chart-card.tsx
 msgid "Average"
 msgstr "میانگین"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average CPU utilization of containers"
 msgstr "میانگین استفاده از CPU کانتینرها"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average drops below <0>{value}{0}</0>"
-msgstr ""
+msgstr "میانگین به زیر <0>{value}{0}</0> می‌افتد"
 
 #. placeholder {0}: alertData.unit
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Average exceeds <0>{value}{0}</0>"
 msgstr "میانگین از <0>{value}{0}</0> فراتر رفته است"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Average number of I/O operations waiting to be serviced"
+msgstr "میانگین تعداد عملیات ورودی/خروجی در انتظار سرویس"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average power consumption of GPUs"
 msgstr "میانگین مصرف برق پردازنده‌های گرافیکی"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "Average queue to completion time per operation"
+msgstr "میانگین زمان صف تا تکمیل به ازای هر عملیات"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Average system-wide CPU utilization"
 msgstr "میانگین استفاده از CPU در کل سیستم"
 
 #. placeholder {0}: gpu.n
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of {0}"
 msgstr "میانگین استفاده از {0}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "Average utilization of GPU engines"
 msgstr "میانگین استفاده از موتورهای GPU"
 
@@ -261,12 +250,18 @@ msgstr "میانگین استفاده از موتورهای GPU"
 msgid "Backups"
 msgstr "پشتیبان‌گیری‌ها"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/lib/alerts.ts
 msgid "Bandwidth"
 msgstr "پهنای باند"
 
-#: src/components/routes/system.tsx
+#. Battery label in systems table header
+#: src/components/systems-table/systems-table-columns.tsx
+msgid "Bat"
+msgstr "باتری"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Battery"
 msgstr "باتری"
@@ -283,6 +278,13 @@ msgstr "غیرفعال شد"
 msgid "Before"
 msgstr "قبل از"
 
+#. placeholder {0}: alert.value
+#. placeholder {1}: info.unit
+#. placeholder {2}: alert.min
+#: src/components/active-alerts.tsx
+msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
+msgstr "زیر {0}{1} در آخرین {2, plural, one {# دقیقه} other {# دقیقه}}"
+
 #: src/components/login/auth-form.tsx
 msgid "Beszel supports OpenID Connect and many OAuth2 authentication providers."
 msgstr "بِزل از OpenID Connect و بسیاری از ارائه‌دهندگان احراز هویت OAuth2 پشتیبانی می‌کند."
@@ -290,10 +292,6 @@ msgstr "بِزل از OpenID Connect و بسیاری از ارائه‌دهند�
 #: src/components/routes/settings/notifications.tsx
 msgid "Beszel uses <0>Shoutrrr</0> to integrate with popular notification services."
 msgstr "بِزل از <0>Shoutrrr</0> برای ادغام با سرویس‌های اطلاع‌رسانی محبوب استفاده می‌کند."
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Billing URL"
-msgstr ""
 
 #: src/components/add-system.tsx
 msgid "Binary"
@@ -313,13 +311,9 @@ msgstr "وضعیت بوت"
 msgid "Bytes (KB/s, MB/s, GB/s)"
 msgstr "بایت (کیلوبایت بر ثانیه، مگابایت بر ثانیه، گیگابایت بر ثانیه)"
 
-#: src/components/charts/mem-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "حافظه پنهان / بافرها"
-
-#: src/components/routes/payments.tsx
-#~ msgid "Calendar"
-#~ msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -333,8 +327,6 @@ msgstr "می‌تواند شروع شود"
 msgid "Can stop"
 msgstr "می‌تواند متوقف شود"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -346,6 +338,7 @@ msgid "Capabilities"
 msgstr "قابلیت‌ها"
 
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Capacity"
 msgstr "ظرفیت"
 
@@ -365,7 +358,7 @@ msgstr "تغییر واحدهای نمایش برای معیارها."
 msgid "Change general application options."
 msgstr "تغییر گزینه‌های کلی برنامه."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
 msgstr "شارژ"
 
@@ -378,6 +371,10 @@ msgstr "در حال شارژ"
 msgid "Chart options"
 msgstr "گزینه‌های نمودار"
 
+#: src/components/routes/system/info-bar.tsx
+msgid "Chart width"
+msgstr "عرض نمودار"
+
 #: src/components/login/forgot-pass-form.tsx
 msgid "Check {email} for a reset link."
 msgstr "ایمیل {email} خود را برای لینک بازنشانی بررسی کنید."
@@ -386,15 +383,25 @@ msgstr "ایمیل {email} خود را برای لینک بازنشانی برر
 msgid "Check logs for more details."
 msgstr "برای جزئیات بیشتر، لاگ‌ها را بررسی کنید."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Check your monitoring service"
+msgstr "سرویس نظارتی خود را بررسی کنید"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Check your notification service"
 msgstr "سرویس اطلاع‌رسانی خود را بررسی کنید"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Checksum errors"
+msgstr "خطاهای مجموع بررسی"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Clear"
-msgstr ""
+msgstr "پاک کردن"
 
 #: src/components/containers-table/containers-table.tsx
 msgid "Click on a container to view more information."
@@ -403,6 +410,10 @@ msgstr "برای مشاهده اطلاعات بیشتر روی کانتینر ک
 #: src/components/routes/system/smart-table.tsx
 msgid "Click on a device to view more information."
 msgstr "برای مشاهده اطلاعات بیشتر روی دستگاه کلیک کنید."
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Click on a pool to view vdev and dataset details."
+msgstr "برای مشاهده جزئیات vdev و مجموعه‌داده‌ها روی یک استخر کلیک کنید."
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Click on a system to view more information."
@@ -434,6 +445,18 @@ msgstr "تعارض‌ها"
 msgid "Connection is down"
 msgstr "اتصال قطع است"
 
+#: src/lib/alerts.ts
+msgid "Container"
+msgstr "کانتینر"
+
+#: src/lib/alerts.ts
+msgid "Container Health"
+msgstr "سلامت کانتینر"
+
+#: src/components/routes/system.tsx
+msgid "Containers"
+msgstr "کانتینرها"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Continue"
@@ -460,6 +483,11 @@ msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "کپی متغیرهای محیط"
 
+#: src/components/alerts/alerts-sheet.tsx
+msgctxt "Copy alerts from another system"
+msgid "Copy from"
+msgstr "کپی از"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy host"
 msgstr "کپی میزبان"
@@ -472,6 +500,10 @@ msgstr "کپی دستور لینوکس"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
 msgstr "کپی نام"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy public key"
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Copy text"
@@ -489,9 +521,10 @@ msgstr "محتوای <0>docker-compose.yml</0> عامل زیر را کپی کن�
 msgid "Copy YAML"
 msgstr "کپی YAML"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Country"
-msgstr ""
+#: src/components/routes/system.tsx
+msgctxt "Core system metrics"
+msgid "Core"
+msgstr "هسته"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -503,9 +536,17 @@ msgstr "پردازنده"
 msgid "CPU Cores"
 msgstr "هسته‌های CPU"
 
+#: src/lib/alerts.ts
+msgid "CPU I/O Wait"
+msgstr "زمان انتظار ورودی/خروجی CPU (IOWait)"
+
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "CPU Peak"
 msgstr "حداکثر CPU"
+
+#: src/lib/alerts.ts
+msgid "CPU Steal Time"
+msgstr "زمان ربوده‌شده CPU (Steal)"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "CPU time"
@@ -515,8 +556,8 @@ msgstr "زمان CPU"
 msgid "CPU Time Breakdown"
 msgstr "تجزیه زمان CPU"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
+#: src/components/routes/system/charts/cpu-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/lib/alerts.ts
 msgid "CPU Usage"
@@ -539,24 +580,34 @@ msgstr "ایجاد شده"
 msgid "Critical (%)"
 msgstr "بحرانی (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Critical (today/overdue)"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data read since boot"
+msgstr "مجموع داده‌های خوانده‌شده از زمان راه‌اندازی"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative data written since boot"
+msgstr "مجموع داده‌های نوشته‌شده از زمان راه‌اندازی"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Download"
 msgstr "دانلود تجمعی"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Read"
+msgstr "خواندن تجمعی"
+
 #: src/components/routes/system/network-sheet.tsx
 msgid "Cumulative Upload"
 msgstr "آپلود تجمعی"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Currency"
-msgstr ""
+#: src/components/routes/system/disk-io-sheet.tsx
+msgid "Cumulative Write"
+msgstr "نوشتن تجمعی"
 
 #. Context: Battery state
-#: src/components/routes/system.tsx
+#. Context: Battery state
+#: src/components/routes/system/charts/sensor-charts.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Current state"
 msgstr "وضعیت فعلی"
 
@@ -570,30 +621,15 @@ msgstr "چرخه‌ها"
 msgid "Daily"
 msgstr "روزانه"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Date"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-msgid "days"
-msgstr ""
-
-#: src/components/payments/PaymentsTable.tsx
-msgid "Days Left"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Default Currency"
-msgstr ""
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Default system layout option"
+msgid "Default"
+msgstr "پیش‌فرض"
 
 #: src/components/routes/settings/general.tsx
 msgid "Default time period"
 msgstr "بازه زمانی پیش‌فرض"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -622,37 +658,38 @@ msgstr "دستگاه"
 msgid "Discharging"
 msgstr "در حال تخلیه"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "دیسک"
-
-#: src/components/routes/system.tsx
-msgid "Disk I/O"
-msgstr "ورودی/خروجی دیسک"
 
 #: src/components/routes/settings/general.tsx
 msgid "Disk unit"
 msgstr "واحد دیسک"
 
-#: src/components/charts/disk-chart.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/lib/alerts.ts
 msgid "Disk Usage"
 msgstr "میزان استفاده از دیسک"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Disk usage of {extraFsName}"
 msgstr "میزان استفاده از دیسک {extraFsName}"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Layout display options"
+msgid "Display"
+msgstr "نمایش"
+
+#: src/components/routes/system/charts/cpu-charts.tsx
 msgid "Docker CPU Usage"
 msgstr "میزان استفاده از CPU داکر"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Docker Memory Usage"
 msgstr "میزان استفاده از حافظه داکر"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Docker Network I/O"
 msgstr "ورودی/خروجی شبکه داکر"
 
@@ -663,7 +700,7 @@ msgstr "مستندات"
 
 #. Context: System is down
 #: src/components/alerts-history-columns.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
 msgid "Down"
@@ -677,27 +714,10 @@ msgstr "قطع ({downSystemsLength})"
 msgid "Download"
 msgstr "دانلود"
 
-#: src/components/payments/PaymentsTable.tsx
-msgid "Due Date"
-msgstr ""
-
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Due Soon"
-msgstr ""
-
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "مدت زمان"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "e.g., Hetzner, DigitalOcean, AWS"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/ProvidersList.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Edit"
@@ -707,14 +727,6 @@ msgstr "ویرایش"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Edit {foo}"
 msgstr "ویرایش {foo}"
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Edit Payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Edit Provider"
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -736,6 +748,14 @@ msgstr "خالی"
 msgid "End Time"
 msgstr "زمان پایان"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL"
+msgstr "URL نقطه پایانی"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Endpoint URL to ping (required)"
+msgstr "URL نقطه پایانی برای پینگ (الزامی)"
+
 #: src/components/login/login.tsx
 msgid "Enter email address to reset password"
 msgstr "آدرس ایمیل را برای بازنشانی رمز عبور وارد کنید"
@@ -748,9 +768,15 @@ msgstr "آدرس ایمیل را وارد کنید..."
 msgid "Enter your one-time password."
 msgstr "رمز عبور یک‌بار مصرف خود را وارد کنید."
 
-#: src/components/login/auth-form.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Ephemeral"
+msgstr "گذرا"
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
+#: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -758,6 +784,10 @@ msgstr "رمز عبور یک‌بار مصرف خود را وارد کنید."
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
 msgstr "خطا"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Example:"
+msgstr "مثال:"
 
 #. placeholder {0}: alert.value
 #. placeholder {1}: info.unit
@@ -768,7 +798,7 @@ msgstr "در {2, plural, one {# دقیقه} other {# دقیقه}} گذشته ا�
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Exec main PID"
-msgstr ""
+msgstr "PID اصلی اجرایی"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
@@ -778,7 +808,10 @@ msgstr "سیستم‌های موجود که در <0>config.yml</0> تعریف ن
 msgid "Exited active"
 msgstr "خروج فعال"
 
-#: src/components/routes/payments.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Expires after one hour or on hub restart."
+msgstr "پس از یک ساعت یا راه‌اندازی مجدد هاب منقضی می‌شود."
+
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Export"
 msgstr "خروجی گرفتن"
@@ -803,33 +836,23 @@ msgstr "ناموفق"
 msgid "Failed Attributes:"
 msgstr "ویژگی‌های ناموفق:"
 
+#: src/lib/alerts.ts
+msgid "Failed Services"
+msgstr "سرویس‌های ناموفق"
+
 #: src/lib/api.ts
 msgid "Failed to authenticate"
 msgstr "احراز هویت ناموفق بود"
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to delete payment"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Failed to delete provider"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Failed to save payment"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Failed to save provider"
-msgstr ""
 
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Failed to save settings"
 msgstr "ذخیره تنظیمات ناموفق بود"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Failed to send heartbeat"
+msgstr "ارسال ضربان قلب ناموفق بود"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Failed to send test notification"
@@ -839,25 +862,21 @@ msgstr "ارسال اعلان آزمایشی ناموفق بود"
 msgid "Failed to update alert"
 msgstr "به‌روزرسانی هشدار ناموفق بود"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Failed to update payment"
-msgstr ""
-
 #. placeholder {0}: statusTotals[ServiceStatus.Failed]
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Failed: {0}"
 msgstr "ناموفق: {0}"
 
-#: src/components/routes/payments.tsx
-msgid "Fallback rates"
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Fans"
 msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Filter..."
@@ -879,6 +898,12 @@ msgstr "برای <0>{min}</0> {min, plural, one {دقیقه} other {دقیقه}}
 msgid "Forgot password?"
 msgstr "رمز عبور را فراموش کرده‌اید؟"
 
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgctxt "Free space"
+msgid "Free"
+msgstr "آزاد"
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy install command"
@@ -886,6 +911,7 @@ msgid "FreeBSD command"
 msgstr "دستور FreeBSD"
 
 #. Context: Battery state
+#: src/components/routes/system/info-bar.tsx
 #: src/lib/i18n.ts
 msgid "Full"
 msgstr "پر"
@@ -900,17 +926,15 @@ msgstr "عمومی"
 msgid "Global"
 msgstr "جهانی"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Go to Payment"
-msgstr ""
-
 #: src/components/routes/system.tsx
+msgid "GPU"
+msgstr "پردازنده گرافیکی"
+
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
 msgstr "موتورهای GPU"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Power Draw"
 msgstr "مصرف برق پردازنده گرافیکی"
 
@@ -918,13 +942,27 @@ msgstr "مصرف برق پردازنده گرافیکی"
 msgid "GPU Usage"
 msgstr "میزان استفاده از GPU"
 
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Grid"
 msgstr "جدول"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Health"
 msgstr "سلامتی"
+
+#: src/components/routes/settings/layout.tsx
+msgid "Heartbeat"
+msgstr "ضربان قلب"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat Monitoring"
+msgstr "نظارت بر ضربان قلب"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Heartbeat sent successfully"
+msgstr "ضربان قلب با موفقیت ارسال شد"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -935,6 +973,29 @@ msgstr "دستور Homebrew"
 #: src/components/add-system.tsx
 msgid "Host / IP"
 msgstr "میزبان / IP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP Method"
+msgstr "متد HTTP"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "HTTP method: POST, GET, or HEAD (default: POST)"
+msgstr "متد HTTP: POST، GET، یا HEAD (پیش‌فرض: POST)"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average operation time (iostat await)"
+msgid "I/O Await"
+msgstr "انتظار ورودی/خروجی"
+
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O total time spent on read/write"
+msgid "I/O Time"
+msgstr "زمان ورودی/خروجی"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Percent of time the disk is busy with I/O"
+msgid "I/O Utilization"
+msgstr "استفاده از ورودی/خروجی"
 
 #. Context: Battery state
 #: src/lib/i18n.ts
@@ -950,38 +1011,17 @@ msgctxt "Docker image"
 msgid "Image"
 msgstr "تصویر"
 
-#: src/components/routes/payments.tsx
-msgid "Import"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import completed with errors:"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import failed. Please check the file format."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Import successful!"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Importing..."
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "غیرفعال"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Interval"
+msgstr "بازه زمانی"
+
 #: src/components/login/auth-form.tsx
 msgid "Invalid email address."
 msgstr "آدرس ایمیل نامعتبر است."
-
-#. Linux kernel
-#: src/components/routes/system.tsx
-msgid "Kernel"
-msgstr "هسته"
 
 #: src/components/routes/settings/general.tsx
 msgid "Language"
@@ -1002,13 +1042,9 @@ msgstr "چرخه حیات"
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "limit"
-msgstr ""
+msgstr "محدودیت"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Link a payment to a server and provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "Load Average"
 msgstr "میانگین بار"
 
@@ -1033,18 +1069,11 @@ msgstr "میانگین بار"
 msgid "Load state"
 msgstr "وضعیت بارگذاری"
 
-#: src/components/routes/payments.tsx
-msgid "Loading payments..."
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Loading rates..."
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "در حال بارگذاری..."
 
+#: src/components/navbar.tsx
 #: src/components/navbar.tsx
 msgid "Log Out"
 msgstr "خروج"
@@ -1070,33 +1099,24 @@ msgstr "به دنبال جایی برای ایجاد هشدار هستید؟ ر�
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Main PID"
-msgstr ""
+msgstr "PID اصلی"
 
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "مدیریت تنظیمات نمایش و اعلان‌ها."
-
-#: src/components/routes/payments.tsx
-msgid "Manage your hosting providers"
-msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "دستورالعمل‌های راه‌اندازی دستی"
 
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Mark Paid"
-msgstr ""
-
 #. Chart select field. Please try to keep this short.
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Max 1 min"
 msgstr "حداکثر ۱ دقیقه"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1112,27 +1132,23 @@ msgstr "محدودیت حافظه"
 msgid "Memory Peak"
 msgstr "حداکثر حافظه"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 #: src/lib/alerts.ts
 msgid "Memory Usage"
 msgstr "میزان استفاده از حافظه"
 
-#: src/components/routes/system.tsx
-msgid "Memory usage of docker containers"
-msgstr "میزان استفاده از حافظه کانتینرهای داکر"
+#: src/components/routes/system/charts/memory-charts.tsx
+msgid "Memory usage of containers"
+msgstr "میزان استفاده حافظه کانتینرها"
 
+#. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
 msgstr "مدل"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Monthly Total"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "more"
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "Mountpoint"
+msgstr "نقطه اتصال"
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
@@ -1147,11 +1163,11 @@ msgstr "نام"
 msgid "Net"
 msgstr "شبکه"
 
-#: src/components/routes/system.tsx
-msgid "Network traffic of docker containers"
-msgstr "ترافیک شبکه کانتینرهای داکر"
+#: src/components/routes/system/charts/network-charts.tsx
+msgid "Network traffic of containers"
+msgstr "ترافیک شبکه کانتینرها"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
@@ -1163,24 +1179,15 @@ msgstr "ترافیک شبکه رابط‌های عمومی"
 msgid "Network unit"
 msgstr "واحد شبکه"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Next Payment Date"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "خیر"
 
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "No payments added yet. Add a provider first, then add payments."
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "No providers added yet. Add your first hosting provider."
-msgstr ""
+#: src/components/routes/system/zfs-table.tsx
+msgid "No detail data for this pool."
+msgstr "دادهٔ جزئی برای این استخر موجود نیست."
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1205,18 +1212,9 @@ msgstr "هیچ ویژگی S.M.A.R.T برای این دستگاه موجود نی
 msgid "No systems found."
 msgstr "هیچ سیستمی یافت نشد."
 
-#: src/components/payments/ProviderForm.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "None"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#~ msgid "Not specified"
-#~ msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Notes"
-msgstr ""
+msgstr "هیچ‌کدام"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -1224,17 +1222,25 @@ msgstr ""
 msgid "Notifications"
 msgstr "اعلان‌ها"
 
+#: src/lib/alerts.ts
+msgid "Notifications may include recent container log excerpts."
+msgstr "اعلان‌ها ممکن است شامل بخش‌هایی از گزارش‌های اخیر کانتینر باشند."
+
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "پشتیبانی از OAuth 2 / OIDC"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "OK (6+ days)"
-msgstr ""
-
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "در هر بار راه‌اندازی مجدد، سیستم‌های موجود در پایگاه داده با سیستم‌های تعریف شده در فایل مطابقت داده می‌شوند."
+
+#: src/lib/alerts.ts
+msgid "One or more containers are unhealthy"
+msgstr "یک یا چند کانتینر در وضعیت ناسالم هستند"
+
+#: src/lib/alerts.ts
+msgid "One or more services are in a failed state"
+msgstr "یک یا چند سرویس در وضعیت ناموفق هستند"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1245,26 +1251,14 @@ msgstr "یک‌بار مصرف"
 msgid "One-time password"
 msgstr "رمز عبور یک‌بار مصرف"
 
-#: src/components/payments/ProvidersList.tsx
-msgid "Open Billing"
-msgstr ""
-
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "باز کردن منو"
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Optional notes"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Optional. Override the provider URL for this specific payment."
-msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1327,60 +1321,30 @@ msgstr "مکث شده"
 msgid "Paused ({pausedSystemsLength})"
 msgstr "مکث شده ({pausedSystemsLength})"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment added successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#~ msgid "Payment Calendar"
-#~ msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment deleted"
-msgstr ""
-
-#: src/components/payments/PaymentsCalendar.tsx
-#: src/components/payments/PaymentsMobileCards.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Payment marked as paid"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-msgid "Payment Schedule"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment updated successfully"
-msgstr ""
-
-#: src/components/payments/PaymentForm.tsx
-msgid "Payment URL Override"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "payments"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Payments"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Payload format"
+msgstr "فرمت پی‌لود"
 
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Per-core average utilization"
 msgstr "میانگین استفاده در هر هسته"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+msgid "Percent of time the disk is busy with I/O"
+msgstr "درصد زمانی که دیسک مشغول عملیات ورودی/خروجی است"
+
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Percentage of time spent in each state"
 msgstr "درصد زمان صرف شده در هر حالت"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Period"
-msgstr ""
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Permanent"
+msgstr "دائمی"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Persistence"
+msgstr "ماندگاری"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Please <0>configure an SMTP server</0> to ensure alerts are delivered."
@@ -1415,17 +1379,30 @@ msgstr "لطفاً برای دستورالعمل‌ها به <0>مستندات</
 msgid "Please sign in to your account"
 msgstr "لطفاً به حساب کاربری خود وارد شوید"
 
+#: src/components/routes/system/zfs-table.tsx
+msgid "Pool Health"
+msgstr "سلامت استخر"
+
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Pool Usage"
+msgstr "استفاده از استخر"
+
 #: src/components/add-system.tsx
 msgid "Port"
 msgstr "پورت"
+
+#: src/components/containers-table/containers-table-columns.tsx
+msgctxt "Container ports"
+msgid "Ports"
+msgstr "پورت‌ها"
 
 #. Power On Time
 #: src/components/routes/system/smart-table.tsx
 msgid "Power On"
 msgstr "روشن کردن"
 
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Precise utilization at the recorded time"
 msgstr "میزان دقیق استفاده در زمان ثبت شده"
 
@@ -1433,38 +1410,12 @@ msgstr "میزان دقیق استفاده در زمان ثبت شده"
 msgid "Preferred Language"
 msgstr "زبان ترجیحی"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Price"
-#~ msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "فرآیند شروع شد"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Provider"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider added successfully"
-msgstr ""
-
-#: src/components/payments/ProvidersList.tsx
-msgid "Provider deleted"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider Name"
-msgstr ""
-
-#: src/components/payments/ProviderForm.tsx
-msgid "Provider updated successfully"
-msgstr ""
-
-#: src/components/routes/payments.tsx
-#: src/components/routes/payments.tsx
-msgid "Providers"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Public key"
 msgstr ""
 
 #. Use 'Key' if your language requires many more characters
@@ -1472,23 +1423,38 @@ msgstr ""
 msgid "Public Key"
 msgstr "کلید عمومی"
 
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O average queue depth"
+msgid "Queue Depth"
+msgstr "عمق صف"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Quiet Hours"
 msgstr "ساعات آرام"
 
 #. Disk read
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk read
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Read"
 msgstr "خواندن"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/zfs-table.tsx
+msgid "Read errors"
+msgstr "خطاهای خواندن"
+
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Received"
 msgstr "دریافت شد"
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Refresh"
 msgstr "تازه‌سازی"
 
@@ -1530,10 +1496,12 @@ msgstr "راه‌اندازی مجدد"
 msgid "Resume"
 msgstr "ادامه"
 
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgctxt "Root disk label"
 msgid "Root"
-msgstr ""
+msgstr "ریشه"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
@@ -1555,23 +1523,22 @@ msgstr "جزئیات S.M.A.R.T"
 msgid "S.M.A.R.T. Self-Test"
 msgstr "تست خود S.M.A.R.T"
 
+#: src/components/add-system.tsx
+msgid "Save {foo}"
+msgstr "ذخیره {foo}"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "آدرس را با استفاده از کلید Enter یا کاما ذخیره کنید. برای غیرفعال کردن اعلان‌های ایمیلی، خالی بگذارید."
-
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/ProviderForm.tsx
-msgid "Save Changes"
-msgstr ""
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
 msgstr "ذخیره تنظیمات"
 
-#: src/components/add-system.tsx
-msgid "Save system"
-msgstr "ذخیره سیستم"
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saved in the database and does not expire until you disable it."
+msgstr "در پایگاه داده ذخیره شده و تا زمانی که آن را غیرفعال نکنید، منقضی نمی‌شود."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1593,10 +1560,9 @@ msgstr "جستجو"
 msgid "Search for systems or settings..."
 msgstr "جستجو برای سیستم‌ها یا تنظیمات..."
 
-#: src/components/payments/PaymentsTable.tsx
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Search..."
-#~ msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Seconds between pings (default: 60)"
+msgstr "ثانیه بین پینگ‌ها (پیش‌فرض: ۶۰)"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "See <0>notification settings</0> to configure how you receive alerts."
@@ -1606,23 +1572,19 @@ msgstr "برای پیکربندی نحوه دریافت هشدارها، به <0
 msgid "Select {foo}"
 msgstr "انتخاب {foo}"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select country"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send a single heartbeat ping to verify your endpoint is working."
+msgstr "یک پینگ ضربان قلب تکی ارسال کنید تا از کارکرد نقطه پایانی خود اطمینان حاصل کنید."
 
-#: src/components/payments/ProviderForm.tsx
-msgid "Select currency"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send periodic outbound pings to an external monitoring service so you can monitor Beszel without exposing it to the internet."
+msgstr "پینگ‌های خروجی دوره‌ای را به یک سرویس نظارتی خارجی ارسال کنید تا بتوانید Beszel را بدون قرار دادن آن در معرض اینترنت نظارت کنید."
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select provider"
-msgstr ""
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Send test heartbeat"
+msgstr "ارسال ضربان قلب آزمایشی"
 
-#: src/components/payments/PaymentForm.tsx
-msgid "Select server"
-msgstr ""
-
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/network-charts.tsx
 msgid "Sent"
 msgstr "ارسال شد"
 
@@ -1630,15 +1592,11 @@ msgstr "ارسال شد"
 msgid "Serial Number"
 msgstr "شماره سریال"
 
-#: src/components/payments/PaymentForm.tsx
-#: src/components/payments/PaymentsTable.tsx
-msgid "Server"
-msgstr ""
-
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Service Details"
 msgstr "جزئیات سرویس"
 
+#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "سرویس‌ها"
@@ -1647,10 +1605,17 @@ msgstr "سرویس‌ها"
 msgid "Set percentage thresholds for meter colors."
 msgstr "آستانه های درصدی را برای رنگ های متر تنظیم کنید."
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Set the following environment variables on your Beszel hub to enable heartbeat monitoring:"
+msgstr "متغیرهای محیطی زیر را در هاب Beszel خود تنظیم کنید تا نظارت بر ضربان قلب فعال شود:"
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
+#: src/components/navbar.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/layout.tsx
+#: src/components/routes/system/info-bar.tsx
 msgid "Settings"
 msgstr "تنظیمات"
 
@@ -1666,10 +1631,6 @@ msgstr "ورود"
 msgid "SMTP settings"
 msgstr "تنظیمات SMTP"
 
-#: src/components/payments/PaymentsTable.tsx
-#~ msgid "Sort by"
-#~ msgstr ""
-
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "مرتب‌سازی بر اساس"
@@ -1682,6 +1643,7 @@ msgstr "زمان شروع"
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "State"
 msgstr "وضعیت"
@@ -1698,17 +1660,23 @@ msgstr "وضعیت"
 msgid "Sub State"
 msgstr "وضعیت فرعی"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "فضای Swap استفاده شده توسط سیستم"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap Usage"
 msgstr "میزان استفاده از Swap"
+
+#: src/components/mode-toggle.tsx
+#: src/components/mode-toggle.tsx
+msgid "Switch theme"
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/navbar.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1720,7 +1688,11 @@ msgstr "میزان استفاده از Swap"
 msgid "System"
 msgstr "سیستم"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "System fan speeds (RPM)"
+msgstr ""
+
+#: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "میانگین بار سیستم در طول زمان"
 
@@ -1740,6 +1712,11 @@ msgstr "سیستم‌ها ممکن است در یک فایل <0>config.yml</0> �
 msgid "Table"
 msgstr "جدول"
 
+#: src/components/routes/system/info-bar.tsx
+msgctxt "Tabs system layout option"
+msgid "Tabs"
+msgstr "تب‌ها"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Tasks"
 msgstr "وظایف"
@@ -1750,7 +1727,7 @@ msgstr "وظایف"
 msgid "Temp"
 msgstr "دما"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 #: src/lib/alerts.ts
 msgid "Temperature"
 msgstr "دما"
@@ -1759,7 +1736,7 @@ msgstr "دما"
 msgid "Temperature unit"
 msgstr "واحد دما"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
 msgstr "دمای حسگرهای سیستم"
 
@@ -1767,9 +1744,17 @@ msgstr "دمای حسگرهای سیستم"
 msgid "Test <0>URL</0>"
 msgstr "تست <0>آدرس اینترنتی</0>"
 
+#: src/components/routes/settings/heartbeat.tsx
+msgid "Test heartbeat"
+msgstr "تست ضربان قلب"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Test notification sent"
 msgstr "اعلان آزمایشی ارسال شد"
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+msgstr "وضعیت کلی زمانی <0>ok</0> است که همه سیستم‌ها بالا باشند، <1>warn</1> زمانی که هشدارها فعال شوند، و <2>error</2> زمانی که هر سیستمی پایین باشد."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -1779,21 +1764,17 @@ msgstr "سپس وارد بخش پشتیبان شوید و رمز عبور حسا
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "این عمل قابل برگشت نیست. این کار تمام رکوردهای فعلی {name} را برای همیشه از پایگاه داده حذف خواهد کرد."
 
-#: src/components/payments/ProvidersList.tsx
-msgid "This will also delete {count} payment(s) linked to this provider. Are you sure?"
-msgstr ""
-
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "This will permanently delete all selected records from the database."
 msgstr "این کار تمام رکوردهای انتخاب شده را برای همیشه از پایگاه داده حذف خواهد کرد."
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
 msgid "Throughput of {extraFsName}"
 msgstr "توان عملیاتی {extraFsName}"
 
-#: src/components/routes/system.tsx
-msgid "Throughput of root filesystem"
-msgstr "توان عملیاتی سیستم فایل ریشه"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Throughput of ZFS pool {poolName}"
+msgstr "توان عملیاتی استخر ZFS ‏{poolName}"
 
 #: src/components/routes/settings/general.tsx
 msgid "Time format"
@@ -1802,19 +1783,6 @@ msgstr "فرمت زمان"
 #: src/components/routes/settings/notifications.tsx
 msgid "To email(s)"
 msgstr "به ایمیل(ها)"
-
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Today"
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-msgid "Toggle grid"
-msgstr "تغییر نمایش جدول"
-
-#: src/components/mode-toggle.tsx
-msgid "Toggle theme"
-msgstr "تغییر تم"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1848,19 +1816,15 @@ msgstr "داده‌های کل دریافت شده برای هر رابط"
 msgid "Total data sent for each interface"
 msgstr "داده‌های کل ارسال شده برای هر رابط"
 
-#: src/components/payments/PaymentsStats.tsx
-#: src/components/payments/PaymentsStats.tsx
-msgid "Total Servers"
+#: src/components/routes/system/disk-io-sheet.tsx
+msgctxt "Disk I/O"
+msgid "Total time spent on read/write (can exceed 100%)"
 msgstr ""
 
 #. placeholder {0}: data.length
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "کل: {0}"
-
-#: src/components/routes/payments.tsx
-msgid "Track server payments and billing schedules"
-msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -1883,16 +1847,32 @@ msgid "Triggers when 5 minute load average exceeds a threshold"
 msgstr "هنگامی که میانگین بار ۵ دقیقه‌ای از یک آستانه فراتر رود، فعال می‌شود"
 
 #: src/lib/alerts.ts
+msgid "Triggers when a container's health check reports unhealthy"
+msgstr "هنگامی فعال می‌شود که بررسی سلامت کانتینر وضعیت ناسالم را گزارش کند"
+
+#: src/lib/alerts.ts
 msgid "Triggers when any sensor exceeds a threshold"
 msgstr "هنگامی که هر حسگری از یک آستانه فراتر رود، فعال می‌شود"
 
 #: src/lib/alerts.ts
+msgid "Triggers when any systemd service enters the failed state"
+msgstr "هنگامی فعال می‌شود که هر سرویس systemd وارد وضعیت ناموفق شود"
+
+#: src/lib/alerts.ts
 msgid "Triggers when battery charge drops below a threshold"
-msgstr ""
+msgstr "زمانی که شارژ باتری زیر آستانه قرار می‌گیرد، فعال می‌شود"
 
 #: src/lib/alerts.ts
 msgid "Triggers when combined up/down exceeds a threshold"
 msgstr "هنگامی که مجموع بالا/پایین از یک آستانه فراتر رود، فعال می‌شود"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU I/O wait exceeds a threshold"
+msgstr "زمانی فعال می‌شود که انتظار ورودی/خروجی CPU از آستانه عبور کند"
+
+#: src/lib/alerts.ts
+msgid "Triggers when CPU steal time exceeds a threshold"
+msgstr "زمانی فعال می‌شود که زمان ربوده‌شده CPU از آستانه عبور کند"
 
 #: src/lib/alerts.ts
 msgid "Triggers when CPU usage exceeds a threshold"
@@ -1920,9 +1900,13 @@ msgstr "هنگامی که استفاده از هر دیسکی از یک آستا
 msgid "Type"
 msgstr "نوع"
 
+#: src/lib/alerts.ts
+msgid "Unhealthy"
+msgstr "ناسالم"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
-msgstr ""
+msgstr "فایل واحد"
 
 #. Temperature / network units
 #: src/components/routes/settings/general.tsx
@@ -1935,6 +1919,7 @@ msgid "Universal token"
 msgstr "توکن جهانی"
 
 #. Context: Battery state
+#: src/components/routes/system/zfs-table.tsx
 #: src/lib/i18n.ts
 msgid "Unknown"
 msgstr "ناشناخته"
@@ -1945,7 +1930,7 @@ msgid "Unlimited"
 msgstr "نامحدود"
 
 #. Context: System is up
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Up"
 msgstr "فعال"
@@ -1960,6 +1945,7 @@ msgstr "به‌روزرسانی"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/routes/system/smart-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Updated"
 msgstr "به‌روزرسانی شد"
@@ -1972,28 +1958,30 @@ msgstr "هر ۱۰ دقیقه به‌روزرسانی می‌شود."
 msgid "Upload"
 msgstr "آپلود"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/info-bar.tsx
+#: src/components/systems-table/systems-table-columns.tsx
 msgid "Uptime"
 msgstr "آپتایم"
 
-#: src/components/payments/ProviderForm.tsx
-msgid "URL to access billing/payment page for this provider."
-msgstr ""
-
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/gpu-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
 #: src/components/routes/system/cpu-sheet.tsx
 msgid "Usage"
 msgstr "میزان استفاده"
 
-#: src/components/routes/system.tsx
-msgid "Usage of root partition"
-msgstr "میزان استفاده از پارتیشن ریشه"
+#: src/components/routes/system/charts/zfs-charts.tsx
+msgid "Usage of ZFS pool {poolName}"
+msgstr "استفاده از استخر ZFS ‏{poolName}"
 
-#: src/components/charts/mem-chart.tsx
-#: src/components/charts/swap-chart.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/charts/memory-charts.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
+#: src/components/routes/system/zfs-table.tsx
 msgid "Used"
 msgstr "استفاده شده"
 
@@ -2001,6 +1989,11 @@ msgstr "استفاده شده"
 #: src/components/navbar.tsx
 msgid "Users"
 msgstr "کاربران"
+
+#: src/components/routes/system/charts/disk-charts.tsx
+msgctxt "Disk I/O utilization"
+msgid "Utilization"
+msgstr "بهره‌وری"
 
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
@@ -2010,11 +2003,8 @@ msgstr "مقدار"
 msgid "View"
 msgstr "مشاهده"
 
-#: src/components/routes/payments.tsx
-#~ msgid "View all scheduled payments on a calendar"
-#~ msgstr ""
-
 #: src/components/routes/system/cpu-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 #: src/components/routes/system/network-sheet.tsx
 msgid "View more"
 msgstr "مشاهده بیشتر"
@@ -2027,7 +2017,7 @@ msgstr "۲۰۰ هشدار اخیر خود را مشاهده کنید."
 msgid "Visible Fields"
 msgstr "فیلدهای قابل مشاهده"
 
-#: src/components/routes/system.tsx
+#: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "در انتظار رکوردهای کافی برای نمایش"
 
@@ -2043,10 +2033,6 @@ msgstr "می‌خواهد"
 msgid "Warning (%)"
 msgstr "هشدار (%)"
 
-#: src/components/payments/PaymentsCalendar.tsx
-msgid "Warning (2-5 days)"
-msgstr ""
-
 #: src/components/routes/settings/general.tsx
 msgid "Warning thresholds"
 msgstr "آستانه های هشدار"
@@ -2056,8 +2042,12 @@ msgid "Webhook / Push notifications"
 msgstr "اعلان‌های Webhook / Push"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "When enabled, this token allows agents to self-register without prior system creation. Expires after one hour or on hub restart."
-msgstr "هنگامی که فعال است، این توکن به عامل‌ها اجازه خودثبت‌نامی بدون ایجاد سیستم قبلی می‌دهد. پس از یک ساعت یا در راه‌اندازی مجدد هاب منقضی می‌شود."
+msgid "When enabled, this token allows agents to self-register without prior system creation."
+msgstr "هنگامی که فعال باشد، این توکن به عوامل اجازه می‌دهد بدون ایجاد سیستم قبلی، خود را ثبت کنند."
+
+#: src/components/routes/settings/heartbeat.tsx
+msgid "When using POST, each heartbeat includes a JSON payload with system status summary, list of down systems, and triggered alerts."
+msgstr "هنگام استفاده از POST، هر ضربان قلب شامل یک پی‌لود JSON با خلاصه وضعیت سیستم، لیست سیستم‌های پایین و هشدارهای فعال شده است."
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2066,10 +2056,19 @@ msgid "Windows command"
 msgstr "دستور Windows"
 
 #. Disk write
-#: src/components/routes/system.tsx
-#: src/components/routes/system.tsx
+#. Disk write
+#: src/components/routes/system/charts/disk-charts.tsx
+#: src/components/routes/system/charts/zfs-charts.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
+#: src/components/routes/system/disk-io-sheet.tsx
 msgid "Write"
 msgstr "نوشتن"
+
+#: src/components/routes/system/zfs-table.tsx
+msgid "Write errors"
+msgstr "خطاهای نوشتن"
 
 #: src/components/routes/settings/layout.tsx
 msgid "YAML Config"
@@ -2088,3 +2087,4 @@ msgstr "بله"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "تنظیمات کاربری شما به‌روزرسانی شد."
+

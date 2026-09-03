@@ -1,65 +1,70 @@
 package systems
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"strings"
 	"time"
 
-	"github.com/fxamacker/cbor/v2"
-	"github.com/henrygd/beszel/internal/common"
 	"github.com/henrygd/beszel/internal/entities/smart"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
-	"golang.org/x/crypto/ssh"
 )
 
-// FetchSmartDataFromAgent fetches SMART data from the agent
-func (sys *System) FetchSmartDataFromAgent() (map[string]smart.SmartData, error) {
-	// fetch via websocket
-	if sys.WsConn != nil && sys.WsConn.IsConnected() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		return sys.WsConn.RequestSmartData(ctx)
-	}
-	// fetch via SSH
-	var result map[string]smart.SmartData
-	err := sys.runSSHOperation(5*time.Second, 1, func(session *ssh.Session) (bool, error) {
-		stdout, err := session.StdoutPipe()
-		if err != nil {
-			return false, err
-		}
-		stdin, stdinErr := session.StdinPipe()
-		if stdinErr != nil {
-			return false, stdinErr
-		}
-		if err := session.Shell(); err != nil {
-			return false, err
-		}
-		req := common.HubRequest[any]{Action: common.GetSmartData}
-		_ = cbor.NewEncoder(stdin).Encode(req)
-		_ = stdin.Close()
-		var resp common.AgentResponse
-		if err := cbor.NewDecoder(stdout).Decode(&resp); err != nil {
-			return false, err
-		}
-		result = resp.SmartData
-		return false, nil
-	})
-	return result, err
+type smartFetchState struct {
+	LastAttempt int64
+	Successful  bool
 }
 
 // FetchAndSaveSmartDevices fetches SMART data from the agent and saves it to the database
 func (sys *System) FetchAndSaveSmartDevices() error {
-	smartData, err := sys.FetchSmartDataFromAgent()
-	if err != nil || len(smartData) == 0 {
+	response, err := sys.FetchSmartDataFromAgent()
+	if err != nil {
+		sys.recordSmartFetchResult(err, 0)
 		return err
 	}
-	return sys.saveSmartDevices(smartData)
+	err = sys.saveSmartDevices(response.Data, response.Complete)
+	sys.recordSmartFetchResult(err, len(response.Data))
+	return err
 }
 
-// saveSmartDevices saves SMART device data to the smart_devices collection
-func (sys *System) saveSmartDevices(smartData map[string]smart.SmartData) error {
+// recordSmartFetchResult stores a cooldown entry for the SMART interval and marks
+// whether the last fetch produced any devices, so failed setup can retry on reconnect.
+func (sys *System) recordSmartFetchResult(err error, deviceCount int) {
+	if sys.manager == nil {
+		return
+	}
+	interval := sys.smartFetchInterval()
+	success := err == nil && deviceCount > 0
+	if sys.manager.hub != nil {
+		sys.manager.hub.Logger().Info("SMART fetch result", "system", sys.Id, "success", success, "devices", deviceCount, "interval", interval.String(), "err", err)
+	}
+	sys.manager.smartFetchMap.Set(sys.Id, smartFetchState{LastAttempt: time.Now().UnixMilli(), Successful: success}, interval+time.Minute)
+}
+
+// shouldFetchSmart returns true when there is no active SMART cooldown entry for this system.
+func (sys *System) shouldFetchSmart() bool {
+	if sys.manager == nil {
+		return true
+	}
+	state, ok := sys.manager.smartFetchMap.GetOk(sys.Id)
+	if !ok {
+		return true
+	}
+	return !time.UnixMilli(state.LastAttempt).Add(sys.smartFetchInterval()).After(time.Now())
+}
+
+// smartFetchInterval returns the agent-provided SMART interval or the default when unset.
+func (sys *System) smartFetchInterval() time.Duration {
+	if sys.smartInterval > 0 {
+		return sys.smartInterval
+	}
+	return time.Hour
+}
+
+// saveSmartDevices saves SMART device data and, after a complete refresh,
+// removes rows for devices that are no longer reported.
+func (sys *System) saveSmartDevices(smartData map[string]smart.SmartData, complete bool) error {
 	if len(smartData) == 0 {
 		return nil
 	}
@@ -70,20 +75,49 @@ func (sys *System) saveSmartDevices(smartData map[string]smart.SmartData) error 
 		return err
 	}
 
-	for deviceKey, device := range smartData {
-		if err := sys.upsertSmartDeviceRecord(collection, deviceKey, device); err != nil {
-			return err
-		}
+	currentIDs := make(map[string]struct{}, len(smartData))
+	for deviceKey := range smartData {
+		currentIDs[makeStableHashId(sys.Id, deviceKey)] = struct{}{}
 	}
 
-	return nil
+	err = hub.RunInTransaction(func(txApp core.App) error {
+		if complete {
+			existing, err := txApp.FindRecordsByFilter(
+				collection,
+				"system = {:system}",
+				"",
+				0,
+				0,
+				dbx.Params{"system": sys.Id},
+			)
+			if err != nil {
+				return err
+			}
+			for _, record := range existing {
+				if _, ok := currentIDs[record.Id]; ok {
+					continue
+				}
+				if err := txApp.Delete(record); err != nil {
+					return err
+				}
+			}
+		}
+
+		for deviceKey, device := range smartData {
+			if err := sys.upsertSmartDeviceRecord(txApp, collection, deviceKey, device); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	return err
 }
 
-func (sys *System) upsertSmartDeviceRecord(collection *core.Collection, deviceKey string, device smart.SmartData) error {
-	hub := sys.manager.hub
+func (sys *System) upsertSmartDeviceRecord(app core.App, collection *core.Collection, deviceKey string, device smart.SmartData) error {
 	recordID := makeStableHashId(sys.Id, deviceKey)
 
-	record, err := hub.FindRecordById(collection, recordID)
+	record, err := app.FindRecordById(collection, recordID)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
@@ -111,7 +145,7 @@ func (sys *System) upsertSmartDeviceRecord(collection *core.Collection, deviceKe
 	record.Set("cycles", powerCycles)
 	record.Set("attributes", device.Attributes)
 
-	return hub.SaveNoValidate(record)
+	return app.SaveNoValidate(record)
 }
 
 // extractPowerMetrics extracts power on hours and power cycles from SMART attributes

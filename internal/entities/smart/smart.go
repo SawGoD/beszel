@@ -130,8 +130,21 @@ type SummaryInfo struct {
 }
 
 type AtaSmartAttributes struct {
-	// Revision int                 `json:"revision"`
 	Table []AtaSmartAttribute `json:"table"`
+}
+
+type AtaDeviceStatistics struct {
+	Pages []AtaDeviceStatisticsPage `json:"pages"`
+}
+
+type AtaDeviceStatisticsPage struct {
+	Number uint8                      `json:"number"`
+	Table  []AtaDeviceStatisticsEntry `json:"table"`
+}
+
+type AtaDeviceStatisticsEntry struct {
+	Name  string `json:"name"`
+	Value *int64 `json:"value,omitempty"`
 }
 
 type AtaSmartAttribute struct {
@@ -343,7 +356,8 @@ type SmartInfoForSata struct {
 	SmartStatus SmartStatusInfo `json:"smart_status"`
 	// AtaSmartData                 AtaSmartData                 `json:"ata_smart_data"`
 	// AtaSctCapabilities           AtaSctCapabilities           `json:"ata_sct_capabilities"`
-	AtaSmartAttributes AtaSmartAttributes `json:"ata_smart_attributes"`
+	AtaSmartAttributes  AtaSmartAttributes `json:"ata_smart_attributes"`
+	AtaDeviceStatistics json.RawMessage    `json:"ata_device_statistics"`
 	// PowerOnTime                  PowerOnTimeInfo              `json:"power_on_time"`
 	// PowerCycleCount              uint16                       `json:"power_cycle_count"`
 	Temperature TemperatureInfo `json:"temperature"`
@@ -480,7 +494,7 @@ type SmartInfoForNvme struct {
 	FirmwareVersion string           `json:"firmware_version"`
 	// NVMePCIVendor                 NVMePCIVendor                 `json:"nvme_pci_vendor"`
 	// NVMeIEEEOUIIdentifier         uint32                        `json:"nvme_ieee_oui_identifier"`
-	// NVMeTotalCapacity             uint64                        `json:"nvme_total_capacity"`
+	NVMeTotalCapacity uint64 `json:"nvme_total_capacity"`
 	// NVMeUnallocatedCapacity       uint64                        `json:"nvme_unallocated_capacity"`
 	// NVMeControllerID              uint16                        `json:"nvme_controller_id"`
 	// NVMeVersion                   VersionStringInfo             `json:"nvme_version"`
@@ -515,6 +529,13 @@ type SmartData struct {
 	DiskType        string            `json:"dt,omitempty" cbor:"7,keyasint,omitempty"`
 	Temperature     uint8             `json:"t,omitempty" cbor:"8,keyasint,omitempty"`
 	Attributes      []*SmartAttribute `json:"a,omitempty" cbor:"9,keyasint,omitempty"`
+}
+
+// SmartDataResponse contains the collected data and whether every discovered
+// device was collected. Older agents omit Complete, so hubs must not prune from it.
+type SmartDataResponse struct {
+	Data     map[string]SmartData `json:"data" cbor:"0,keyasint"`
+	Complete bool                 `json:"complete" cbor:"1,keyasint,omitempty"` // Whether every discovered device was collected
 }
 
 type SmartAttribute struct {

@@ -1,3 +1,321 @@
+## 0.19.0
+
+- **Potential breaking change:** Agents now verify HTTPS certificates. If an agent connects to a hub using a self-signed or otherwise untrusted certificate, configure `CA_CERT_FILE` with the appropriate CA certificate or the connection will be rejected.
+
+- Add ZFS pool and dataset monitoring (#2209)
+
+- Add container health alerts with log excerpts in notifications (#2225)
+
+- Add alerts for failed systemd services (#2173)
+
+- Add alerts for CPU I/O wait and steal time (#2249)
+
+- Add cumulative disk read and write totals to the Disk I/O sheet (#2179)
+
+- Add Greek and Uzbek translations (#2034)
+
+- Add custom root disk names and sort disks alphabetically (#2006)
+
+- Improve alert security by enforcing system ownership and blocking additional internal notification URL ranges
+
+- Improve ATA SMART warnings for critical attributes (#2275)
+
+- Fix a hub crash caused by concurrent SSH client shutdown (#2277)
+
+- Fix host CPU and memory totals when Docker runs in a VM on macOS or Windows (#2272)
+
+- Fix multi-line `TOKEN_FILE` loading (#2276)
+
+- Fix QNAP MD RAID arrays being incorrectly reported as failed (#2065)
+
+- Fix Intel GPU power data disappearing between samples (#2256)
+
+- Fix swap usage calculations to include cached swap (#2267)
+
+- Fix agent payload failures caused by invalid UTF-8 in battery names (#2241)
+
+- Fix uptime reporting inside Linux containers (#2180)
+
+- Fix fan discovery on legacy hwmon devices (#2238)
+
+- Fix CPU model detection on MIPS systems (#2138)
+
+- Fix machine ID generation on FreeBSD and pfSense installations (#2274)
+
+- Fix agent environment variable updates during reinstall (#2107)
+
+- Fix the install script reporting the wrong listen address after upgrades (#2243)
+
+- Fix load average precision on macOS, BSD, and Windows (#2245)
+
+- Update the Go version and Go dependencies
+
+## 0.18.8
+
+- Add multi-battery monitoring
+
+- Add Linux fan RPM monitoring (#2032)
+
+- Add Intel GPU power monitoring through sysfs and Intel Arc GPU monitoring through `nvtop` (#2020, #2223)
+
+- Add CPU and ACPI thermal zone monitoring on FreeBSD (#2227)
+
+- Add popup-free OAuth login when `OAUTH_DISABLE_POPUP=true` (#2171)
+
+- Add a `:slim` NVIDIA agent container image (#2002, #2003)
+
+- Add ARMv5 and ARMv6 builds, and ARM64 support for the NVIDIA agent image (#1884, #2207)
+
+- Improve SMART device detection for shared paths and explicit device type hints (#2102)
+
+- Improve agent startup after OPNsense and pfSense reboots (#2089, #2214)
+
+- Improve SSH-pull agent reconnection when connections silently fail (#2126)
+
+- Improve update security with checksum verification and archive path containment
+
+- Add public key display to universal token settings (#2028)
+
+- Add support for showing all IP and port mappings for containers bound to multiple IPs (#1993)
+
+- Fix stale SMART records when drives are no longer reported (#2178)
+
+- Fix Docker memory charts and container statistics after malformed or backwards Docker counters (#2027, #2066, #2205)
+
+- Fix memory calculation underflow and Linux battery percentages (#1978, #1957)
+
+- Improve connection source IP detection behind proxies (#1973)
+
+- Update Go and JavaScript dependencies
+
+## 0.18.7
+
+- Add more disk I/O metrics (utilization, read/write time, await, queue depth) (#1866)
+
+- Add ability to copy alerts between systems (#1853)
+
+- Add `SENSORS_TIMEOUT` environment variable (#1871)
+
+- Replace `distatus/battery` with an internal implementation (#1872)
+
+- Restrict universal token API to non-superuser accounts (#1870)
+
+- Fix macOS ARM64 crashes by upgrading `gopsutil` to v4.26.3 (#1881, #796)
+
+- Fix text size for system names in grid view (#1860)
+
+- Fix NVMe capacity reporting for Apple SSDs (#1873)
+
+- Fix Windows root disk detection when the executable is not on the root disk (#1863)
+
+- Fix nested virtual filesystem inclusion in Docker when mounting host root (#1859)
+
+- Fix OPNsense installation persistence by using the daemon user (#1880)
+
+- Upgrade JS dependencies with dependabot security alerts (#1882)
+
+- Upgrade PocketBase to latest version
+
+## 0.18.6
+
+- Add apple-touch-icon link to index.html (#1850)
+
+- Fix UI bug where charts did not display 1m max until next update
+
+- Fix regression in partition discovery on Docker (#1847)
+
+- Fix agent detection of Podman when using socket proxy (#1846)
+
+- Fix NVML GPU collection being disabled when `nvidia-smi` is not in PATH (#1849)
+
+- Reset SMART interval on agent reconnect if the agent hasn't collected SMART data, allowing config changes to take effect immediately
+
+## 0.18.5
+
+- Add "update available" notification in hub web UI with `CHECK_UPDATES=true` (#1830)
+
+- Add Linux mdraid health monitoring (#1750)
+
+- Add ports column to containers table (#1481)
+
+- Allow Linux systemd timer monitoring with `SERVICE_PATTERNS` (#1820)
+
+- Add ZFS ARC support on FreeBSD
+
+- Add optional tabs layout on web UI system page (#1513)
+
+- Improve web UI performance and mobile styles
+
+- Improve disk discovery and I/O device matching (#1811, #1772)
+
+- Improve (likely fix) status alert reliability (#1519)
+
+- Fix temperature collection blocking agent stats on some systems (#1839)
+
+- Fix `SMART_INTERVAL` consistency across agent reconnects (#1800)
+
+- Fix container health status for Podman (#1475)
+
+- Fix disk usage averaging for extra disk alerts using historical records (#1801)
+
+- Fix bandwidth alert computation from byte-per-second source (#1770)
+
+- Fix 1m chart view leading to inflated Docker network IO during use
+
+- Fix light flashes when refreshing in dark mode (#1832)
+
+- Fix daylight saving time offset handling in daily quiet hours (#1827)
+
+- Fix potential nil pointer panics in hub realtime worker and websocket ping
+
+- Fix NIC auto-filter bypass when explicitly whitelisted (#1805)
+
+- Fix ATA device statistics handling for negative values (#1791)
+
+- Fix AMD GPU sysfs filesize misreporting workaround (#1799)
+
+- Fix macOS agent path lookup for `macmon` (#1746)
+
+- Update Go version and dependencies
+
+## 0.18.4
+
+- Add outbound heartbeat monitoring to external services (#1729)
+
+- Add experimental GPU monitoring for Apple Silicon. (#1747, #1746)
+
+- Add `nvtop` integration for GPU monitoring. (#1508)
+
+- Add `GPU_COLLECTOR` environment variable to manually specify the GPU collector(s).
+
+- Add eMMC health monitoring via sysfs. (#1736)
+
+- Add uptime to systems table. (#1719)
+
+- Add `DISABLE_SSH` environment variable to disable SSH agent functionality. (#1061)
+
+- Add `fingerprint` command to the agent. (#1726)
+
+- Add precise value entry for alerts via text input. (#1718)
+
+- Include GTT memory in AMD GPU metrics and improve device name lookup. (#1569)
+
+- Improve multiplexed logs detection for Podman. (#1755)
+
+- Harden against Docker API path traversal.
+
+- Fix issue where the agent could report incorrect root disk I/O when running in Docker. (#1737)
+
+- Retry Docker check on non-200 HTTP response. (#1754)
+
+- Fix race issue with meter threshold colors.
+
+- Update Go version and dependencies.
+
+- Add `InstallMethod` parameter to Windows install script.
+
+## 0.18.3
+
+- Add experimental sysfs AMD GPU collector. (#737, #1569)
+
+- Update LibreHardwareMonitorLib to 0.9.5. (#1697)
+
+- Improve container network stats accuracy.
+
+- Fix `SHARE_ALL_SYSTEMS` for system_details, smart_devices, and systemd_services. (#1660)
+
+- Parse ATA device statistics for temperature and future metrics. (#1689)
+
+- Add `SMART_DEVICES_SEPARATOR` environment variable and allow drives with the same name to be added with different types (e.g. RAID controllers). (#1655)
+
+- Add tooltips for navbar buttons. (#1636)
+
+- Add icon button for mobile use. (#1687)
+
+- Add tooltip to system name in systems table. (#1640)
+
+- Improve CJK truncation in UI.
+
+- Fix container uptime sorting edge case. (#1696)
+
+- Remove stale systemd services from tracking after deletion. (#1594)
+
+- Apply SELinux context after binary replacement. (#1678)
+
+- Update honeypot field name and autofill ignores. (#1011)
+
+- Write health_file to `/dev/shm` instead of `/tmp` if available. (#1455)
+
+- Don't force lowercase text for active alerts. (#1682)
+
+- Ensure battery current charge doesn't exceed full capacity. (#1668)
+
+- Increase `smartctl --scan` timeout to 10 seconds. (#1465)
+
+- Use name-only matching for unique S.M.A.R.T. devices. (#1655)
+
+- Fix smartctlArgs call to use hasExistingData flag. (#1645)
+
+- Ignore alt key combinations when navigating systems with arrow keys. (#1698)
+
+- Update Go dependencies
+
+## 0.18.2
+
+- Add separate dynamically linked glibc build for Linux. (#1618)
+
+- Fix GPU ID collision between Intel and NVIDIA collectors. (#1522)
+
+- Only hide GPU engine graph if entire usage is 0%. (#1624)
+
+- Add Jetson tegrastats regex support for pre-Jetpack 5 versions. (#1631)
+
+- Improve Indonesian translations. (#1625)
+
+## 0.18.1
+
+- Fix bug in 0.18.0 where all containers were cleared from the "All Containers" page when any system returned no containers.
+
+## 0.18.0
+
+- Add experimental NVML GPU collector. (#1522, #1587)
+
+- Add low battery alerts. (#1507)
+
+- Add battery charge to systems table.
+
+- Add option to make universal token permanent. (#1097, #1614)
+
+- Add `--url` and `--token` command line arguments to the agent. (#1524)
+
+- Collect S.M.A.R.T. data in the background every hour.
+
+- Add `SMART_INTERVAL` environment variable to customize S.M.A.R.T. data collection interval.
+
+- Collect system distribution and architecture.
+
+- Add `system_details` collection to store infrequently updated system information.
+
+- Improve S.M.A.R.T. device path lookup for NVMe devices. (#1504)
+
+- Use origin country flags for Spanish, Portuguese, English languages. (#1571)
+
+- Raise `smartctl` timeout to 15 seconds. (#1465)
+
+- Skip known non-unique product UUID when generating fingerprints. (#1556)
+
+- Fix container logs decoding for raw streams. (#1535)
+
+- Fix capacity sorting in S.M.A.R.T. table. (#1551)
+
+- Fix loader visibility when no systems are present. (#1511)
+
+- Rename login honeypot field to prevent password manager autofill (#1011).
+
+- Add Serbian and Bahasa Indonesia translations.
+
+- Update Go dependencies.
+
 ## 0.17.0
 
 - Add quiet hours to silence alerts during specific time periods. (#265)
@@ -282,4 +600,4 @@ Note that the default memory calculation changed in this release, which may caus
 
 ## Older
 
-Release notes are available at https://github.com/henrygd/beszel/releases
+Release notes are available at <https://github.com/henrygd/beszel/releases>

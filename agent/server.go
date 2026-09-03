@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/henrygd/beszel"
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/common"
-	"github.com/henrygd/beszel/internal/entities/smart"
 	"github.com/henrygd/beszel/internal/entities/system"
-	"github.com/henrygd/beszel/internal/entities/systemd"
 
 	"github.com/blang/semver"
 	"github.com/fxamacker/cbor/v2"
@@ -30,14 +29,14 @@ type ServerOptions struct {
 	Keys    []gossh.PublicKey // SSH public keys for authentication
 }
 
-// hubVersions caches hub versions by session ID to avoid repeated parsing.
-var hubVersions map[string]semver.Version
-
 // StartServer starts the SSH server with the provided options.
 // It configures the server with secure defaults, sets up authentication,
 // and begins listening for connections. Returns an error if the server
 // is already running or if there's an issue starting the server.
 func (a *Agent) StartServer(opts ServerOptions) error {
+	if disableSSH, _ := utils.GetEnv("DISABLE_SSH"); disableSSH == "true" {
+		return errors.New("SSH disabled")
+	}
 	if a.server != nil {
 		return errors.New("server already started")
 	}
@@ -97,24 +96,15 @@ func (a *Agent) StartServer(opts ServerOptions) error {
 	return a.server.Serve(ln)
 }
 
-// getHubVersion retrieves and caches the hub version for a given session.
-// It extracts the version from the SSH client version string and caches
-// it to avoid repeated parsing. Returns a zero version if parsing fails.
-func (a *Agent) getHubVersion(sessionId string, sessionCtx ssh.Context) semver.Version {
-	if hubVersions == nil {
-		hubVersions = make(map[string]semver.Version, 1)
-	}
-	hubVersion, ok := hubVersions[sessionId]
-	if ok {
-		return hubVersion
-	}
-	// Extract hub version from SSH client version
+// getHubVersion extracts the hub version from the SSH client version string
+// for a given session. Returns a zero version if parsing fails.
+func (a *Agent) getHubVersion(sessionCtx ssh.Context) semver.Version {
 	clientVersion := sessionCtx.Value(ssh.ContextKeyClientVersion)
 	if versionStr, ok := clientVersion.(string); ok {
-		hubVersion, _ = extractHubVersion(versionStr)
+		hubVersion, _ := extractHubVersion(versionStr)
+		return hubVersion
 	}
-	hubVersions[sessionId] = hubVersion
-	return hubVersion
+	return semver.Version{}
 }
 
 // handleSession handles an incoming SSH session by gathering system statistics
@@ -125,9 +115,8 @@ func (a *Agent) handleSession(s ssh.Session) {
 	a.connectionManager.eventChan <- SSHConnect
 
 	sessionCtx := s.Context()
-	sessionID := sessionCtx.SessionID()
 
-	hubVersion := a.getHubVersion(sessionID, sessionCtx)
+	hubVersion := a.getHubVersion(sessionCtx)
 
 	// Legacy one-shot behavior for older hubs
 	if hubVersion.LT(beszel.MinVersionAgentResponse) {
@@ -165,20 +154,9 @@ func (a *Agent) handleSSHRequest(w io.Writer, req *common.HubRequest[cbor.RawMes
 	}
 
 	// responder that writes AgentResponse to stdout
+	// Uses legacy typed fields for backward compatibility with <= 0.17
 	sshResponder := func(data any, requestID *uint32) error {
-		response := common.AgentResponse{Id: requestID}
-		switch v := data.(type) {
-		case *system.CombinedData:
-			response.SystemData = v
-		case string:
-			response.String = &v
-		case map[string]smart.SmartData:
-			response.SmartData = v
-		case systemd.ServiceDetails:
-			response.ServiceInfo = v
-		default:
-			response.Error = fmt.Sprintf("unsupported response type: %T", data)
-		}
+		response := newAgentResponse(data, requestID)
 		return cbor.NewEncoder(w).Encode(response)
 	}
 
@@ -202,7 +180,7 @@ func (a *Agent) handleSSHRequest(w io.Writer, req *common.HubRequest[cbor.RawMes
 
 // handleLegacyStats serves the legacy one-shot stats payload for older hubs
 func (a *Agent) handleLegacyStats(w io.Writer, hubVersion semver.Version) error {
-	stats := a.gatherStats(60_000)
+	stats := a.gatherStats(common.DataRequestOptions{CacheTimeMs: defaultDataCacheTimeMs})
 	return a.writeToSession(w, stats, hubVersion)
 }
 
@@ -248,11 +226,11 @@ func ParseKeys(input string) ([]gossh.PublicKey, error) {
 // and finally defaults to ":45876".
 func GetAddress(addr string) string {
 	if addr == "" {
-		addr, _ = GetEnv("LISTEN")
+		addr, _ = utils.GetEnv("LISTEN")
 	}
 	if addr == "" {
 		// Legacy PORT environment variable support
-		addr, _ = GetEnv("PORT")
+		addr, _ = utils.GetEnv("PORT")
 	}
 	if addr == "" {
 		return ":45876"
@@ -268,7 +246,7 @@ func GetAddress(addr string) string {
 // It checks the NETWORK environment variable first, then infers from
 // the address format: addresses starting with "/" are "unix", others are "tcp".
 func GetNetwork(addr string) string {
-	if network, ok := GetEnv("NETWORK"); ok && network != "" {
+	if network, ok := utils.GetEnv("NETWORK"); ok && network != "" {
 		return network
 	}
 	if strings.HasPrefix(addr, "/") {
@@ -287,6 +265,5 @@ func (a *Agent) StopServer() error {
 	slog.Info("Stopping SSH server")
 	_ = a.server.Close()
 	a.server = nil
-	a.connectionManager.eventChan <- SSHDisconnect
 	return nil
 }

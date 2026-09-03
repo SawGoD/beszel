@@ -2,6 +2,7 @@ package agent
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,19 +15,30 @@ import (
 	"time"
 
 	"github.com/henrygd/beszel"
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/common"
-	"github.com/henrygd/beszel/internal/entities/smart"
-	"github.com/henrygd/beszel/internal/entities/system"
-	"github.com/henrygd/beszel/internal/entities/systemd"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/lxzan/gws"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/net/proxy"
 )
 
 const (
 	wsDeadline = 70 * time.Second
 )
+
+type caCertFileError struct {
+	err error
+}
+
+func (e *caCertFileError) Error() string {
+	return e.err.Error()
+}
+
+func (e *caCertFileError) Unwrap() error {
+	return e.err
+}
 
 // WebSocketClient manages the WebSocket connection between the agent and hub.
 // It handles authentication, message routing, and connection lifecycle management.
@@ -41,12 +53,13 @@ type WebSocketClient struct {
 	hubRequest         *common.HubRequest[cbor.RawMessage] // Reusable request structure for message parsing
 	lastConnectAttempt time.Time                           // Timestamp of last connection attempt
 	hubVerified        bool                                // Whether the hub has been cryptographically verified
+	tlsConfig          *tls.Config                         // Optional TLS configuration with custom CA certificates
 }
 
 // newWebSocketClient creates a new WebSocket client for the given agent.
 // It reads configuration from environment variables and validates the hub URL.
 func newWebSocketClient(agent *Agent) (client *WebSocketClient, err error) {
-	hubURLStr, exists := GetEnv("HUB_URL")
+	hubURLStr, exists := utils.GetEnv("HUB_URL")
 	if !exists {
 		return nil, errors.New("HUB_URL environment variable not set")
 	}
@@ -54,11 +67,15 @@ func newWebSocketClient(agent *Agent) (client *WebSocketClient, err error) {
 	client = &WebSocketClient{}
 
 	client.hubURL, err = url.Parse(hubURLStr)
-	if err != nil {
-		return nil, errors.New("invalid hub URL")
+	if err != nil || client.hubURL.Host == "" {
+		return nil, fmt.Errorf("invalid HUB_URL %q: must include scheme and host (e.g. http://hub.example.com:8090)", hubURLStr)
 	}
 	// get registration token
 	client.token, err = getToken()
+	if err != nil {
+		return nil, err
+	}
+	client.tlsConfig, err = getTLSConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +92,12 @@ func newWebSocketClient(agent *Agent) (client *WebSocketClient, err error) {
 // If neither is set, it returns an error.
 func getToken() (string, error) {
 	// get token from env var
-	token, _ := GetEnv("TOKEN")
+	token, _ := utils.GetEnv("TOKEN")
 	if token != "" {
 		return token, nil
 	}
 	// get token from file
-	tokenFile, _ := GetEnv("TOKEN_FILE")
+	tokenFile, _ := utils.GetEnv("TOKEN_FILE")
 	if tokenFile == "" {
 		return "", errors.New("must set TOKEN or TOKEN_FILE")
 	}
@@ -88,7 +105,52 @@ func getToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(tokenBytes)), nil
+	return parseTokenFile(string(tokenBytes), tokenFile)
+}
+
+// parseTokenFile reads a single token from TOKEN_FILE.
+// Blank lines and comments are ignored. Multiple tokens are rejected because
+// the agent supports only one outbound hub connection.
+func parseTokenFile(contents, path string) (string, error) {
+	var token string
+	for line := range strings.Lines(contents) {
+		line = strings.TrimSpace(line)
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if token != "" {
+			return "", fmt.Errorf("%s must contain a single token", path)
+		}
+		token = line
+	}
+	// An empty file keeps returning an empty token, as before: the caller decides
+	// what to do about it.
+	return token, nil
+}
+
+// getTLSConfig returns a TLS configuration containing the system certificate
+// pool plus any certificates configured through CA_CERT_FILE. A nil config lets
+// gws use Go's default TLS configuration and system roots.
+func getTLSConfig() (*tls.Config, error) {
+	caCertFile, _ := utils.GetEnv("CA_CERT_FILE")
+	if caCertFile == "" {
+		return nil, nil
+	}
+
+	caCertPEM, err := os.ReadFile(caCertFile)
+	if err != nil {
+		return nil, &caCertFileError{fmt.Errorf("read CA_CERT_FILE %q: %w", caCertFile, err)}
+	}
+
+	rootCAs, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, &caCertFileError{fmt.Errorf("load system CA certificate pool: %w", err)}
+	}
+	if !rootCAs.AppendCertsFromPEM(caCertPEM) {
+		return nil, &caCertFileError{fmt.Errorf("CA_CERT_FILE %q does not contain any valid PEM certificates", caCertFile)}
+	}
+
+	return &tls.Config{RootCAs: rootCAs}, nil
 }
 
 // getOptions returns the WebSocket client options, creating them if necessary.
@@ -106,13 +168,21 @@ func (client *WebSocketClient) getOptions() *gws.ClientOption {
 	}
 	client.hubURL.Path = path.Join(client.hubURL.Path, "api/beszel/agent-connect")
 
+	// make sure BESZEL_AGENT_ALL_PROXY works (GWS only checks ALL_PROXY)
+	if val := os.Getenv("BESZEL_AGENT_ALL_PROXY"); val != "" {
+		os.Setenv("ALL_PROXY", val)
+	}
+
 	client.options = &gws.ClientOption{
 		Addr:      client.hubURL.String(),
-		TlsConfig: &tls.Config{InsecureSkipVerify: true},
+		TlsConfig: client.tlsConfig,
 		RequestHeader: http.Header{
 			"User-Agent": []string{getUserAgent()},
 			"X-Token":    []string{client.token},
 			"X-Beszel":   []string{beszel.Version},
+		},
+		NewDialer: func() (gws.Dialer, error) {
+			return proxy.FromEnvironment(), nil
 		},
 	}
 	return client.options
@@ -200,8 +270,8 @@ func (client *WebSocketClient) handleAuthChallenge(msg *common.HubRequest[cbor.R
 	}
 
 	if authRequest.NeedSysInfo {
-		response.Name, _ = GetEnv("SYSTEM_NAME")
-		response.Hostname = client.agent.systemInfo.Hostname
+		response.Name, _ = utils.GetEnv("SYSTEM_NAME")
+		response.Hostname = client.agent.systemDetails.Hostname
 		serverAddr := client.agent.connectionManager.serverOptions.Addr
 		_, response.Port, _ = net.SplitHostPort(serverAddr)
 	}
@@ -259,40 +329,16 @@ func (client *WebSocketClient) sendMessage(data any) error {
 	return err
 }
 
-// sendResponse sends a response with optional request ID for the new protocol
+// sendResponse sends a response with optional request ID.
+// For ID-based requests, we must populate legacy typed fields for backward
+// compatibility with older hubs (<= 0.17) that don't read the generic Data field.
 func (client *WebSocketClient) sendResponse(data any, requestID *uint32) error {
 	if requestID != nil {
-		// New format with ID - use typed fields
-		response := common.AgentResponse{
-			Id: requestID,
-		}
-
-		// Set the appropriate typed field based on data type
-		switch v := data.(type) {
-		case *system.CombinedData:
-			response.SystemData = v
-		case *common.FingerprintResponse:
-			response.Fingerprint = v
-		case string:
-			response.String = &v
-		case map[string]smart.SmartData:
-			response.SmartData = v
-		case systemd.ServiceDetails:
-			response.ServiceInfo = v
-		// case []byte:
-		// 	response.RawBytes = v
-		// case string:
-		// 	response.RawBytes = []byte(v)
-		default:
-			// For any other type, convert to error
-			response.Error = fmt.Sprintf("unsupported response type: %T", data)
-		}
-
+		response := newAgentResponse(data, requestID)
 		return client.sendMessage(response)
-	} else {
-		// Legacy format - send data directly
-		return client.sendMessage(data)
 	}
+	// Legacy format - send data directly
+	return client.sendMessage(data)
 }
 
 // getUserAgent returns one of two User-Agent strings based on current time.

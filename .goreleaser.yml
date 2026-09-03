@@ -31,12 +31,16 @@ builds:
         goarch: arm64
       - goos: freebsd
         goarch: arm
+      - goos: darwin
+        goarch: arm
 
   - id: beszel-agent
     binary: beszel-agent
     main: internal/cmd/agent/agent.go
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/henrygd/beszel/internal/ghupdate.buildGOARM={{ .Arm }}
     goos:
       - linux
       - darwin
@@ -52,6 +56,10 @@ builds:
       - mipsle
       - mips
       - ppc64le
+    goarm:
+      - "5"
+      - "6"
+      - "7"
     gomips:
       - hardfloat
       - softfloat
@@ -72,9 +80,23 @@ builds:
       - goos: windows
         goarch: arm
       - goos: darwin
+        goarch: arm
+      - goos: darwin
         goarch: riscv64
       - goos: windows
         goarch: riscv64
+
+  - id: beszel-agent-linux-amd64-glibc
+    binary: beszel-agent
+    main: internal/cmd/agent/agent.go
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -tags=glibc
+    goos:
+      - linux
+    goarch:
+      - amd64
 
 archives:
   - id: beszel-agent
@@ -85,9 +107,19 @@ archives:
       {{ .Binary }}_
       {{- .Os }}_
       {{- .Arch }}
+      {{- if ne .Arm "6" }}{{ with .Arm }}v{{ . }}{{ end }}{{ end }}
     format_overrides:
       - goos: windows
         formats: [zip]
+
+  - id: beszel-agent-linux-amd64-glibc
+    formats: [tar.gz]
+    ids:
+      - beszel-agent-linux-amd64-glibc
+    name_template: >-
+      {{ .Binary }}_
+      {{- .Os }}_
+      {{- .Arch }}_glibc
 
   - id: beszel
     formats: [tar.gz]
@@ -137,9 +169,7 @@ nfpms:
         - debconf
       scripts:
         templates: ./supplemental/debian/templates
-        # Currently broken due to a bug in goreleaser
-        # https://github.com/goreleaser/goreleaser/issues/5487
-        #config: ./supplemental/debian/config.sh
+        config: ./supplemental/debian/config.sh
 
 scoops:
   - ids: [beszel-agent]

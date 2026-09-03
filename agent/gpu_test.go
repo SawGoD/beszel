@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package agent
 
@@ -11,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/henrygd/beszel/agent/utils"
 	"github.com/henrygd/beszel/internal/entities/system"
 
 	"github.com/stretchr/testify/assert"
@@ -250,6 +250,101 @@ func TestParseAmdData(t *testing.T) {
 	}
 }
 
+func TestParseNvtopData(t *testing.T) {
+	input, err := os.ReadFile("test-data/nvtop.json")
+	require.NoError(t, err)
+
+	gm := &GPUManager{
+		GpuDataMap: make(map[string]*system.GPUData),
+	}
+	valid := gm.parseNvtopData(input)
+	require.True(t, valid)
+
+	g0, ok := gm.GpuDataMap["n0"]
+	require.True(t, ok)
+	assert.Equal(t, "NVIDIA GeForce RTX 3050 Ti Laptop GPU", g0.Name)
+	assert.Equal(t, 48.0, g0.Temperature)
+	assert.Equal(t, 5.0, g0.Usage)
+	assert.Equal(t, 13.0, g0.Power)
+	assert.Equal(t, utils.BytesToMegabytes(349372416), g0.MemoryUsed)
+	assert.Equal(t, utils.BytesToMegabytes(4294967296), g0.MemoryTotal)
+	assert.Equal(t, 1.0, g0.Count)
+
+	g1, ok := gm.GpuDataMap["n1"]
+	require.True(t, ok)
+	assert.Equal(t, "AMD Radeon 680M", g1.Name)
+	assert.Equal(t, 48.0, g1.Temperature)
+	assert.Equal(t, 12.0, g1.Usage)
+	assert.Equal(t, 9.0, g1.Power)
+	assert.Equal(t, utils.BytesToMegabytes(1213784064), g1.MemoryUsed)
+	assert.Equal(t, utils.BytesToMegabytes(16929173504), g1.MemoryTotal)
+	assert.Equal(t, 1.0, g1.Count)
+}
+
+func TestUpdateNvtopSnapshotsKeepsDeviceAssociationWhenOrderChanges(t *testing.T) {
+	strPtr := func(s string) *string { return &s }
+
+	gm := &GPUManager{
+		GpuDataMap: make(map[string]*system.GPUData),
+	}
+
+	firstBatch := []nvtopSnapshot{
+		{
+			DeviceName: "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+			GpuUtil:    strPtr("20%"),
+			PowerDraw:  strPtr("10W"),
+		},
+		{
+			DeviceName: "AMD Radeon 680M",
+			GpuUtil:    strPtr("30%"),
+			PowerDraw:  strPtr("20W"),
+		},
+	}
+	secondBatchSwapped := []nvtopSnapshot{
+		{
+			DeviceName: "AMD Radeon 680M",
+			GpuUtil:    strPtr("40%"),
+			PowerDraw:  strPtr("25W"),
+		},
+		{
+			DeviceName: "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+			GpuUtil:    strPtr("50%"),
+			PowerDraw:  strPtr("15W"),
+		},
+	}
+
+	require.True(t, gm.updateNvtopSnapshots(firstBatch))
+	require.True(t, gm.updateNvtopSnapshots(secondBatchSwapped))
+
+	nvidia := gm.GpuDataMap["n0"]
+	require.NotNil(t, nvidia)
+	assert.Equal(t, "NVIDIA GeForce RTX 3050 Ti Laptop GPU", nvidia.Name)
+	assert.Equal(t, 70.0, nvidia.Usage)
+	assert.Equal(t, 25.0, nvidia.Power)
+	assert.Equal(t, 2.0, nvidia.Count)
+
+	amd := gm.GpuDataMap["n1"]
+	require.NotNil(t, amd)
+	assert.Equal(t, "AMD Radeon 680M", amd.Name)
+	assert.Equal(t, 70.0, amd.Usage)
+	assert.Equal(t, 45.0, amd.Power)
+	assert.Equal(t, 2.0, amd.Count)
+}
+
+func TestParseCollectorPriority(t *testing.T) {
+	got := parseCollectorPriority(" nvml, nvidia-smi, intel_gpu_top, intel_sysfs, amd_sysfs, nvtop, rocm-smi, bad ")
+	want := []collectorSource{
+		collectorSourceNVML,
+		collectorSourceNvidiaSMI,
+		collectorSourceIntelGpuTop,
+		collectorSourceIntelSysfs,
+		collectorSourceAmdSysfs,
+		collectorSourceNVTop,
+		collectorSourceRocmSMI,
+	}
+	assert.Equal(t, want, got)
+}
+
 func TestParseJetsonData(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -304,6 +399,19 @@ func TestParseJetsonData(t *testing.T) {
 				MemoryTotal: 30698.0,
 				Usage:       45.0,
 				Power:       2.171,
+				Count:       1,
+			},
+		},
+		{
+			name:  "orin-style output with GPU@ temp and VDD_SYS_GPU power",
+			input: "RAM 3276/7859MB (lfb 5x4MB) SWAP 1626/12122MB (cached 181MB) CPU [44%@1421,49%@2031,67%@2034,17%@1420,25%@1419,8%@1420] EMC_FREQ 1%@1866 GR3D_FREQ 0%@114 APE 150 MTS fg 1% bg 1% PLL@42.5C MCPU@42.5C PMIC@50C Tboard@38C GPU@39.5C BCPU@42.5C thermal@41.3C Tdiode@39.25C VDD_SYS_GPU 182/182 VDD_SYS_SOC 730/730 VDD_4V0_WIFI 0/0 VDD_IN 5297/5297 VDD_SYS_CPU 1917/1917 VDD_SYS_DDR 1241/1241",
+			wantMetrics: &system.GPUData{
+				Name:        "GPU",
+				MemoryUsed:  3276.0,
+				MemoryTotal: 7859.0,
+				Usage:       0.0,
+				Power:       0.182, // 182mW -> 0.182W
+				Temperature: 39.5,
 				Count:       1,
 			},
 		},
@@ -456,6 +564,42 @@ func TestGetCurrentData(t *testing.T) {
 		assert.InDelta(t, 60.0, result2["0"].Temperature, 0.01, "Should use current temperature")
 		assert.InDelta(t, 1600.0, result2["0"].MemoryUsed, 0.01, "Should use current memory")
 		assert.EqualValues(t, 2, gm.GpuDataMap["0"].Count, "Count should still be 2")
+	})
+
+	t.Run("carries Intel GPU average forward between samples", func(t *testing.T) {
+		// Intel GPUs report no temp/memory, so between-sample gaps (delta 0) must
+		// reuse the last average instead of returning zeros and blanking the chart.
+		gm := &GPUManager{
+			GpuDataMap: map[string]*system.GPUData{
+				"0": {
+					Name:     "GPU",
+					Usage:    0,   // derived from engines for Intel
+					Power:    200, // averages to 100 over 2 counts
+					PowerPkg: 60,  // averages to 30 over 2 counts
+					Count:    2,
+					Engines: map[string]float64{
+						"Render/3D": 80, // averages to 40
+						"Video":     20, // averages to 10
+					},
+				},
+			},
+		}
+
+		cacheKey := uint16(1000) // realtime cache key
+
+		// First collection - computes and stores averages
+		result1 := gm.GetCurrentData(cacheKey)
+		assert.InDelta(t, 100.0, result1["0"].Power, 0.01)
+		assert.InDelta(t, 30.0, result1["0"].PowerPkg, 0.01)
+		assert.InDelta(t, 40.0, result1["0"].Engines["Render/3D"], 0.01)
+
+		// Second collection with no new sample (count unchanged, temp/mem still 0).
+		// Must carry the last average forward rather than blanking to zero.
+		result2 := gm.GetCurrentData(cacheKey)
+		assert.Equal(t, "GPU", result2["0"].Name, "Name should be preserved")
+		assert.InDelta(t, 100.0, result2["0"].Power, 0.01, "Should reuse last average power, not 0")
+		assert.InDelta(t, 30.0, result2["0"].PowerPkg, 0.01, "Should reuse last average package power, not 0")
+		assert.InDelta(t, 40.0, result2["0"].Engines["Render/3D"], 0.01, "Should reuse last average engine usage")
 	})
 
 	t.Run("tracks separate averages per cache key", func(t *testing.T) {
@@ -825,7 +969,7 @@ func TestInitializeSnapshots(t *testing.T) {
 }
 
 func TestCalculateGPUAverage(t *testing.T) {
-	t.Run("returns zero value when deltaCount is zero", func(t *testing.T) {
+	t.Run("returns cached average when deltaCount is zero", func(t *testing.T) {
 		gm := &GPUManager{
 			lastSnapshots: map[uint16]map[string]*gpuSnapshot{
 				5000: {
@@ -838,15 +982,41 @@ func TestCalculateGPUAverage(t *testing.T) {
 		}
 
 		gpu := &system.GPUData{
-			Count: 10.0, // Same as snapshot, so delta = 0
-			Usage: 100.0,
-			Power: 200.0,
+			Count:       10.0, // Same as snapshot, so delta = 0
+			Usage:       100.0,
+			Power:       200.0,
+			Temperature: 50.0, // Non-zero to avoid "suspended" check
 		}
 
 		result := gm.calculateGPUAverage("0", gpu, 5000)
 
 		assert.Equal(t, 50.0, result.Usage, "Should return cached average")
 		assert.Equal(t, 100.0, result.Power, "Should return cached average")
+	})
+
+	t.Run("returns zero value when GPU is suspended", func(t *testing.T) {
+		gm := &GPUManager{
+			lastSnapshots: map[uint16]map[string]*gpuSnapshot{
+				5000: {
+					"0": {count: 10, usage: 100, power: 200},
+				},
+			},
+			lastAvgData: map[string]system.GPUData{
+				"0": {Usage: 50.0, Power: 100.0},
+			},
+		}
+
+		gpu := &system.GPUData{
+			Name:        "Test GPU",
+			Count:       10.0,
+			Temperature: 0,
+			MemoryUsed:  0,
+		}
+
+		result := gm.calculateGPUAverage("0", gpu, 5000)
+
+		assert.Equal(t, 0.0, result.Usage, "Should return zero usage")
+		assert.Equal(t, 0.0, result.Power, "Should return zero power")
 	})
 
 	t.Run("calculates average for standard GPU", func(t *testing.T) {
@@ -948,36 +1118,33 @@ func TestCalculateGPUAverage(t *testing.T) {
 	})
 }
 
-func TestDetectGPUs(t *testing.T) {
+func TestGPUCapabilitiesAndLegacyPriority(t *testing.T) {
 	// Save original PATH
-	origPath := os.Getenv("PATH")
-	defer os.Setenv("PATH", origPath)
-
-	// Set up temp dir with the commands
-	tempDir := t.TempDir()
-	os.Setenv("PATH", tempDir)
+	hasAmdSysfs := (&GPUManager{}).hasAmdSysfs()
 
 	tests := []struct {
 		name           string
-		setupCommands  func() error
+		setupCommands  func(string) error
 		wantNvidiaSmi  bool
 		wantRocmSmi    bool
 		wantTegrastats bool
+		wantNvtop      bool
 		wantErr        bool
 	}{
 		{
 			name: "nvidia-smi not available",
-			setupCommands: func() error {
+			setupCommands: func(_ string) error {
 				return nil
 			},
 			wantNvidiaSmi:  false,
 			wantRocmSmi:    false,
 			wantTegrastats: false,
+			wantNvtop:      false,
 			wantErr:        true,
 		},
 		{
 			name: "nvidia-smi available",
-			setupCommands: func() error {
+			setupCommands: func(tempDir string) error {
 				path := filepath.Join(tempDir, "nvidia-smi")
 				script := `#!/bin/sh
 echo "test"`
@@ -989,28 +1156,13 @@ echo "test"`
 			wantNvidiaSmi:  true,
 			wantTegrastats: false,
 			wantRocmSmi:    false,
+			wantNvtop:      false,
 			wantErr:        false,
 		},
 		{
 			name: "rocm-smi available",
-			setupCommands: func() error {
+			setupCommands: func(tempDir string) error {
 				path := filepath.Join(tempDir, "rocm-smi")
-				script := `#!/bin/sh
-echo "test"`
-				if err := os.WriteFile(path, []byte(script), 0755); err != nil {
-					return err
-				}
-				return nil
-			},
-			wantNvidiaSmi:  true,
-			wantRocmSmi:    true,
-			wantTegrastats: false,
-			wantErr:        false,
-		},
-		{
-			name: "tegrastats available",
-			setupCommands: func() error {
-				path := filepath.Join(tempDir, "tegrastats")
 				script := `#!/bin/sh
 echo "test"`
 				if err := os.WriteFile(path, []byte(script), 0755); err != nil {
@@ -1020,13 +1172,48 @@ echo "test"`
 			},
 			wantNvidiaSmi:  false,
 			wantRocmSmi:    true,
+			wantTegrastats: false,
+			wantNvtop:      false,
+			wantErr:        false,
+		},
+		{
+			name: "tegrastats available",
+			setupCommands: func(tempDir string) error {
+				path := filepath.Join(tempDir, "tegrastats")
+				script := `#!/bin/sh
+echo "test"`
+				if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+					return err
+				}
+				return nil
+			},
+			wantNvidiaSmi:  false,
+			wantRocmSmi:    false,
 			wantTegrastats: true,
+			wantNvtop:      false,
+			wantErr:        false,
+		},
+		{
+			name: "nvtop available",
+			setupCommands: func(tempDir string) error {
+				path := filepath.Join(tempDir, "nvtop")
+				script := `#!/bin/sh
+echo "[]"`
+				if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+					return err
+				}
+				return nil
+			},
+			wantNvidiaSmi:  false,
+			wantRocmSmi:    false,
+			wantTegrastats: false,
+			wantNvtop:      true,
 			wantErr:        false,
 		},
 		{
 			name: "no gpu tools available",
-			setupCommands: func() error {
-				os.Setenv("PATH", "")
+			setupCommands: func(_ string) error {
+				t.Setenv("PATH", "")
 				return nil
 			},
 			wantErr: true,
@@ -1035,36 +1222,56 @@ echo "test"`
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.setupCommands(); err != nil {
+			tempDir := t.TempDir()
+			t.Setenv("PATH", tempDir)
+			if err := tt.setupCommands(tempDir); err != nil {
 				t.Fatal(err)
 			}
 
 			gm := &GPUManager{}
-			err := gm.detectGPUs()
+			caps := gm.discoverGpuCapabilities()
+			var err error
+			if !hasAnyGpuCollector(caps) {
+				err = fmt.Errorf(noGPUFoundMsg)
+			}
+			priorities := gm.resolveLegacyCollectorPriority(caps)
+			hasPriority := func(source collectorSource) bool {
+				for _, s := range priorities {
+					if s == source {
+						return true
+					}
+				}
+				return false
+			}
+			gotNvidiaSmi := hasPriority(collectorSourceNvidiaSMI)
+			gotRocmSmi := hasPriority(collectorSourceRocmSMI)
+			gotTegrastats := caps.hasTegrastats
+			gotNvtop := caps.hasNvtop
 
-			t.Logf("nvidiaSmi: %v, rocmSmi: %v, tegrastats: %v", gm.nvidiaSmi, gm.rocmSmi, gm.tegrastats)
+			t.Logf("nvidiaSmi: %v, rocmSmi: %v, tegrastats: %v", gotNvidiaSmi, gotRocmSmi, gotTegrastats)
 
-			if tt.wantErr {
+			wantErr := tt.wantErr
+			if hasAmdSysfs && (tt.name == "nvidia-smi not available" || tt.name == "no gpu tools available") {
+				wantErr = false
+			}
+			if wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, tt.wantNvidiaSmi, gm.nvidiaSmi)
-			assert.Equal(t, tt.wantRocmSmi, gm.rocmSmi)
-			assert.Equal(t, tt.wantTegrastats, gm.tegrastats)
+			assert.Equal(t, tt.wantNvidiaSmi, gotNvidiaSmi)
+			assert.Equal(t, tt.wantRocmSmi, gotRocmSmi)
+			assert.Equal(t, tt.wantTegrastats, gotTegrastats)
+			assert.Equal(t, tt.wantNvtop, gotNvtop)
 		})
 	}
 }
 
-func TestStartCollector(t *testing.T) {
-	// Save original PATH
-	origPath := os.Getenv("PATH")
-	defer os.Setenv("PATH", origPath)
-
+func TestCollectorStartHelpers(t *testing.T) {
 	// Set up temp dir with the commands
 	dir := t.TempDir()
-	os.Setenv("PATH", dir)
+	t.Setenv("PATH", dir)
 
 	tests := []struct {
 		name     string
@@ -1142,6 +1349,27 @@ echo "11-14-2024 22:54:33 RAM 1024/4096MB GR3D_FREQ 80% tj@70C VDD_GPU_SOC 1000m
 				},
 			},
 		},
+		{
+			name:    "nvtop collector",
+			command: "nvtop",
+			setup: func(t *testing.T) error {
+				path := filepath.Join(dir, "nvtop")
+				script := `#!/bin/sh
+echo '[{"device_name":"NVIDIA Test GPU","temp":"52C","power_draw":"31W","gpu_util":"37%","mem_total":"4294967296","mem_used":"536870912","processes":[]}]'`
+				if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+					return err
+				}
+				return nil
+			},
+			validate: func(t *testing.T, gm *GPUManager) {
+				gpu, exists := gm.GpuDataMap["n0"]
+				assert.True(t, exists)
+				if exists {
+					assert.Equal(t, "NVIDIA Test GPU", gpu.Name)
+					assert.Equal(t, 52.0, gpu.Temperature)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1154,11 +1382,159 @@ echo "11-14-2024 22:54:33 RAM 1024/4096MB GR3D_FREQ 80% tj@70C VDD_GPU_SOC 1000m
 					GpuDataMap: make(map[string]*system.GPUData),
 				}
 			}
-			tt.gm.startCollector(tt.command)
+			switch tt.command {
+			case nvidiaSmiCmd:
+				tt.gm.startNvidiaSmiCollector("4")
+			case rocmSmiCmd:
+				tt.gm.startRocmSmiCollector(4300 * time.Millisecond)
+			case tegraStatsCmd:
+				tt.gm.startTegraStatsCollector("3700")
+			case nvtopCmd:
+				tt.gm.startNvtopCollector("30", nil)
+			default:
+				t.Fatalf("unknown test command %q", tt.command)
+			}
 			time.Sleep(50 * time.Millisecond) // Give collector time to run
 			tt.validate(t, tt.gm)
 		})
 	}
+}
+
+func TestNewGPUManagerPriorityNvtopFallback(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "nvtop,nvidia-smi")
+
+	nvtopPath := filepath.Join(dir, "nvtop")
+	nvtopScript := `#!/bin/sh
+echo 'not-json'`
+	require.NoError(t, os.WriteFile(nvtopPath, []byte(nvtopScript), 0755))
+
+	nvidiaPath := filepath.Join(dir, "nvidia-smi")
+	nvidiaScript := `#!/bin/sh
+echo "0, NVIDIA Priority GPU, 45, 512, 2048, 12, 25"`
+	require.NoError(t, os.WriteFile(nvidiaPath, []byte(nvidiaScript), 0755))
+
+	gm, err := NewGPUManager()
+	require.NoError(t, err)
+	require.NotNil(t, gm)
+
+	time.Sleep(150 * time.Millisecond)
+	gpu, ok := gm.GpuDataMap["0"]
+	require.True(t, ok)
+	assert.Equal(t, "Priority GPU", gpu.Name)
+	assert.Equal(t, 45.0, gpu.Temperature)
+}
+
+func TestNewGPUManagerPriorityMixedCollectors(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "intel_gpu_top,rocm-smi")
+
+	intelPath := filepath.Join(dir, "intel_gpu_top")
+	intelScript := `#!/bin/sh
+echo "Freq MHz      IRQ RC6     Power W     IMC MiB/s             RCS             VCS"
+echo " req  act       /s   %   gpu   pkg     rd     wr       %  se  wa       %  se  wa"
+echo "226  223      338  58  2.00  2.69   1820    965   0.00    0   0    0.00   0   0"
+echo "189  187      412  67  1.80  2.45   1950    823   8.50    2   1    15.00   1   0"
+`
+	require.NoError(t, os.WriteFile(intelPath, []byte(intelScript), 0755))
+
+	rocmPath := filepath.Join(dir, "rocm-smi")
+	rocmScript := `#!/bin/sh
+echo '{"card0": {"Temperature (Sensor edge) (C)": "49.0", "Current Socket Graphics Package Power (W)": "28.159", "GPU use (%)": "0", "VRAM Total Memory (B)": "536870912", "VRAM Total Used Memory (B)": "445550592", "Card Series": "Rembrandt [Radeon 680M]", "GUID": "34756"}}'
+`
+	require.NoError(t, os.WriteFile(rocmPath, []byte(rocmScript), 0755))
+
+	gm, err := NewGPUManager()
+	require.NoError(t, err)
+	require.NotNil(t, gm)
+
+	time.Sleep(150 * time.Millisecond)
+	_, intelOk := gm.GpuDataMap["i0"]
+	_, amdOk := gm.GpuDataMap["34756"]
+	assert.True(t, intelOk)
+	assert.True(t, amdOk)
+}
+
+func TestNewGPUManagerPriorityNvmlFallbackToNvidiaSmi(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "nvml,nvidia-smi")
+
+	nvidiaPath := filepath.Join(dir, "nvidia-smi")
+	nvidiaScript := `#!/bin/sh
+echo "0, NVIDIA Fallback GPU, 41, 256, 1024, 8, 14"`
+	require.NoError(t, os.WriteFile(nvidiaPath, []byte(nvidiaScript), 0755))
+
+	gm, err := NewGPUManager()
+	require.NoError(t, err)
+	require.NotNil(t, gm)
+
+	time.Sleep(150 * time.Millisecond)
+	gpu, ok := gm.GpuDataMap["0"]
+	require.True(t, ok)
+	assert.Equal(t, "Fallback GPU", gpu.Name)
+}
+
+func TestNewGPUManagerConfiguredCollectorsMustStart(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+
+	t.Run("configured valid collector unavailable", func(t *testing.T) {
+		t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "nvidia-smi")
+		gm, err := NewGPUManager()
+		require.Nil(t, gm)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no configured GPU collectors are available")
+	})
+
+	t.Run("configured collector list has only unknown entries", func(t *testing.T) {
+		t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "bad,unknown")
+		gm, err := NewGPUManager()
+		require.Nil(t, gm)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no configured GPU collectors are available")
+	})
+}
+
+func TestCollectorDefinitionsNvmlDoesNotRequireNvidiaSmi(t *testing.T) {
+	gm := &GPUManager{}
+	definitions := gm.collectorDefinitions(gpuCapabilities{})
+	require.Contains(t, definitions, collectorSourceNVML)
+	assert.True(t, definitions[collectorSourceNVML].available)
+}
+
+func TestNewGPUManagerConfiguredNvmlBypassesCapabilityGate(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "nvml")
+
+	gm, err := NewGPUManager()
+	require.Nil(t, gm)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no configured GPU collectors are available")
+	assert.NotContains(t, err.Error(), noGPUFoundMsg)
+}
+
+func TestNewGPUManagerJetsonIgnoresCollectorConfig(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("BESZEL_AGENT_GPU_COLLECTOR", "nvidia-smi")
+
+	tegraPath := filepath.Join(dir, "tegrastats")
+	tegraScript := `#!/bin/sh
+echo "11-14-2024 22:54:33 RAM 1024/4096MB GR3D_FREQ 80% tj@70C VDD_GPU_SOC 1000mW"`
+	require.NoError(t, os.WriteFile(tegraPath, []byte(tegraScript), 0755))
+
+	gm, err := NewGPUManager()
+	require.NoError(t, err)
+	require.NotNil(t, gm)
+
+	time.Sleep(100 * time.Millisecond)
+	gpu, ok := gm.GpuDataMap["0"]
+	require.True(t, ok)
+	assert.Equal(t, "GPU", gpu.Name)
 }
 
 // TestAccumulationTableDriven tests the accumulation behavior for all three GPU types
@@ -1346,7 +1722,7 @@ func TestIntelUpdateFromStats(t *testing.T) {
 	ok := gm.updateIntelFromStats(&sample1)
 	assert.True(t, ok)
 
-	gpu := gm.GpuDataMap["0"]
+	gpu := gm.GpuDataMap["i0"]
 	require.NotNil(t, gpu)
 	assert.Equal(t, "GPU", gpu.Name)
 	assert.EqualValues(t, 10.5, gpu.Power)
@@ -1368,7 +1744,7 @@ func TestIntelUpdateFromStats(t *testing.T) {
 	ok = gm.updateIntelFromStats(&sample2)
 	assert.True(t, ok)
 
-	gpu = gm.GpuDataMap["0"]
+	gpu = gm.GpuDataMap["i0"]
 	require.NotNil(t, gpu)
 	assert.EqualValues(t, 10.5, gpu.Power)
 	assert.EqualValues(t, 30.0, gpu.Engines["Render/3D"]) // 20 + 10
@@ -1378,12 +1754,8 @@ func TestIntelUpdateFromStats(t *testing.T) {
 }
 
 func TestIntelCollectorStreaming(t *testing.T) {
-	// Save and override PATH
-	origPath := os.Getenv("PATH")
-	defer os.Setenv("PATH", origPath)
-
 	dir := t.TempDir()
-	os.Setenv("PATH", dir)
+	t.Setenv("PATH", dir)
 
 	// Create a fake intel_gpu_top that prints -l format with four samples (first will be skipped) and exits
 	scriptPath := filepath.Join(dir, "intel_gpu_top")
@@ -1407,7 +1779,7 @@ echo "298  295      278  51  2.20  3.12   1675    942   5.75    1   2    9.50   
 		t.Fatalf("collectIntelStats error: %v", err)
 	}
 
-	gpu := gm.GpuDataMap["0"]
+	gpu := gm.GpuDataMap["i0"]
 	require.NotNil(t, gpu)
 	// Power should be sum of samples 2-4 (first is skipped): 2.0 + 1.8 + 2.2 = 6.0
 	assert.EqualValues(t, 6.0, gpu.Power)

@@ -6,17 +6,19 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/henrygd/beszel/agent/utils"
 )
 
-// getDataDir returns the path to the data directory for the agent and an error
+// GetDataDir returns the path to the data directory for the agent and an error
 // if the directory is not valid. Attempts to find the optimal data directory if
 // no data directories are provided.
-func getDataDir(dataDirs ...string) (string, error) {
+func GetDataDir(dataDirs ...string) (string, error) {
 	if len(dataDirs) > 0 {
 		return testDataDirs(dataDirs)
 	}
 
-	dataDir, _ := GetEnv("DATA_DIR")
+	dataDir, _ := utils.GetEnv("DATA_DIR")
 	if dataDir != "" {
 		dataDirs = append(dataDirs, dataDir)
 	}

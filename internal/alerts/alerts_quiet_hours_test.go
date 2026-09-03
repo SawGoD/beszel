@@ -1,5 +1,4 @@
 //go:build testing
-// +build testing
 
 package alerts_test
 
@@ -50,7 +49,7 @@ func TestAlertSilencedOneTime(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Test that alert is silenced
 	silenced := am.IsNotificationSilenced(user.Id, system.Id)
@@ -107,7 +106,7 @@ func TestAlertSilencedDaily(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Get current hour and create a window that includes current time
 	now := time.Now().UTC()
@@ -171,7 +170,7 @@ func TestAlertSilencedDailyMidnightCrossing(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Create a window that crosses midnight: 22:00 - 02:00
 	startTime := time.Date(2000, 1, 1, 22, 0, 0, 0, time.UTC)
@@ -212,7 +211,7 @@ func TestAlertSilencedGlobal(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Create a global quiet hours window (no system specified)
 	now := time.Now().UTC()
@@ -251,7 +250,7 @@ func TestAlertSilencedSystemSpecific(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Create a system-specific quiet hours window for system1 only
 	now := time.Now().UTC()
@@ -297,7 +296,7 @@ func TestAlertSilencedMultiUser(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Create a quiet hours window for user1 only
 	now := time.Now().UTC()
@@ -323,8 +322,9 @@ func TestAlertSilencedMultiUser(t *testing.T) {
 }
 
 func TestAlertSilencedWithActualAlert(t *testing.T) {
+	hub, user := beszelTests.GetHubWithUser(t)
+
 	synctest.Test(t, func(t *testing.T) {
-		hub, user := beszelTests.GetHubWithUser(t)
 		defer hub.Cleanup()
 
 		// Create a system
@@ -418,7 +418,7 @@ func TestAlertSilencedNoWindows(t *testing.T) {
 
 	// Get alert manager
 	am := alerts.NewAlertManager(hub)
-	defer am.StopWorker()
+	defer am.Stop()
 
 	// Without any quiet hours windows, alert should NOT be silenced
 	silenced := am.IsNotificationSilenced(user.Id, system.Id)
